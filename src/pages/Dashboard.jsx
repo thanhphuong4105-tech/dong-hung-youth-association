@@ -13,7 +13,43 @@ function fmt(n) {
   return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(n)
 }
 
-const REMINDERS = []
+function getUpcomingTaskReminders() {
+  try {
+    const taskLibRaw = localStorage.getItem('dhya_task_library')
+    const taskLib = taskLibRaw ? JSON.parse(taskLibRaw) : []
+    const taskMap = {}
+    taskLib.forEach(t => { taskMap[t.id] = t.title })
+
+    const eventTasksRaw = localStorage.getItem('dhya_event_tasks')
+    const eventTasks = eventTasksRaw ? JSON.parse(eventTasksRaw) : {}
+
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    const cutoff = new Date(today)
+    cutoff.setDate(cutoff.getDate() + 10)
+
+    const reminders = []
+    Object.values(eventTasks).forEach(tasks => {
+      (tasks || []).forEach(task => {
+        if (!task.due_date) return
+        const due = new Date(task.due_date + 'T00:00:00')
+        if (due >= today && due <= cutoff) {
+          const diffDays = Math.round((due - today) / 86400000)
+          reminders.push({
+            id: task.taskId || task.id,
+            title: taskMap[task.taskId] || task.title || 'Task',
+            sub: task.due_date,
+            when: diffDays === 0 ? 'Today' : diffDays === 1 ? 'Tomorrow' : `In ${diffDays} days`,
+            urgent: diffDays <= 2,
+            due,
+          })
+        }
+      })
+    })
+    reminders.sort((a, b) => a.due - b.due)
+    return reminders
+  } catch { return [] }
+}
 
 function timeAgo(dateStr) {
   const diff = (Date.now() - new Date(dateStr)) / 1000
@@ -106,6 +142,7 @@ export default function Dashboard() {
   const [upcomingEvents, setUpcomingEvents] = useState([])
   const [recentActivity, setRecentActivity] = useState([])
   const [activityPage, setActivityPage] = useState(1)
+  const [reminders, setReminders] = useState([])
   const ACTIVITY_PAGE_SIZE = 5
 
   const activityClearedAt = typeof window !== 'undefined' ? localStorage.getItem('dhya_activity_cleared_at') : null
@@ -158,6 +195,7 @@ export default function Dashboard() {
     if (!session) return
     fetchStats()
     fetchActivity()
+    setReminders(getUpcomingTaskReminders())
   }, [session, fetchStats, fetchActivity])
 
   const cards = [
@@ -237,12 +275,12 @@ export default function Dashboard() {
           style={{ backgroundColor: '#ffffff', border: '1.5px solid #EDD0AC', boxShadow: '0 4px 20px rgba(0,0,0,0.06)' }}>
           <SectionHeader Icon={BellAlertIcon} title="Today's Reminders" linkLabel="View all" onLink={() => navigate('/calendar')} />
           <div className="space-y-1">
-            {REMINDERS.length === 0
+            {reminders.length === 0
               ? <p className="text-sm py-6 text-center" style={{ color: '#A08070' }}>No reminders today.</p>
-              : REMINDERS.map((r, i) => (
+              : reminders.map((r, i) => (
               <div key={r.id}
                 className="flex items-start gap-3 py-3 transition-colors hover:bg-orange-50 rounded-2xl px-2 -mx-2"
-                style={{ borderBottom: i < REMINDERS.length - 1 ? '1px solid #F5EDE4' : 'none' }}>
+                style={{ borderBottom: i < reminders.length - 1 ? '1px solid #F5EDE4' : 'none' }}>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-semibold leading-snug" style={{ color: '#4F252A' }}>{r.title}</p>
                   <p className="text-xs mt-0.5" style={{ color: '#A08070' }}>{r.sub}</p>

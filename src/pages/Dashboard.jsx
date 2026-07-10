@@ -39,6 +39,7 @@ function getUpcomingTaskReminders() {
             id: task.taskId || task.id,
             title: taskMap[task.taskId] || task.title || 'Task',
             sub: task.due_date,
+            assigned_members: task.assigned_members || [],
             when: diffDays === 0 ? 'Today' : diffDays === 1 ? 'Tomorrow' : `In ${diffDays} days`,
             urgent: diffDays <= 2,
             due,
@@ -143,6 +144,7 @@ export default function Dashboard() {
   const [recentActivity, setRecentActivity] = useState([])
   const [activityPage, setActivityPage] = useState(1)
   const [reminders, setReminders] = useState([])
+  const [memberMap, setMemberMap] = useState({})
   const ACTIVITY_PAGE_SIZE = 5
 
   const activityClearedAt = typeof window !== 'undefined' ? localStorage.getItem('dhya_activity_cleared_at') : null
@@ -196,6 +198,15 @@ export default function Dashboard() {
     fetchStats()
     fetchActivity()
     setReminders(getUpcomingTaskReminders())
+    Promise.all([
+      supabase.from('profiles').select('id, full_name'),
+      supabase.from('general_members').select('id, full_name'),
+    ]).then(([p, g]) => {
+      const map = {}
+      ;(p.data || []).forEach(m => { map[`profile:${m.id}`] = m.full_name })
+      ;(g.data || []).forEach(m => { map[`general:${m.id}`] = m.full_name })
+      setMemberMap(map)
+    })
   }, [session, fetchStats, fetchActivity])
 
   const cards = [
@@ -273,22 +284,27 @@ export default function Dashboard() {
         {/* Today's Reminders */}
         <div className="rounded-3xl p-5"
           style={{ backgroundColor: '#ffffff', border: '1.5px solid #EDD0AC', boxShadow: '0 4px 20px rgba(0,0,0,0.06)' }}>
-          <SectionHeader Icon={BellAlertIcon} title="Today's Reminders" linkLabel="View all" onLink={() => navigate('/calendar')} />
+          <SectionHeader Icon={BellAlertIcon} title="Today's Reminders" />
           <div className="space-y-1">
             {reminders.length === 0
               ? <p className="text-sm py-6 text-center" style={{ color: '#A08070' }}>No reminders today.</p>
-              : reminders.map((r, i) => (
-              <div key={r.id}
-                className="flex items-start gap-3 py-3 transition-colors hover:bg-orange-50 rounded-2xl px-2 -mx-2"
-                style={{ borderBottom: i < reminders.length - 1 ? '1px solid #F5EDE4' : 'none' }}>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold leading-snug" style={{ color: '#4F252A' }}>{r.title}</p>
-                  <p className="text-xs mt-0.5" style={{ color: '#A08070' }}>{r.sub}</p>
+              : reminders.map((r, i) => {
+                const assignees = (r.assigned_members || []).map(k => memberMap[k]).filter(Boolean)
+                return (
+                <div key={r.id}
+                  className="flex items-start gap-3 py-3 transition-colors hover:bg-orange-50 rounded-2xl px-2 -mx-2"
+                  style={{ borderBottom: i < reminders.length - 1 ? '1px solid #F5EDE4' : 'none' }}>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold leading-snug" style={{ color: '#4F252A' }}>{r.title}</p>
+                    <p className="text-xs mt-0.5" style={{ color: '#A08070' }}>
+                      {assignees.length > 0 ? assignees.join(', ') : r.sub}
+                    </p>
+                  </div>
+                  <span className="text-xs font-semibold shrink-0 mt-0.5 whitespace-nowrap"
+                    style={{ color: r.urgent ? '#E06464' : '#F1745E' }}>{r.when}</span>
                 </div>
-                <span className="text-xs font-semibold shrink-0 mt-0.5 whitespace-nowrap"
-                  style={{ color: r.urgent ? '#E06464' : '#F1745E' }}>{r.when}</span>
-              </div>
-            ))}
+              )})}
+
           </div>
         </div>
 

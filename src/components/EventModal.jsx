@@ -1215,12 +1215,6 @@ function getRoleLibrary() {
     return INIT_ROLE_LIBRARY
   } catch { return INIT_ROLE_LIBRARY }
 }
-function getEventTasks() {
-  try { return JSON.parse(localStorage.getItem('dhya_event_tasks') || '{}') } catch { return {} }
-}
-function setEventTasks(data) {
-  localStorage.setItem('dhya_event_tasks', JSON.stringify(data))
-}
 
 function AddTaskPopup({ eventId, onClose, onAdded }) {
   const [available, setAvailable] = useState([])
@@ -1230,14 +1224,17 @@ function AddTaskPopup({ eventId, onClose, onAdded }) {
   const [saving, setSaving] = useState(false)
 
   useEffect(() => {
-    try {
-      const library = getTaskLibrary()
-      const eventData = getEventTasks()
-      const linkedIds = new Set((eventData[eventId] || []).map(r => r.taskId))
-      const sorted = [...library].sort((a, b) => (a.title || '').localeCompare(b.title || ''))
-      setAvailable(sorted.filter(t => !linkedIds.has(t.id)))
-    } catch { setAvailable([]) }
-    setLoadingTasks(false)
+    async function load() {
+      try {
+        const library = getTaskLibrary()
+        const { data: existing } = await supabase.from('event_tasks').select('task_id').eq('event_id', eventId)
+        const linkedIds = new Set((existing || []).map(r => r.task_id))
+        const sorted = [...library].sort((a, b) => (a.title || '').localeCompare(b.title || ''))
+        setAvailable(sorted.filter(t => !linkedIds.has(t.id)))
+      } catch { setAvailable([]) }
+      setLoadingTasks(false)
+    }
+    load()
   }, [eventId])
 
   const filtered = available.filter(t =>
@@ -1252,19 +1249,15 @@ function AddTaskPopup({ eventId, onClose, onAdded }) {
     })
   }
 
-  function handleAdd() {
+  async function handleAdd() {
     if (selected.size === 0) return
     setSaving(true)
-    const eventData = getEventTasks()
-    const existing = eventData[eventId] || []
-    const next = [...existing]
-    for (const taskId of selected) {
-      if (!next.find(r => r.taskId === taskId)) {
-        next.push({ taskId, due_date: null, status: 'pending', assigned_members: [], sort_order: next.length })
-      }
-    }
-    eventData[eventId] = next
-    setEventTasks(eventData)
+    const library = getTaskLibrary()
+    const rows = [...selected].map((taskId, i) => {
+      const t = library.find(x => x.id === taskId)
+      return { event_id: eventId, task_id: taskId, task_title: t?.title || '', status: 'pending', assigned_members: [], sort_order: i }
+    })
+    await supabase.from('event_tasks').insert(rows)
     setSaving(false)
     onAdded()
     onClose()
@@ -1590,7 +1583,7 @@ function EditTodoTaskModal({ task, eventId, onClose, onSaved }) {
 
   function hc(e) { setForm(f => ({ ...f, [e.target.name]: e.target.value })) }
 
-  function handleSave(e) {
+  async function handleSave(e) {
     e.preventDefault()
     if (!form.title.trim()) return setErr('Title is required.')
     setSaving(true)
@@ -1601,20 +1594,17 @@ function EditTodoTaskModal({ task, eventId, onClose, onSaved }) {
       if (libIdx >= 0) { library[libIdx] = { ...library[libIdx], title: form.title.trim() } }
       localStorage.setItem('dhya_task_library', JSON.stringify(library))
 
-      // Update per-event fields
-      const eventData = getEventTasks()
-      const links = eventData[eventId] || []
-      const linkIdx = links.findIndex(r => r.taskId === task.id)
-      if (linkIdx >= 0) {
-        links[linkIdx] = {
-          ...links[linkIdx],
+      // Update per-event fields in Supabase
+      const { error } = await supabase.from('event_tasks')
+        .update({
+          task_title:       form.title.trim(),
           due_date:         form.due_date || null,
           status:           form.status,
           assigned_members: form.assigned_members,
-        }
-        eventData[eventId] = links
-        setEventTasks(eventData)
-      }
+        })
+        .eq('event_id', eventId)
+        .eq('task_id', task.id)
+      if (error) throw error
     } catch (ex) {
       setSaving(false)
       return setErr(ex.message)
@@ -1743,23 +1733,23 @@ function TodoSection({ eventId, onCountChange }) {
     })
   }, [])
 
-  const fetchTasks = useCallback(() => {
+  const fetchTasks = useCallback(async () => {
     setLoading(true)
     try {
-      const library = getTaskLibrary()
-      const eventData = getEventTasks()
-      const links = (eventData[eventId] || []).slice().sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
-      const rows = links.map(link => {
-        const libTask = library.find(t => t.id === link.taskId)
-        if (!libTask) return null
-        return {
-          id:               link.taskId,
-          title:            libTask.title || '',
-          due_date:         link.due_date || null,
-          status:           link.status   || 'pending',
-          assigned_members: link.assigned_members || [],
-        }
-      }).filter(Boolean)
+      const { data, error } = await supabase
+        .from('event_tasks')
+        .select('*')
+        .eq('event_id', eventId)
+        .order('sort_order', { ascending: true })
+      if (error) throw error
+      const rows = (data || []).map(r => ({
+        id:               r.task_id,
+        dbId:             r.id,
+        title:            r.task_title || '',
+        due_date:         r.due_date || null,
+        status:           r.status   || 'pending',
+        assigned_members: r.assigned_members || [],
+      }))
       rows.sort((a, b) => {
         if (!a.due_date && !b.due_date) return 0
         if (!a.due_date) return 1
@@ -1774,35 +1764,24 @@ function TodoSection({ eventId, onCountChange }) {
 
   useEffect(() => { fetchTasks() }, [fetchTasks])
 
-  function cycleStatus(task) {
-    const eventData = getEventTasks()
-    const links = eventData[eventId] || []
-    const idx = links.findIndex(r => r.taskId === task.id)
-    if (idx >= 0) {
-      links[idx] = { ...links[idx], status: STATUS_CYCLE[task.status] || 'pending' }
-      eventData[eventId] = links
-      setEventTasks(eventData)
-    }
+  async function cycleStatus(task) {
+    await supabase.from('event_tasks')
+      .update({ status: STATUS_CYCLE[task.status] || 'pending' })
+      .eq('event_id', eventId).eq('task_id', task.id)
     fetchTasks()
   }
 
-  function removeFromEvent(id) {
-    const eventData = getEventTasks()
-    eventData[eventId] = (eventData[eventId] || []).filter(r => r.taskId !== id)
-    setEventTasks(eventData)
+  async function removeFromEvent(id) {
+    await supabase.from('event_tasks').delete().eq('event_id', eventId).eq('task_id', id)
     fetchTasks()
   }
 
-  function deleteTask(id) {
+  async function deleteTask(id) {
     // Remove from library
     const library = getTaskLibrary()
     localStorage.setItem('dhya_task_library', JSON.stringify(library.filter(t => t.id !== id)))
-    // Remove from all events
-    const eventData = getEventTasks()
-    for (const eid of Object.keys(eventData)) {
-      eventData[eid] = (eventData[eid] || []).filter(r => r.taskId !== id)
-    }
-    setEventTasks(eventData)
+    // Remove from all events in Supabase
+    await supabase.from('event_tasks').delete().eq('task_id', id)
     fetchTasks()
   }
 
@@ -2617,12 +2596,12 @@ export default function EventModal({ event, onClose, onEdit }) {
   // Fetch all counts on open so the summary bar is populated immediately
   useEffect(() => {
     async function fetchCounts() {
-      const [rolesRes, danceRes] = await Promise.all([
+      const [todoRes, rolesRes, danceRes] = await Promise.all([
+        supabase.from('event_tasks').select('id', { count: 'exact', head: true }).eq('event_id', event.id),
         supabase.from('volunteer_roles').select('id, assigned_to, assigned_general_member_id, assigned_volunteers').eq('event_id', event.id),
         supabase.from('dance_participants').select('id', { count: 'exact', head: true }).eq('event_id', event.id),
       ])
-      const eventTasksStore = getEventTasks()
-      setTodoCount((eventTasksStore[event.id] || []).length)
+      setTodoCount(todoRes.count ?? 0)
       if (!rolesRes.error) {
         const rows = rolesRes.data || []
         setVolunteerCount(rows.length)

@@ -13,44 +13,6 @@ function fmt(n) {
   return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(n)
 }
 
-function getUpcomingTaskReminders() {
-  try {
-    const taskLibRaw = localStorage.getItem('dhya_task_library')
-    const taskLib = taskLibRaw ? JSON.parse(taskLibRaw) : []
-    const taskMap = {}
-    taskLib.forEach(t => { taskMap[t.id] = t.title })
-
-    const eventTasksRaw = localStorage.getItem('dhya_event_tasks')
-    const eventTasks = eventTasksRaw ? JSON.parse(eventTasksRaw) : {}
-
-    const today = new Date()
-    today.setHours(0, 0, 0, 0)
-    const cutoff = new Date(today)
-    cutoff.setDate(cutoff.getDate() + 14)
-
-    const reminders = []
-    Object.values(eventTasks).forEach(tasks => {
-      (tasks || []).forEach(task => {
-        if (!task.due_date) return
-        const due = new Date(task.due_date + 'T00:00:00')
-        if (due >= today && due <= cutoff) {
-          const diffDays = Math.round((due - today) / 86400000)
-          reminders.push({
-            id: task.taskId || task.id,
-            title: taskMap[task.taskId] || task.title || 'Task',
-            sub: task.due_date,
-            assigned_members: task.assigned_members || [],
-            when: diffDays === 0 ? 'Today' : diffDays === 1 ? 'Tomorrow' : `In ${diffDays} days`,
-            urgent: diffDays <= 2,
-            due,
-          })
-        }
-      })
-    })
-    reminders.sort((a, b) => a.due - b.due)
-    return reminders
-  } catch { return [] }
-}
 
 function timeAgo(dateStr) {
   const diff = (Date.now() - new Date(dateStr)) / 1000
@@ -197,15 +159,33 @@ export default function Dashboard() {
     if (!session) return
     fetchStats()
     fetchActivity()
-    setReminders(getUpcomingTaskReminders())
+    // Fetch reminders from Supabase
+    const today = new Date(); today.setHours(0,0,0,0)
+    const cutoff = new Date(today); cutoff.setDate(cutoff.getDate() + 14)
+    const todayStr = today.toISOString().slice(0,10)
+    const cutoffStr = cutoff.toISOString().slice(0,10)
     Promise.all([
+      supabase.from('event_tasks').select('*').gte('due_date', todayStr).lte('due_date', cutoffStr).order('due_date'),
       supabase.from('profiles').select('id, full_name'),
       supabase.from('general_members').select('id, full_name'),
-    ]).then(([p, g]) => {
+    ]).then(([taskRes, pRes, gRes]) => {
       const map = {}
-      ;(p.data || []).forEach(m => { map[`profile:${m.id}`] = m.full_name })
-      ;(g.data || []).forEach(m => { map[`general:${m.id}`] = m.full_name })
+      ;(pRes.data || []).forEach(m => { map[`profile:${m.id}`] = m.full_name })
+      ;(gRes.data || []).forEach(m => { map[`general:${m.id}`] = m.full_name })
       setMemberMap(map)
+      const rows = (taskRes.data || []).map(r => {
+        const due = new Date(r.due_date + 'T00:00:00')
+        const diffDays = Math.round((due - today) / 86400000)
+        return {
+          id: r.id,
+          title: r.task_title,
+          sub: r.due_date,
+          assigned_members: r.assigned_members || [],
+          when: diffDays === 0 ? 'Today' : diffDays === 1 ? 'Tomorrow' : `In ${diffDays} days`,
+          urgent: diffDays <= 2,
+        }
+      })
+      setReminders(rows)
     })
   }, [session, fetchStats, fetchActivity])
 

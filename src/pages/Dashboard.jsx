@@ -26,7 +26,7 @@ function getUpcomingTaskReminders() {
     const today = new Date()
     today.setHours(0, 0, 0, 0)
     const cutoff = new Date(today)
-    cutoff.setDate(cutoff.getDate() + 10)
+    cutoff.setDate(cutoff.getDate() + 14)
 
     const reminders = []
     Object.values(eventTasks).forEach(tasks => {

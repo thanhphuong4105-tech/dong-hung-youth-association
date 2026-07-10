@@ -1,0 +1,36 @@
+﻿@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --color-burgundy: #4F252A;
+  --color-coral: #E06464;
+  --color-orange: #F1745E;
+  --color-beige: #EDD0AC;
+  --color-blush: #FBC3B9;
+
+  --background-main: #FFF7F3;
+  --background-card: #FFFCF8;
+  --text-primary: #4F252A;
+  --text-secondary: #7A5550;
+  --border-soft: #EDD0AC;
+  --accent-primary: #F1745E;
+  --accent-hover: #E06464;
+}
+
+@layer base {
+  html {
+    font-family: 'Nunito', system-ui, sans-serif;
+    background-color: #FFF7F3;
+    color: #4F252A;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Nunito', system-ui, sans-serif;
+    font-weight: 800;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+}

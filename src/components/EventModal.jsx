@@ -1197,6 +1197,24 @@ function getTaskLibrary() {
     return INIT_TASK_LIBRARY
   } catch { return INIT_TASK_LIBRARY }
 }
+const INIT_ROLE_LIBRARY = [
+  { id: 'r-001', name: 'MC', description: 'Host and guide the event program, introduce performers and speakers.', category: 'Leadership', createdAt: '2026-01-10' },
+  { id: 'r-002', name: 'Registration', description: 'Check in attendees, hand out name tags, manage sign-in sheet.', category: 'Registration', createdAt: '2026-01-09' },
+  { id: 'r-003', name: 'Food Table', description: 'Set up, manage, and clean up the food and drinks table.', category: 'Food & Supplies', createdAt: '2026-01-08' },
+  { id: 'r-004', name: 'Photographer', description: 'Take photos and short videos throughout the event.', category: 'Media', createdAt: '2026-01-07' },
+  { id: 'r-005', name: 'Sound System', description: 'Operate microphones, speakers, and audio equipment during the event.', category: 'Logistics', createdAt: '2026-01-07' },
+  { id: 'r-006', name: 'Parking', description: 'Direct cars and assist with parking management outside the venue.', category: 'Logistics', createdAt: '2026-01-06' },
+  { id: 'r-007', name: 'Decoration Setup', description: 'Set up banners, flowers, lanterns, and other decorative items.', category: 'Event Setup', createdAt: '2026-01-05' },
+  { id: 'r-008', name: 'Cleanup Crew', description: 'Manage post-event cleanup, trash removal, and venue reset.', category: 'Cleanup', createdAt: '2026-01-04' },
+]
+function getRoleLibrary() {
+  try {
+    const s = localStorage.getItem('dhya_role_library')
+    if (s) return JSON.parse(s)
+    localStorage.setItem('dhya_role_library', JSON.stringify(INIT_ROLE_LIBRARY))
+    return INIT_ROLE_LIBRARY
+  } catch { return INIT_ROLE_LIBRARY }
+}
 function getEventTasks() {
   try { return JSON.parse(localStorage.getItem('dhya_event_tasks') || '{}') } catch { return {} }
 }
@@ -2297,8 +2315,7 @@ function RolePickerModal({ eventId, existingNames, onClose, onSaved }) {
 
   useEffect(() => {
     try {
-      const stored = localStorage.getItem('dhya_role_library')
-      const roles = stored ? JSON.parse(stored) : []
+      const roles = getRoleLibrary()
       const sorted = [...roles].sort((a, b) => (a.name || '').localeCompare(b.name || ''))
       setTemplates(sorted)
     } catch { setTemplates([]) }

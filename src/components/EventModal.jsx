@@ -1175,6 +1175,28 @@ function fmtDue(dateStr) {
 }
 
 // ─── Add Task to Event popup ──────────────────────────────────────────────────
+const INIT_TASK_LIBRARY = [
+  { id: 't-001', title: 'Remind parents of dance team and thỉnh sư', description: 'Send reminder to parents and coordinate with thỉnh sư for event preparation.', category: 'Communication', createdAt: '2026-01-10' },
+  { id: 't-002', title: 'Set up livestream', description: 'Prepare equipment, test connection, and set up livestream platform.', category: 'Media', createdAt: '2026-01-09' },
+  { id: 't-003', title: 'Prepare coolers and have them ready at the tent', description: 'Fill coolers with ice and drinks, and transport them to the event tent.', category: 'Food & Supplies', createdAt: '2026-01-08' },
+  { id: 't-004', title: 'Prepare registration table', description: 'Set up sign-in sheet, pens, name tags, and registration supplies.', category: 'Event Setup', createdAt: '2026-01-08' },
+  { id: 't-005', title: 'Prepare DHYA tent', description: 'Set up tent, tables, chairs, banners, and decorations before the event starts.', category: 'Event Setup', createdAt: '2026-01-07' },
+  { id: 't-006', title: 'Create dance moves', description: 'Choreograph and practice dance performance for the event.', category: 'Dance Team', createdAt: '2026-01-07' },
+  { id: 't-007', title: 'Prepare event flyer', description: 'Design flyer and share it on social media and community channels.', category: 'Communication', createdAt: '2026-01-06' },
+  { id: 't-008', title: 'Prepare flags, gong, incense tray, flowers', description: 'Gather all ceremonial items and ensure they are clean and ready.', category: 'Ceremony', createdAt: '2026-01-06' },
+  { id: 't-009', title: 'Bring waffle makers', description: 'Prepare waffle makers and ingredients for the food booth.', category: 'Food & Supplies', createdAt: '2026-01-05' },
+  { id: 't-010', title: 'Check dance team outfits', description: 'Make sure all dancers have the correct outfits and accessories.', category: 'Dance Team', createdAt: '2026-01-05' },
+  { id: 't-011', title: 'Post-event cleanup', description: 'Break down tables, chairs, tents, and dispose of trash properly.', category: 'Cleanup', createdAt: '2026-01-04' },
+  { id: 't-012', title: 'Edit and upload event photos', description: 'Collect photos from photographers, edit, and upload to the group page.', category: 'Media', createdAt: '2026-01-04' },
+]
+function getTaskLibrary() {
+  try {
+    const s = localStorage.getItem('dhya_task_library')
+    if (s) return JSON.parse(s)
+    localStorage.setItem('dhya_task_library', JSON.stringify(INIT_TASK_LIBRARY))
+    return INIT_TASK_LIBRARY
+  } catch { return INIT_TASK_LIBRARY }
+}
 function getEventTasks() {
   try { return JSON.parse(localStorage.getItem('dhya_event_tasks') || '{}') } catch { return {} }
 }
@@ -1191,7 +1213,7 @@ function AddTaskPopup({ eventId, onClose, onAdded }) {
 
   useEffect(() => {
     try {
-      const library = JSON.parse(localStorage.getItem('dhya_task_library') || '[]')
+      const library = getTaskLibrary()
       const eventData = getEventTasks()
       const linkedIds = new Set((eventData[eventId] || []).map(r => r.taskId))
       const sorted = [...library].sort((a, b) => (a.title || '').localeCompare(b.title || ''))
@@ -1556,7 +1578,7 @@ function EditTodoTaskModal({ task, eventId, onClose, onSaved }) {
     setSaving(true)
     try {
       // Update title in task library
-      const library = JSON.parse(localStorage.getItem('dhya_task_library') || '[]')
+      const library = getTaskLibrary()
       const libIdx = library.findIndex(t => t.id === task.id)
       if (libIdx >= 0) { library[libIdx] = { ...library[libIdx], title: form.title.trim() } }
       localStorage.setItem('dhya_task_library', JSON.stringify(library))
@@ -1706,7 +1728,7 @@ function TodoSection({ eventId, onCountChange }) {
   const fetchTasks = useCallback(() => {
     setLoading(true)
     try {
-      const library = JSON.parse(localStorage.getItem('dhya_task_library') || '[]')
+      const library = getTaskLibrary()
       const eventData = getEventTasks()
       const links = (eventData[eventId] || []).slice().sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
       const rows = links.map(link => {
@@ -1755,7 +1777,7 @@ function TodoSection({ eventId, onCountChange }) {
 
   function deleteTask(id) {
     // Remove from library
-    const library = JSON.parse(localStorage.getItem('dhya_task_library') || '[]')
+    const library = getTaskLibrary()
     localStorage.setItem('dhya_task_library', JSON.stringify(library.filter(t => t.id !== id)))
     // Remove from all events
     const eventData = getEventTasks()

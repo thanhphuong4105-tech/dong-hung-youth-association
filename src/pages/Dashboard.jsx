@@ -296,9 +296,10 @@ export default function Dashboard() {
                   style={{ borderBottom: i < reminders.length - 1 ? '1px solid #F5EDE4' : 'none' }}>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-semibold leading-snug" style={{ color: '#4F252A' }}>{r.title}</p>
-                    <p className="text-xs mt-0.5" style={{ color: '#A08070' }}>
-                      {assignees.length > 0 ? assignees.join(', ') : r.sub}
-                    </p>
+                    <p className="text-xs mt-0.5" style={{ color: '#A08070' }}>Due by {r.sub}</p>
+                    {assignees.length > 0 && (
+                      <p className="text-xs mt-0.5" style={{ color: '#A08070' }}>Assigned to {assignees.join(', ')}</p>
+                    )}
                   </div>
                   <span className="text-xs font-semibold shrink-0 mt-0.5 whitespace-nowrap"
                     style={{ color: r.urgent ? '#E06464' : '#F1745E' }}>{r.when}</span>

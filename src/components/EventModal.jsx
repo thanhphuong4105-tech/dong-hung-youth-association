@@ -1746,9 +1746,9 @@ function TodoSection({ eventId, onCountChange }) {
       const libMap = {}
       library.forEach(t => { libMap[t.id] = t.title })
       const rows = (data || []).map(r => {
-        const title = r.task_title || libMap[r.task_id] || ''
+        const title = r.task_title || libMap[r.task_id] || '(Untitled task)'
         // Backfill empty task_title in DB
-        if (!r.task_title && title) {
+        if (!r.task_title) {
           supabase.from('event_tasks').update({ task_title: title }).eq('id', r.id).then(() => {})
         }
         return {

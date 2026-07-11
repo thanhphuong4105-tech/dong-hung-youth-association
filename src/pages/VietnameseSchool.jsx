@@ -2169,11 +2169,26 @@ export default function VietnameseSchool() {
       const lsLes  = JSON.parse(localStorage.getItem('dhya_vs_lessons')   || '[]')
       const lsAtt  = JSON.parse(localStorage.getItem('dhya_vs_attendance')|| '[]')
 
-      if (lsSems.length) await supabase.from('vs_semesters').upsert(lsSems.map(s => semToDB({ ...s, calEvents: s.calEvents || {} })), { onConflict: 'id' })
-      if (lsCls.length)  await supabase.from('vs_classes').upsert(lsCls.map(clsToDB), { onConflict: 'id' })
-      if (lsStu.length)  await supabase.from('vs_students').upsert(lsStu.map(s => stuToDB({ ...s, semesterId: s.semesterId, classId: s.classId || null })), { onConflict: 'id' })
-      if (lsLes.length)  await supabase.from('vs_lessons').upsert(lsLes.map(lesToDB), { onConflict: 'id' })
-      if (lsAtt.length)  await supabase.from('vs_attendance').upsert(lsAtt.map(a => attToDB({ ...a, id: a.id || `att-${Date.now()}-${Math.random()}` })), { onConflict: 'id' })
+      if (lsSems.length) {
+        const { error } = await supabase.from('vs_semesters').upsert(lsSems.map(s => semToDB({ ...s, calEvents: s.calEvents || {} })), { onConflict: 'id' })
+        if (error) { alert('Error importing semesters: ' + error.message); setMigrating(false); return }
+      }
+      if (lsCls.length) {
+        const { error } = await supabase.from('vs_classes').upsert(lsCls.map(clsToDB), { onConflict: 'id' })
+        if (error) { alert('Error importing classes: ' + error.message); setMigrating(false); return }
+      }
+      if (lsStu.length) {
+        const { error } = await supabase.from('vs_students').upsert(lsStu.map(s => stuToDB({ ...s, classId: s.classId || null })), { onConflict: 'id' })
+        if (error) { alert('Error importing students: ' + error.message); setMigrating(false); return }
+      }
+      if (lsLes.length) {
+        const { error } = await supabase.from('vs_lessons').upsert(lsLes.map(lesToDB), { onConflict: 'id' })
+        if (error) { alert('Error importing lessons: ' + error.message); setMigrating(false); return }
+      }
+      if (lsAtt.length) {
+        const { error } = await supabase.from('vs_attendance').upsert(lsAtt.map(a => attToDB({ ...a, id: a.id || `att-${Date.now()}-${Math.random()}` })), { onConflict: 'id' })
+        if (error) { alert('Error importing attendance: ' + error.message); setMigrating(false); return }
+      }
 
       await fetchAll()
       alert(`Migration complete! Imported ${lsSems.length} semesters, ${lsCls.length} classes, ${lsStu.length} students.`)

@@ -1741,7 +1741,7 @@ function TodoSection({ eventId, onCountChange }) {
         .select('*')
         .eq('event_id', eventId)
         .order('sort_order', { ascending: true })
-      if (error) throw error
+      if (error) { console.error('event_tasks fetch error:', JSON.stringify(error)); throw error }
       const library = getTaskLibrary()
       const libMap = {}
       library.forEach(t => { libMap[t.id] = t.title })

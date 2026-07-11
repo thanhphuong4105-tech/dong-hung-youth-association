@@ -2968,21 +2968,21 @@ export default function EventModal({ event, onClose, onEdit }) {
                   : card.subtitle
               return (
                 <button key={card.id} onClick={() => toggleSection(card.id)}
-                  className="flex items-center gap-3 p-4 rounded-2xl text-left transition-all"
+                  className="flex items-center gap-2 px-3 py-3 rounded-2xl text-left transition-all"
                   style={{
                     backgroundColor: active ? C.orangeLight : '#ffffff',
                     border: `1.5px solid ${active ? C.orange : C.peach}`,
                     boxShadow: active ? '0 2px 16px rgba(230,106,44,0.14)' : '0 2px 8px rgba(0,0,0,0.04)',
                   }}>
-                  <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
+                  <div className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0"
                     style={{ backgroundColor: active ? C.orangeMid : C.orangeLight, color: C.orange }}>
-                    <card.Icon size={20} />
+                    <card.Icon size={16} />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-sm" style={{ color: active ? C.orange : C.text }}>{card.label}</p>
-                    <p className="text-xs mt-0.5" style={{ color: C.faint }}>{subtitle}</p>
+                    <p className="font-semibold whitespace-nowrap" style={{ color: active ? C.orange : C.text, fontSize: '0.78rem' }}>{card.label}</p>
+                    <p className="mt-0.5 whitespace-nowrap" style={{ color: C.faint, fontSize: '0.7rem' }}>{subtitle}</p>
                   </div>
-                  <ChevronRightIcon className="w-4 h-4 shrink-0 transition-transform"
+                  <ChevronRightIcon className="w-3.5 h-3.5 shrink-0 transition-transform"
                     style={{ color: active ? C.orange : C.faint, transform: active ? 'rotate(90deg)' : 'none' }} />
                 </button>
               )

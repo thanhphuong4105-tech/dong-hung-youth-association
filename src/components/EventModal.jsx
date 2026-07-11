@@ -2764,7 +2764,7 @@ function AgendaSection({ eventId, onCountChange }) {
                 </>
               ) : (
                 <>
-                  <span className="text-xs font-bold shrink-0 w-16" style={{ color: C.orange }}>{item.time}</span>
+                  <span className="text-sm font-bold shrink-0 w-20" style={{ color: C.orange }}>{item.time}</span>
                   <span className="flex-1 text-sm" style={{ color: C.text }}>{item.title}</span>
                   {/* Three-dot menu */}
                   <AgendaItemMenu onEdit={() => startEdit(item)} onDelete={() => setDeleteId(item.id)} />

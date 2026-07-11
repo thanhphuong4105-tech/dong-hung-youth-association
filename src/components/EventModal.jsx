@@ -2858,17 +2858,51 @@ function AgendaItemMenu({ onEdit, onDelete }) {
   )
 }
 
+// ─── Helpers for student deduplication ───────────────────────────────────────
+function getDeduplicatedStudents() {
+  try {
+    const raw = localStorage.getItem('dhya_vs_students')
+    const all = raw ? JSON.parse(raw) : []
+    const seen = new Map()
+    for (const s of all) {
+      const fullName = [s.firstName, s.lastName].filter(Boolean).join(' ').trim() || s.name || ''
+      const birthday = s.birthday || ''
+      const parentKey = (s.parents || []).map(p => (p.name || '').trim().toLowerCase()).sort().join('|')
+      const key = `${fullName.toLowerCase()}|${birthday}|${parentKey}`
+      if (!seen.has(key)) seen.set(key, { ...s, _fullName: fullName })
+    }
+    return [...seen.values()].sort((a, b) => a._fullName.localeCompare(b._fullName))
+  } catch { return [] }
+}
+
 // ─── Retreat Participants Section ─────────────────────────────────────────────
 function RetreatParticipantsSection({ eventId, onCountChange }) {
+  const EMPTY_FORM = { name: '', birthday: '', notes: '', parents: [{ name: '', phone: '' }] }
   const [participants, setParticipants] = useState([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
   const [editingId, setEditingId] = useState(null)
-  const [form, setForm] = useState({ name: '', phone: '', notes: '' })
+  const [form, setForm] = useState(EMPTY_FORM)
   const [saving, setSaving] = useState(false)
   const [deleteTarget, setDeleteTarget] = useState(null)
+  const [nameQuery, setNameQuery] = useState('')
+  const [showDropdown, setShowDropdown] = useState(false)
+  const nameRef = useRef(null)
+
+  const allStudents = getDeduplicatedStudents()
+
+  const filteredStudents = nameQuery.length > 0
+    ? allStudents.filter(s => s._fullName.toLowerCase().includes(nameQuery.toLowerCase()))
+    : allStudents
 
   useEffect(() => { fetchParticipants() }, [eventId])
+
+  useEffect(() => {
+    if (!showDropdown) return
+    function close(e) { if (nameRef.current && !nameRef.current.contains(e.target)) setShowDropdown(false) }
+    document.addEventListener('mousedown', close)
+    return () => document.removeEventListener('mousedown', close)
+  }, [showDropdown])
 
   async function fetchParticipants() {
     setLoading(true)
@@ -2886,24 +2920,61 @@ function RetreatParticipantsSection({ eventId, onCountChange }) {
 
   function openAdd() {
     setEditingId(null)
-    setForm({ name: '', phone: '', notes: '' })
+    setForm(EMPTY_FORM)
+    setNameQuery('')
     setShowForm(true)
   }
 
   function openEdit(p) {
     setEditingId(p.id)
-    setForm({ name: p.name, phone: p.phone || '', notes: p.notes || '' })
+    setForm({
+      name: p.name,
+      birthday: p.birthday || '',
+      notes: p.notes || '',
+      parents: p.parents?.length ? p.parents : [{ name: '', phone: '' }],
+    })
+    setNameQuery(p.name)
     setShowForm(true)
+  }
+
+  function selectStudent(s) {
+    const parents = s.parents?.length ? s.parents.map(p => ({ name: p.name || '', phone: p.phone || '' })) : [{ name: '', phone: '' }]
+    setForm(f => ({ ...f, name: s._fullName, birthday: s.birthday || '', parents }))
+    setNameQuery(s._fullName)
+    setShowDropdown(false)
+  }
+
+  function updateParent(i, field, val) {
+    setForm(f => {
+      const parents = [...f.parents]
+      parents[i] = { ...parents[i], [field]: val }
+      return { ...f, parents }
+    })
+  }
+
+  function addParent() {
+    setForm(f => ({ ...f, parents: [...f.parents, { name: '', phone: '' }] }))
+  }
+
+  function removeParent(i) {
+    setForm(f => ({ ...f, parents: f.parents.filter((_, idx) => idx !== i) }))
   }
 
   async function handleSave() {
     if (!form.name.trim()) return
     setSaving(true)
+    const cleanParents = form.parents.filter(p => p.name.trim() || p.phone.trim())
+    const payload = {
+      name: form.name.trim(),
+      birthday: form.birthday || null,
+      notes: form.notes.trim(),
+      parents: cleanParents,
+    }
     if (editingId) {
-      await supabase.from('retreat_participants').update({ name: form.name.trim(), phone: form.phone.trim(), notes: form.notes.trim() }).eq('id', editingId)
+      await supabase.from('retreat_participants').update(payload).eq('id', editingId)
     } else {
       const maxOrder = participants.length > 0 ? Math.max(...participants.map(p => p.sort_order || 0)) + 1 : 0
-      await supabase.from('retreat_participants').insert({ event_id: eventId, name: form.name.trim(), phone: form.phone.trim(), notes: form.notes.trim(), sort_order: maxOrder })
+      await supabase.from('retreat_participants').insert({ event_id: eventId, sort_order: maxOrder, ...payload })
     }
     setSaving(false)
     setShowForm(false)
@@ -2915,6 +2986,8 @@ function RetreatParticipantsSection({ eventId, onCountChange }) {
     setDeleteTarget(null)
     fetchParticipants()
   }
+
+  const inputStyle = { borderColor: C.peach, color: C.text }
 
   return (
     <div>
@@ -2939,53 +3012,131 @@ function RetreatParticipantsSection({ eventId, onCountChange }) {
         />
       ) : (
         <div className="space-y-2">
-          {participants.map((p, i) => (
-            <div key={p.id} className="flex items-center gap-3 px-4 py-3 rounded-xl"
-              style={{ backgroundColor: '#fff', border: `1px solid ${C.peach}` }}>
-              <div className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 text-sm font-bold"
-                style={{ backgroundColor: C.orangeLight, color: C.orange }}>
-                {i + 1}
+          {participants.map((p, i) => {
+            const guardians = p.parents?.filter(g => g.name) || []
+            return (
+              <div key={p.id} className="flex items-start gap-3 px-4 py-3 rounded-xl"
+                style={{ backgroundColor: '#fff', border: `1px solid ${C.peach}` }}>
+                <div className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 text-sm font-bold mt-0.5"
+                  style={{ backgroundColor: C.orangeLight, color: C.orange }}>
+                  {i + 1}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold" style={{ color: C.text }}>{p.name}</p>
+                  {p.birthday && <p className="text-xs" style={{ color: C.faint }}>DOB: {p.birthday}</p>}
+                  {guardians.length > 0 && (
+                    <div className="mt-1 space-y-0.5">
+                      {guardians.map((g, gi) => (
+                        <p key={gi} className="text-xs" style={{ color: C.muted }}>
+                          👤 {g.name}{g.phone ? ` · ${g.phone}` : ''}
+                        </p>
+                      ))}
+                    </div>
+                  )}
+                  {p.notes && <p className="text-xs mt-1 italic" style={{ color: C.faint }}>{p.notes}</p>}
+                </div>
+                <DanceRowMenu onEdit={() => openEdit(p)} onRemove={() => setDeleteTarget(p.id)} />
               </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold truncate" style={{ color: C.text }}>{p.name}</p>
-                {p.phone && <p className="text-xs" style={{ color: C.faint }}>{p.phone}</p>}
-                {p.notes && <p className="text-xs mt-0.5 truncate" style={{ color: C.muted }}>{p.notes}</p>}
-              </div>
-              <DanceRowMenu onEdit={() => openEdit(p)} onRemove={() => setDeleteTarget(p.id)} />
-            </div>
-          ))}
+            )
+          })}
         </div>
       )}
 
       {/* Add / Edit form */}
       {showForm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ backgroundColor: 'rgba(0,0,0,0.35)' }}>
-          <div className="rounded-2xl p-6 w-full max-w-sm" style={{ backgroundColor: '#fff', boxShadow: '0 20px 60px rgba(0,0,0,0.18)' }}>
-            <h4 className="text-base font-bold mb-4" style={{ color: C.text }}>{editingId ? 'Edit Participant' : 'Add Participant'}</h4>
+          <div className="rounded-2xl p-6 w-full max-w-sm max-h-[90vh] overflow-y-auto"
+            style={{ backgroundColor: '#fff', boxShadow: '0 20px 60px rgba(0,0,0,0.18)' }}>
+            <h4 className="text-base font-bold mb-4" style={{ color: C.text }}>
+              {editingId ? 'Edit Participant' : 'Add Participant'}
+            </h4>
             <div className="space-y-3">
-              <div>
+
+              {/* Name with student dropdown */}
+              <div ref={nameRef} className="relative">
                 <label className="block text-xs font-semibold mb-1" style={{ color: C.muted }}>Name *</label>
-                <input value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
-                  placeholder="Full name"
+                <input
+                  value={nameQuery}
+                  onChange={e => { setNameQuery(e.target.value); setForm(f => ({ ...f, name: e.target.value })); setShowDropdown(true) }}
+                  onFocus={() => setShowDropdown(true)}
+                  placeholder="Type to search students or enter name…"
                   className="w-full px-3 py-2 rounded-xl text-sm border outline-none"
-                  style={{ borderColor: C.peach, color: C.text }} />
+                  style={inputStyle}
+                />
+                {showDropdown && filteredStudents.length > 0 && (
+                  <div className="absolute left-0 right-0 top-full mt-1 z-20 rounded-xl overflow-hidden max-h-48 overflow-y-auto"
+                    style={{ backgroundColor: '#fff', border: `1px solid ${C.peach}`, boxShadow: '0 8px 24px rgba(0,0,0,0.10)' }}>
+                    {filteredStudents.map(s => (
+                      <button key={s.id || s._fullName} type="button"
+                        onMouseDown={() => selectStudent(s)}
+                        className="w-full text-left px-3 py-2 text-sm hover:bg-orange-50 transition-colors"
+                        style={{ color: C.text }}>
+                        <span className="font-semibold">{s._fullName}</span>
+                        {s.birthday && <span className="ml-2 text-xs" style={{ color: C.faint }}>{s.birthday}</span>}
+                        {s.parents?.length > 0 && (
+                          <span className="ml-2 text-xs" style={{ color: C.faint }}>
+                            · {s.parents.map(p => p.name).filter(Boolean).join(', ')}
+                          </span>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
+
+              {/* Birthday */}
               <div>
-                <label className="block text-xs font-semibold mb-1" style={{ color: C.muted }}>Phone (optional)</label>
-                <input value={form.phone} onChange={e => setForm(f => ({ ...f, phone: e.target.value }))}
-                  placeholder="Phone number"
+                <label className="block text-xs font-semibold mb-1" style={{ color: C.muted }}>Date of Birth (optional)</label>
+                <input type="date" value={form.birthday}
+                  onChange={e => setForm(f => ({ ...f, birthday: e.target.value }))}
                   className="w-full px-3 py-2 rounded-xl text-sm border outline-none"
-                  style={{ borderColor: C.peach, color: C.text }} />
+                  style={inputStyle} />
               </div>
+
+              {/* Parents / Guardians */}
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="text-xs font-semibold" style={{ color: C.muted }}>Parent / Guardian</label>
+                  <button type="button" onClick={addParent}
+                    className="text-xs font-semibold flex items-center gap-1 hover:opacity-80"
+                    style={{ color: C.orange }}>
+                    <PlusIcon className="w-3 h-3" /> Add another
+                  </button>
+                </div>
+                <div className="space-y-2">
+                  {form.parents.map((g, i) => (
+                    <div key={i} className="rounded-xl p-3 space-y-2" style={{ backgroundColor: C.orangeLight, border: `1px solid ${C.peach}` }}>
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-semibold" style={{ color: C.muted }}>Guardian {form.parents.length > 1 ? i + 1 : ''}</span>
+                        {form.parents.length > 1 && (
+                          <button type="button" onClick={() => removeParent(i)}
+                            className="text-xs hover:opacity-80" style={{ color: '#E06464' }}>Remove</button>
+                        )}
+                      </div>
+                      <input value={g.name} onChange={e => updateParent(i, 'name', e.target.value)}
+                        placeholder="Guardian name"
+                        className="w-full px-3 py-2 rounded-lg text-sm border outline-none"
+                        style={{ borderColor: C.peach, color: C.text, backgroundColor: '#fff' }} />
+                      <input value={g.phone} onChange={e => updateParent(i, 'phone', e.target.value)}
+                        placeholder="Phone number"
+                        className="w-full px-3 py-2 rounded-lg text-sm border outline-none"
+                        style={{ borderColor: C.peach, color: C.text, backgroundColor: '#fff' }} />
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Notes */}
               <div>
                 <label className="block text-xs font-semibold mb-1" style={{ color: C.muted }}>Notes (optional)</label>
                 <textarea value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))}
-                  placeholder="Any notes about this participant"
+                  placeholder="Allergies, special needs, etc."
                   rows={2}
                   className="w-full px-3 py-2 rounded-xl text-sm border outline-none resize-none"
-                  style={{ borderColor: C.peach, color: C.text }} />
+                  style={inputStyle} />
               </div>
             </div>
+
             <div className="flex gap-2 mt-5">
               <button onClick={() => setShowForm(false)}
                 className="flex-1 py-2 rounded-xl text-sm font-semibold border"

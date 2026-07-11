@@ -2601,7 +2601,7 @@ function VolunteerSection({ eventId, onCountChange, onAssignedCountChange }) {
 }
 
 // ─── Agenda Section ───────────────────────────────────────────────────────────
-function AgendaSection({ eventId, onCountChange }) {
+function AgendaSection({ eventId, eventName, onCountChange }) {
   const [items, setItems] = useState([])
   const [loading, setLoading] = useState(true)
   const [adding, setAdding] = useState(false)
@@ -2690,12 +2690,37 @@ function AgendaSection({ eventId, onCountChange }) {
           <h3 className="text-base font-bold" style={{ color: C.text, fontFamily: "'Nunito', sans-serif", fontSize: '1.1rem' }}>Agenda</h3>
           <p className="text-xs mt-0.5" style={{ color: C.faint }}>Add the schedule for this event. Items can be reordered.</p>
         </div>
-        <button
-          onClick={() => { setAdding(true); setNewErr('') }}
-          className="flex items-center gap-1.5 px-3 py-1.5 text-white text-xs font-semibold rounded-xl shadow-md hover:opacity-90 transition-opacity sm:w-auto w-full justify-center"
-          style={{ backgroundColor: C.orange }}>
-          <PlusIcon className="w-3.5 h-3.5" /> Add Agenda Item
-        </button>
+        <div className="flex items-center gap-2 sm:w-auto w-full">
+          <button
+            onClick={() => {
+              const printWindow = window.open('', '_blank')
+              const rows = items.map(item => {
+                const [h, m] = item.time.split(':').map(Number)
+                const ampm = h >= 12 ? 'PM' : 'AM'
+                const h12 = h % 12 || 12
+                const t = `${h12}:${String(m).padStart(2,'0')} ${ampm}`
+                return `<tr><td style="padding:8px 16px;border-bottom:1px solid #F5EDE4;font-weight:700;color:#F1745E;white-space:nowrap;">${t}</td><td style="padding:8px 16px;border-bottom:1px solid #F5EDE4;color:#4F252A;">${item.title}</td></tr>`
+              }).join('')
+              printWindow.document.write(`<!DOCTYPE html><html><head><title>Agenda</title><style>body{font-family:'Nunito',sans-serif;padding:32px;color:#4F252A;}h1{color:#4F252A;font-size:1.5rem;margin-bottom:4px;}p{color:#A08070;font-size:0.9rem;margin-bottom:24px;}table{width:100%;border-collapse:collapse;}th{text-align:left;padding:8px 16px;background:#FFF0EA;color:#4F252A;font-size:0.85rem;}@media print{body{padding:16px;}}</style></head><body><h1>${eventName || 'Event Agenda'}</h1><p>Event Schedule</p><table><thead><tr><th>Time</th><th>Activity</th></tr></thead><tbody>${rows}</tbody></table></body></html>`)
+              printWindow.document.close()
+              printWindow.focus()
+              printWindow.print()
+            }}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-xl border hover:opacity-80 transition-opacity"
+            style={{ borderColor: C.peach, color: C.muted, backgroundColor: '#ffffff' }}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/>
+              <rect x="6" y="14" width="12" height="8"/>
+            </svg>
+            Print
+          </button>
+          <button
+            onClick={() => { setAdding(true); setNewErr('') }}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-white text-xs font-semibold rounded-xl shadow-md hover:opacity-90 transition-opacity"
+            style={{ backgroundColor: C.orange }}>
+            <PlusIcon className="w-3.5 h-3.5" /> Add Agenda
+          </button>
+        </div>
       </div>
 
       {/* Add row */}
@@ -2995,7 +3020,7 @@ export default function EventModal({ event, onClose, onEdit }) {
               {activeSection === 'todo'      && <TodoSection eventId={event.id} onCountChange={handleTodoCount} />}
               {activeSection === 'volunteer' && <VolunteerSection eventId={event.id} onCountChange={handleVolunteerCount} onAssignedCountChange={handleAssignedVolunteerCount} />}
               {activeSection === 'dance' && event.event_type === 'temple_main' && <DanceTeamSection eventId={event.id} onCountChange={handleDanceCount} />}
-              {activeSection === 'agenda'    && <AgendaSection eventId={event.id} onCountChange={handleAgendaCount} />}
+              {activeSection === 'agenda'    && <AgendaSection eventId={event.id} eventName={event.title} onCountChange={handleAgendaCount} />}
             </div>
           )}
         </div>

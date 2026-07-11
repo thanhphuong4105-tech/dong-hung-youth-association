@@ -78,12 +78,22 @@ function TeamIcon({ size = 20 }) {
     </svg>
   )
 }
+function AgendaIcon({ size = 20 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3" y="4" width="18" height="17" rx="2"/>
+      <path d="M16 2v4M8 2v4M3 10h18"/>
+      <path d="M8 14h.01M12 14h4M8 18h.01M12 18h4"/>
+    </svg>
+  )
+}
 
 // ─── Nav cards config ─────────────────────────────────────────────────────────
 const NAV_CARDS = [
-  { id: 'todo',      label: 'To-do List',     subtitle: '6 tasks',    Icon: TodoIcon },
-  { id: 'volunteer', label: 'Volunteer Roles', subtitle: '12 roles',   Icon: HandsIcon },
-  { id: 'dance',     label: 'Dance Team',      subtitle: 'participants', Icon: TeamIcon },
+  { id: 'todo',      label: 'To-do List',     subtitle: '0 tasks',      Icon: TodoIcon },
+  { id: 'volunteer', label: 'Volunteer Roles', subtitle: '0 roles',      Icon: HandsIcon },
+  { id: 'dance',     label: 'Dance Team',      subtitle: '0 participants', Icon: TeamIcon },
+  { id: 'agenda',    label: 'Agenda',          subtitle: '0 items',      Icon: AgendaIcon },
 ]
 
 // ─── Date helpers ─────────────────────────────────────────────────────────────
@@ -2590,6 +2600,228 @@ function VolunteerSection({ eventId, onCountChange, onAssignedCountChange }) {
   )
 }
 
+// ─── Agenda Section ───────────────────────────────────────────────────────────
+function AgendaSection({ eventId, onCountChange }) {
+  const [items, setItems] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [adding, setAdding] = useState(false)
+  const [newTime, setNewTime] = useState('')
+  const [newTitle, setNewTitle] = useState('')
+  const [newErr, setNewErr] = useState('')
+  const [editingId, setEditingId] = useState(null)
+  const [editTime, setEditTime] = useState('')
+  const [editTitle, setEditTitle] = useState('')
+  const [deleteId, setDeleteId] = useState(null)
+  const dragItem = useRef(null)
+  const dragOver = useRef(null)
+
+  const fetchItems = useCallback(async () => {
+    setLoading(true)
+    const { data } = await supabase
+      .from('event_agenda')
+      .select('*')
+      .eq('event_id', eventId)
+      .order('sort_order', { ascending: true })
+    const rows = data || []
+    setItems(rows)
+    onCountChange(rows.length)
+    setLoading(false)
+  }, [eventId, onCountChange])
+
+  useEffect(() => { fetchItems() }, [fetchItems])
+
+  async function handleAdd() {
+    if (!newTime.trim()) return setNewErr('Time is required.')
+    if (!newTitle.trim()) return setNewErr('Activity is required.')
+    const { error } = await supabase.from('event_agenda').insert({
+      event_id: eventId,
+      time: newTime.trim(),
+      title: newTitle.trim(),
+      sort_order: items.length,
+    })
+    if (error) return setNewErr(error.message)
+    setAdding(false); setNewTime(''); setNewTitle(''); setNewErr('')
+    fetchItems()
+  }
+
+  async function handleEditSave(item) {
+    if (!editTime.trim() || !editTitle.trim()) return
+    await supabase.from('event_agenda').update({ time: editTime.trim(), title: editTitle.trim() }).eq('id', item.id)
+    setEditingId(null)
+    fetchItems()
+  }
+
+  async function handleDelete(id) {
+    await supabase.from('event_agenda').delete().eq('id', id)
+    setDeleteId(null)
+    fetchItems()
+  }
+
+  function startEdit(item) {
+    setEditingId(item.id); setEditTime(item.time); setEditTitle(item.title)
+  }
+
+  function handleDragStart(i) { dragItem.current = i }
+  function handleDragEnter(i) { dragOver.current = i }
+  async function handleDragEnd() {
+    if (dragItem.current === null || dragOver.current === null || dragItem.current === dragOver.current) return
+    const reordered = [...items]
+    const [moved] = reordered.splice(dragItem.current, 1)
+    reordered.splice(dragOver.current, 0, moved)
+    dragItem.current = null; dragOver.current = null
+    setItems(reordered)
+    onCountChange(reordered.length)
+    await Promise.all(reordered.map((item, idx) =>
+      supabase.from('event_agenda').update({ sort_order: idx }).eq('id', item.id)
+    ))
+  }
+
+  const inputStyle = {
+    padding: '0.45rem 0.75rem', borderRadius: '0.75rem',
+    border: `1.5px solid ${C.peach}`, backgroundColor: '#ffffff',
+    color: C.text, fontFamily: "'Nunito', sans-serif", fontSize: '0.875rem', outline: 'none',
+  }
+
+  return (
+    <>
+      {/* Header */}
+      <div className="flex items-start justify-between mb-1 flex-wrap gap-2">
+        <div>
+          <h3 className="text-base font-bold" style={{ color: C.text, fontFamily: "'Nunito', sans-serif", fontSize: '1.1rem' }}>Agenda</h3>
+          <p className="text-xs mt-0.5" style={{ color: C.faint }}>Add the schedule for this event. Items can be reordered.</p>
+        </div>
+        <button
+          onClick={() => { setAdding(true); setNewErr('') }}
+          className="flex items-center gap-1.5 px-3 py-1.5 text-white text-xs font-semibold rounded-xl shadow-md hover:opacity-90 transition-opacity sm:w-auto w-full justify-center"
+          style={{ backgroundColor: C.orange }}>
+          <PlusIcon className="w-3.5 h-3.5" /> Add Agenda Item
+        </button>
+      </div>
+
+      {/* Add row */}
+      {adding && (
+        <div className="rounded-xl p-3 mt-3 mb-2 flex flex-col gap-2" style={{ backgroundColor: '#ffffff', border: `1.5px solid ${C.peach}` }}>
+          <div className="flex gap-2 flex-wrap">
+            <input type="time" value={newTime} onChange={e => setNewTime(e.target.value)}
+              style={{ ...inputStyle, width: '130px' }} />
+            <input type="text" value={newTitle} onChange={e => setNewTitle(e.target.value)}
+              placeholder="Activity description" style={{ ...inputStyle, flex: 1, minWidth: '160px' }} />
+          </div>
+          {newErr && <p className="text-xs" style={{ color: '#E06464' }}>{newErr}</p>}
+          <div className="flex gap-2 justify-end">
+            <button onClick={() => { setAdding(false); setNewTime(''); setNewTitle(''); setNewErr('') }}
+              className="px-3 py-1.5 text-xs font-semibold rounded-xl border"
+              style={{ borderColor: C.peach, color: C.muted }}>Cancel</button>
+            <button onClick={handleAdd}
+              className="px-3 py-1.5 text-xs font-semibold rounded-xl text-white"
+              style={{ backgroundColor: C.orange }}>Save</button>
+          </div>
+        </div>
+      )}
+
+      {/* List */}
+      {loading ? (
+        <div className="flex justify-center py-8">
+          <div className="w-6 h-6 rounded-full border-2 animate-spin" style={{ borderColor: C.peach, borderTopColor: C.orange }} />
+        </div>
+      ) : items.length === 0 && !adding ? (
+        <div className="text-center py-10">
+          <AgendaIcon size={36} />
+          <p className="text-sm font-semibold mt-3 mb-1" style={{ color: C.text }}>No agenda items yet</p>
+          <p className="text-xs mb-4" style={{ color: C.faint }}>Create a schedule so volunteers and participants know what happens throughout the event.</p>
+          <button onClick={() => { setAdding(true); setNewErr('') }}
+            className="px-4 py-2 text-sm font-semibold rounded-xl text-white"
+            style={{ backgroundColor: C.orange }}>+ Add Agenda</button>
+        </div>
+      ) : (
+        <div className="mt-3 space-y-2">
+          {items.map((item, idx) => (
+            <div key={item.id}
+              draggable
+              onDragStart={() => handleDragStart(idx)}
+              onDragEnter={() => handleDragEnter(idx)}
+              onDragEnd={handleDragEnd}
+              onDragOver={e => e.preventDefault()}
+              className="flex items-center gap-2 rounded-xl px-3 py-2"
+              style={{ backgroundColor: '#ffffff', border: `1px solid ${C.peach}` }}>
+              {/* Drag handle */}
+              <div className="cursor-grab shrink-0" style={{ color: C.faint }}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                  <circle cx="9" cy="5" r="1.5"/><circle cx="15" cy="5" r="1.5"/>
+                  <circle cx="9" cy="12" r="1.5"/><circle cx="15" cy="12" r="1.5"/>
+                  <circle cx="9" cy="19" r="1.5"/><circle cx="15" cy="19" r="1.5"/>
+                </svg>
+              </div>
+
+              {editingId === item.id ? (
+                <>
+                  <input type="time" value={editTime} onChange={e => setEditTime(e.target.value)}
+                    style={{ ...inputStyle, width: '120px', fontSize: '0.8rem', padding: '0.3rem 0.6rem' }} />
+                  <input type="text" value={editTitle} onChange={e => setEditTitle(e.target.value)}
+                    style={{ ...inputStyle, flex: 1, fontSize: '0.8rem', padding: '0.3rem 0.6rem' }} />
+                  <button onClick={() => handleEditSave(item)} className="text-xs font-semibold px-2 py-1 rounded-lg text-white" style={{ backgroundColor: C.orange }}>Save</button>
+                  <button onClick={() => setEditingId(null)} className="text-xs font-semibold px-2 py-1 rounded-lg" style={{ border: `1px solid ${C.peach}`, color: C.muted }}>Cancel</button>
+                </>
+              ) : (
+                <>
+                  <span className="text-xs font-bold shrink-0 w-16" style={{ color: C.orange }}>{item.time}</span>
+                  <span className="flex-1 text-sm" style={{ color: C.text }}>{item.title}</span>
+                  {/* Three-dot menu */}
+                  <AgendaItemMenu onEdit={() => startEdit(item)} onDelete={() => setDeleteId(item.id)} />
+                </>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Delete confirm */}
+      {deleteId && (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center p-4"
+          style={{ backgroundColor: 'rgba(50,30,10,0.45)', backdropFilter: 'blur(2px)' }}>
+          <div className="w-full max-w-xs rounded-2xl p-6 text-center" style={{ backgroundColor: '#fff', border: `1.5px solid ${C.peach}` }}>
+            <p className="font-bold mb-1" style={{ color: C.text }}>Delete this agenda item?</p>
+            <p className="text-sm mb-5" style={{ color: C.faint }}>This action cannot be undone.</p>
+            <div className="flex gap-3 justify-center">
+              <button onClick={() => setDeleteId(null)} className="px-4 py-2 text-sm font-semibold rounded-xl border" style={{ borderColor: C.peach, color: C.muted }}>Cancel</button>
+              <button onClick={() => handleDelete(deleteId)} className="px-4 py-2 text-sm font-semibold rounded-xl text-white" style={{ backgroundColor: '#E06464' }}>Delete</button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  )
+}
+
+function AgendaItemMenu({ onEdit, onDelete }) {
+  const [open, setOpen] = useState(false)
+  const ref = useRef(null)
+  useEffect(() => {
+    if (!open) return
+    function h(e) { if (ref.current && !ref.current.contains(e.target)) setOpen(false) }
+    window.addEventListener('mousedown', h)
+    return () => window.removeEventListener('mousedown', h)
+  }, [open])
+  return (
+    <div ref={ref} className="relative shrink-0">
+      <button onClick={() => setOpen(v => !v)} className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-orange-50" style={{ color: C.faint }}>
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor">
+          <circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/>
+        </svg>
+      </button>
+      {open && (
+        <div className="absolute right-0 top-8 z-30 rounded-2xl overflow-hidden min-w-[110px]"
+          style={{ backgroundColor: '#fff', boxShadow: '0 8px 24px rgba(0,0,0,0.12)', border: `1px solid ${C.peach}` }}>
+          <button onClick={() => { setOpen(false); onEdit() }}
+            className="w-full text-left px-4 py-2.5 text-sm hover:bg-orange-50 transition-colors" style={{ color: C.text }}>Edit</button>
+          <button onClick={() => { setOpen(false); onDelete() }}
+            className="w-full text-left px-4 py-2.5 text-sm hover:bg-red-50 transition-colors" style={{ color: '#E06464' }}>Delete</button>
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ─── Main modal ───────────────────────────────────────────────────────────────
 export default function EventModal({ event, onClose, onEdit }) {
   const [activeSection, setActiveSection] = useState(null)
@@ -2597,21 +2829,25 @@ export default function EventModal({ event, onClose, onEdit }) {
   const [volunteerCount, setVolunteerCount] = useState(null)
   const [assignedVolunteerCount, setAssignedVolunteerCount] = useState(null)
   const [danceCount, setDanceCount] = useState(null)
+  const [agendaCount, setAgendaCount] = useState(null)
   const handleTodoCount = useCallback(n => setTodoCount(n), [])
   const handleVolunteerCount = useCallback(n => setVolunteerCount(n), [])
   const handleAssignedVolunteerCount = useCallback(n => setAssignedVolunteerCount(n), [])
   const handleDanceCount = useCallback(n => setDanceCount(n), [])
+  const handleAgendaCount = useCallback(n => setAgendaCount(n), [])
   const dateInfo = parseDateInfo(event.start_date)
 
   // Fetch all counts on open so the summary bar is populated immediately
   useEffect(() => {
     async function fetchCounts() {
-      const [todoRes, rolesRes, danceRes] = await Promise.all([
+      const [todoRes, rolesRes, danceRes, agendaRes] = await Promise.all([
         supabase.from('event_tasks').select('id', { count: 'exact', head: true }).eq('event_id', event.id),
         supabase.from('volunteer_roles').select('id, assigned_to, assigned_general_member_id, assigned_volunteers').eq('event_id', event.id),
         supabase.from('dance_participants').select('id', { count: 'exact', head: true }).eq('event_id', event.id),
+        supabase.from('event_agenda').select('id', { count: 'exact', head: true }).eq('event_id', event.id),
       ])
       setTodoCount(todoRes.count ?? 0)
+      if (!agendaRes.error) setAgendaCount(agendaRes.count ?? 0)
       if (!rolesRes.error) {
         const rows = rolesRes.data || []
         setVolunteerCount(rows.length)
@@ -2717,7 +2953,7 @@ export default function EventModal({ event, onClose, onEdit }) {
           </div>
 
           {/* ── Navigation cards ── */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-5">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5">
             {NAV_CARDS.filter(card => card.id !== 'dance' || event.event_type === 'temple_main').map(card => {
               const active = activeSection === card.id
               const subtitle =
@@ -2727,6 +2963,8 @@ export default function EventModal({ event, onClose, onEdit }) {
                   ? `${volunteerCount} role${volunteerCount !== 1 ? 's' : ''}`
                   : card.id === 'dance' && danceCount !== null
                   ? `${danceCount} participant${danceCount !== 1 ? 's' : ''}`
+                  : card.id === 'agenda' && agendaCount !== null
+                  ? `${agendaCount} item${agendaCount !== 1 ? 's' : ''}`
                   : card.subtitle
               return (
                 <button key={card.id} onClick={() => toggleSection(card.id)}
@@ -2757,6 +2995,7 @@ export default function EventModal({ event, onClose, onEdit }) {
               {activeSection === 'todo'      && <TodoSection eventId={event.id} onCountChange={handleTodoCount} />}
               {activeSection === 'volunteer' && <VolunteerSection eventId={event.id} onCountChange={handleVolunteerCount} onAssignedCountChange={handleAssignedVolunteerCount} />}
               {activeSection === 'dance' && event.event_type === 'temple_main' && <DanceTeamSection eventId={event.id} onCountChange={handleDanceCount} />}
+              {activeSection === 'agenda'    && <AgendaSection eventId={event.id} onCountChange={handleAgendaCount} />}
             </div>
           )}
         </div>

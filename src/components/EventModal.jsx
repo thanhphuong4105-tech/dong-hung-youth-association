@@ -87,13 +87,24 @@ function AgendaIcon({ size = 20 }) {
     </svg>
   )
 }
+function PeopleIcon({ size = 20 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="9" cy="7" r="3"/>
+      <path d="M3 21v-2a4 4 0 014-4h4a4 4 0 014 4v2"/>
+      <path d="M16 3.13a4 4 0 010 7.75"/>
+      <path d="M21 21v-2a4 4 0 00-3-3.87"/>
+    </svg>
+  )
+}
 
 // ─── Nav cards config ─────────────────────────────────────────────────────────
 const NAV_CARDS = [
-  { id: 'todo',      label: 'To-do List',     subtitle: '0 tasks',      Icon: TodoIcon },
-  { id: 'volunteer', label: 'Volunteer Roles', subtitle: '0 roles',      Icon: HandsIcon },
-  { id: 'dance',     label: 'Dance Team',      subtitle: '0 participants', Icon: TeamIcon },
-  { id: 'agenda',    label: 'Agenda',          subtitle: '0 items',      Icon: AgendaIcon },
+  { id: 'todo',         label: 'To-do List',     subtitle: '0 tasks',        Icon: TodoIcon },
+  { id: 'volunteer',    label: 'Volunteer Roles', subtitle: '0 roles',        Icon: HandsIcon },
+  { id: 'dance',        label: 'Dance Team',      subtitle: '0 participants', Icon: TeamIcon },
+  { id: 'agenda',       label: 'Agenda',          subtitle: '0 items',        Icon: AgendaIcon },
+  { id: 'participants', label: 'Participants',     subtitle: '0 participants', Icon: PeopleIcon },
 ]
 
 // ─── Date helpers ─────────────────────────────────────────────────────────────
@@ -2847,6 +2858,168 @@ function AgendaItemMenu({ onEdit, onDelete }) {
   )
 }
 
+// ─── Retreat Participants Section ─────────────────────────────────────────────
+function RetreatParticipantsSection({ eventId, onCountChange }) {
+  const [participants, setParticipants] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [showForm, setShowForm] = useState(false)
+  const [editingId, setEditingId] = useState(null)
+  const [form, setForm] = useState({ name: '', phone: '', notes: '' })
+  const [saving, setSaving] = useState(false)
+  const [deleteTarget, setDeleteTarget] = useState(null)
+
+  useEffect(() => { fetchParticipants() }, [eventId])
+
+  async function fetchParticipants() {
+    setLoading(true)
+    const { data } = await supabase
+      .from('retreat_participants')
+      .select('*')
+      .eq('event_id', eventId)
+      .order('sort_order')
+      .order('created_at')
+    const rows = data || []
+    setParticipants(rows)
+    onCountChange(rows.length)
+    setLoading(false)
+  }
+
+  function openAdd() {
+    setEditingId(null)
+    setForm({ name: '', phone: '', notes: '' })
+    setShowForm(true)
+  }
+
+  function openEdit(p) {
+    setEditingId(p.id)
+    setForm({ name: p.name, phone: p.phone || '', notes: p.notes || '' })
+    setShowForm(true)
+  }
+
+  async function handleSave() {
+    if (!form.name.trim()) return
+    setSaving(true)
+    if (editingId) {
+      await supabase.from('retreat_participants').update({ name: form.name.trim(), phone: form.phone.trim(), notes: form.notes.trim() }).eq('id', editingId)
+    } else {
+      const maxOrder = participants.length > 0 ? Math.max(...participants.map(p => p.sort_order || 0)) + 1 : 0
+      await supabase.from('retreat_participants').insert({ event_id: eventId, name: form.name.trim(), phone: form.phone.trim(), notes: form.notes.trim(), sort_order: maxOrder })
+    }
+    setSaving(false)
+    setShowForm(false)
+    fetchParticipants()
+  }
+
+  async function handleDelete(id) {
+    await supabase.from('retreat_participants').delete().eq('id', id)
+    setDeleteTarget(null)
+    fetchParticipants()
+  }
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-base font-bold" style={{ color: C.text }}>
+          Participants <span className="text-sm font-normal" style={{ color: C.faint }}>({participants.length})</span>
+        </h3>
+        <button onClick={openAdd}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-semibold transition-colors hover:opacity-90"
+          style={{ backgroundColor: C.orange, color: '#fff' }}>
+          <PlusIcon className="w-4 h-4" /> Add Participant
+        </button>
+      </div>
+
+      {loading ? (
+        <p className="text-sm text-center py-6" style={{ color: C.faint }}>Loading…</p>
+      ) : participants.length === 0 ? (
+        <DanceEmptyState
+          icon={<PeopleIcon size={28} />}
+          label="No participants yet"
+          sub="Add the first participant to this retreat"
+        />
+      ) : (
+        <div className="space-y-2">
+          {participants.map((p, i) => (
+            <div key={p.id} className="flex items-center gap-3 px-4 py-3 rounded-xl"
+              style={{ backgroundColor: '#fff', border: `1px solid ${C.peach}` }}>
+              <div className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 text-sm font-bold"
+                style={{ backgroundColor: C.orangeLight, color: C.orange }}>
+                {i + 1}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold truncate" style={{ color: C.text }}>{p.name}</p>
+                {p.phone && <p className="text-xs" style={{ color: C.faint }}>{p.phone}</p>}
+                {p.notes && <p className="text-xs mt-0.5 truncate" style={{ color: C.muted }}>{p.notes}</p>}
+              </div>
+              <DanceRowMenu onEdit={() => openEdit(p)} onRemove={() => setDeleteTarget(p.id)} />
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Add / Edit form */}
+      {showForm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ backgroundColor: 'rgba(0,0,0,0.35)' }}>
+          <div className="rounded-2xl p-6 w-full max-w-sm" style={{ backgroundColor: '#fff', boxShadow: '0 20px 60px rgba(0,0,0,0.18)' }}>
+            <h4 className="text-base font-bold mb-4" style={{ color: C.text }}>{editingId ? 'Edit Participant' : 'Add Participant'}</h4>
+            <div className="space-y-3">
+              <div>
+                <label className="block text-xs font-semibold mb-1" style={{ color: C.muted }}>Name *</label>
+                <input value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
+                  placeholder="Full name"
+                  className="w-full px-3 py-2 rounded-xl text-sm border outline-none"
+                  style={{ borderColor: C.peach, color: C.text }} />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold mb-1" style={{ color: C.muted }}>Phone (optional)</label>
+                <input value={form.phone} onChange={e => setForm(f => ({ ...f, phone: e.target.value }))}
+                  placeholder="Phone number"
+                  className="w-full px-3 py-2 rounded-xl text-sm border outline-none"
+                  style={{ borderColor: C.peach, color: C.text }} />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold mb-1" style={{ color: C.muted }}>Notes (optional)</label>
+                <textarea value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))}
+                  placeholder="Any notes about this participant"
+                  rows={2}
+                  className="w-full px-3 py-2 rounded-xl text-sm border outline-none resize-none"
+                  style={{ borderColor: C.peach, color: C.text }} />
+              </div>
+            </div>
+            <div className="flex gap-2 mt-5">
+              <button onClick={() => setShowForm(false)}
+                className="flex-1 py-2 rounded-xl text-sm font-semibold border"
+                style={{ borderColor: C.peach, color: C.muted }}>Cancel</button>
+              <button onClick={handleSave} disabled={saving || !form.name.trim()}
+                className="flex-1 py-2 rounded-xl text-sm font-semibold transition-opacity disabled:opacity-50"
+                style={{ backgroundColor: C.orange, color: '#fff' }}>
+                {saving ? 'Saving…' : editingId ? 'Save Changes' : 'Add'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete confirmation */}
+      {deleteTarget && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ backgroundColor: 'rgba(0,0,0,0.35)' }}>
+          <div className="rounded-2xl p-6 w-full max-w-xs text-center" style={{ backgroundColor: '#fff', boxShadow: '0 20px 60px rgba(0,0,0,0.18)' }}>
+            <p className="text-sm font-semibold mb-4" style={{ color: C.text }}>Remove this participant?</p>
+            <div className="flex gap-2">
+              <button onClick={() => setDeleteTarget(null)}
+                className="flex-1 py-2 rounded-xl text-sm font-semibold border"
+                style={{ borderColor: C.peach, color: C.muted }}>Cancel</button>
+              <button onClick={() => handleDelete(deleteTarget)}
+                className="flex-1 py-2 rounded-xl text-sm font-semibold"
+                style={{ backgroundColor: '#E06464', color: '#fff' }}>Remove</button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ─── Main modal ───────────────────────────────────────────────────────────────
 export default function EventModal({ event, onClose, onEdit }) {
   const [activeSection, setActiveSection] = useState(null)
@@ -2855,11 +3028,13 @@ export default function EventModal({ event, onClose, onEdit }) {
   const [assignedVolunteerCount, setAssignedVolunteerCount] = useState(null)
   const [danceCount, setDanceCount] = useState(null)
   const [agendaCount, setAgendaCount] = useState(null)
+  const [participantsCount, setParticipantsCount] = useState(null)
   const handleTodoCount = useCallback(n => setTodoCount(n), [])
   const handleVolunteerCount = useCallback(n => setVolunteerCount(n), [])
   const handleAssignedVolunteerCount = useCallback(n => setAssignedVolunteerCount(n), [])
   const handleDanceCount = useCallback(n => setDanceCount(n), [])
   const handleAgendaCount = useCallback(n => setAgendaCount(n), [])
+  const handleParticipantsCount = useCallback(n => setParticipantsCount(n), [])
   const dateInfo = parseDateInfo(event.start_date)
 
   // Fetch all counts on open so the summary bar is populated immediately
@@ -2979,7 +3154,10 @@ export default function EventModal({ event, onClose, onEdit }) {
 
           {/* ── Navigation cards ── */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5">
-            {NAV_CARDS.filter(card => card.id !== 'dance' || event.event_type === 'temple_main').map(card => {
+            {NAV_CARDS.filter(card =>
+              (card.id !== 'dance' || event.event_type === 'temple_main') &&
+              (card.id !== 'participants' || event.event_type === 'retreat')
+            ).map(card => {
               const active = activeSection === card.id
               const subtitle =
                 card.id === 'todo' && todoCount !== null
@@ -2990,6 +3168,8 @@ export default function EventModal({ event, onClose, onEdit }) {
                   ? `${danceCount} participant${danceCount !== 1 ? 's' : ''}`
                   : card.id === 'agenda' && agendaCount !== null
                   ? `${agendaCount} item${agendaCount !== 1 ? 's' : ''}`
+                  : card.id === 'participants' && participantsCount !== null
+                  ? `${participantsCount} participant${participantsCount !== 1 ? 's' : ''}`
                   : card.subtitle
               return (
                 <button key={card.id} onClick={() => toggleSection(card.id)}
@@ -3020,7 +3200,8 @@ export default function EventModal({ event, onClose, onEdit }) {
               {activeSection === 'todo'      && <TodoSection eventId={event.id} onCountChange={handleTodoCount} />}
               {activeSection === 'volunteer' && <VolunteerSection eventId={event.id} onCountChange={handleVolunteerCount} onAssignedCountChange={handleAssignedVolunteerCount} />}
               {activeSection === 'dance' && event.event_type === 'temple_main' && <DanceTeamSection eventId={event.id} onCountChange={handleDanceCount} />}
-              {activeSection === 'agenda'    && <AgendaSection eventId={event.id} eventName={event.title} onCountChange={handleAgendaCount} />}
+              {activeSection === 'agenda'       && <AgendaSection eventId={event.id} eventName={event.title} onCountChange={handleAgendaCount} />}
+              {activeSection === 'participants' && event.event_type === 'retreat' && <RetreatParticipantsSection eventId={event.id} onCountChange={handleParticipantsCount} />}
             </div>
           )}
         </div>

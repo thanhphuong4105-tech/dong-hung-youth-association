@@ -2718,7 +2718,7 @@ function AgendaSection({ eventId, eventName, onCountChange }) {
         <div className="flex items-center gap-2 sm:w-auto w-full">
           <button
             onClick={() => {
-              const printWindow = window.open('', '_blank')
+              const printWindow = window.open('', '', 'width=800,height=600,toolbar=0,menubar=0,location=0,status=0,scrollbars=1,resizable=1')
               const rows = items.map(item => {
                 const timeRange = item.end_time ? `${fmt12(item.time)} – ${fmt12(item.end_time)}` : fmt12(item.time)
                 const desc = item.description ? `<div style="font-size:0.8rem;color:#7A5550;margin-top:2px;">${item.description}</div>` : ''

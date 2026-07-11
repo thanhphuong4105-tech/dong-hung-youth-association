@@ -2764,7 +2764,7 @@ function AgendaSection({ eventId, onCountChange }) {
                 </>
               ) : (
                 <>
-                  <span className="text-sm font-bold shrink-0 w-20" style={{ color: C.orange }}>{item.time}</span>
+                  <span className="text-sm font-bold shrink-0 w-24" style={{ color: C.orange }}>{(() => { const [h, m] = item.time.split(':').map(Number); const ampm = h >= 12 ? 'PM' : 'AM'; const h12 = h % 12 || 12; return `${h12}:${String(m).padStart(2,'0')} ${ampm}` })()}</span>
                   <span className="flex-1 text-sm" style={{ color: C.text }}>{item.title}</span>
                   {/* Three-dot menu */}
                   <AgendaItemMenu onEdit={() => startEdit(item)} onDelete={() => setDeleteId(item.id)} />

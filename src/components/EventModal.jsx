@@ -100,11 +100,11 @@ function PeopleIcon({ size = 20 }) {
 
 // ─── Nav cards config ─────────────────────────────────────────────────────────
 const NAV_CARDS = [
-  { id: 'todo',         label: 'To-do List',     subtitle: '0 tasks',        Icon: TodoIcon },
-  { id: 'volunteer',    label: 'Volunteer Roles', subtitle: '0 roles',        Icon: HandsIcon },
-  { id: 'dance',        label: 'Dance Team',      subtitle: '0 participants', Icon: TeamIcon },
   { id: 'agenda',       label: 'Agenda',          subtitle: '0 items',        Icon: AgendaIcon },
-  { id: 'participants', label: 'Participants',     subtitle: '0 participants', Icon: PeopleIcon },
+  { id: 'todo',         label: 'To-do List',      subtitle: '0 tasks',        Icon: TodoIcon },
+  { id: 'volunteer',    label: 'Volunteer Roles',  subtitle: '0 roles',        Icon: HandsIcon },
+  { id: 'dance',        label: 'Dance Team',       subtitle: '0 participants', Icon: TeamIcon },
+  { id: 'participants', label: 'Participants',      subtitle: '0 participants', Icon: PeopleIcon },
 ]
 
 // ─── Date helpers ─────────────────────────────────────────────────────────────

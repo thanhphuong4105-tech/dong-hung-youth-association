@@ -2612,16 +2612,22 @@ function VolunteerSection({ eventId, onCountChange, onAssignedCountChange }) {
 }
 
 // ─── Agenda Section ───────────────────────────────────────────────────────────
+function fmt12(t) {
+  if (!t) return ''
+  const [h, m] = t.split(':').map(Number)
+  const ampm = h >= 12 ? 'PM' : 'AM'
+  return `${h % 12 || 12}:${String(m).padStart(2, '0')} ${ampm}`
+}
+
 function AgendaSection({ eventId, eventName, onCountChange }) {
+  const EMPTY = { time: '', endTime: '', title: '', description: '' }
   const [items, setItems] = useState([])
   const [loading, setLoading] = useState(true)
   const [adding, setAdding] = useState(false)
-  const [newTime, setNewTime] = useState('')
-  const [newTitle, setNewTitle] = useState('')
+  const [newForm, setNewForm] = useState(EMPTY)
   const [newErr, setNewErr] = useState('')
   const [editingId, setEditingId] = useState(null)
-  const [editTime, setEditTime] = useState('')
-  const [editTitle, setEditTitle] = useState('')
+  const [editForm, setEditForm] = useState(EMPTY)
   const [deleteId, setDeleteId] = useState(null)
   const dragItem = useRef(null)
   const dragOver = useRef(null)
@@ -2642,22 +2648,29 @@ function AgendaSection({ eventId, eventName, onCountChange }) {
   useEffect(() => { fetchItems() }, [fetchItems])
 
   async function handleAdd() {
-    if (!newTime.trim()) return setNewErr('Time is required.')
-    if (!newTitle.trim()) return setNewErr('Activity is required.')
+    if (!newForm.time.trim()) return setNewErr('Start time is required.')
+    if (!newForm.title.trim()) return setNewErr('Activity is required.')
     const { error } = await supabase.from('event_agenda').insert({
       event_id: eventId,
-      time: newTime.trim(),
-      title: newTitle.trim(),
+      time: newForm.time.trim(),
+      end_time: newForm.endTime.trim() || null,
+      title: newForm.title.trim(),
+      description: newForm.description.trim() || null,
       sort_order: items.length,
     })
     if (error) return setNewErr(error.message)
-    setAdding(false); setNewTime(''); setNewTitle(''); setNewErr('')
+    setAdding(false); setNewForm(EMPTY); setNewErr('')
     fetchItems()
   }
 
   async function handleEditSave(item) {
-    if (!editTime.trim() || !editTitle.trim()) return
-    await supabase.from('event_agenda').update({ time: editTime.trim(), title: editTitle.trim() }).eq('id', item.id)
+    if (!editForm.time.trim() || !editForm.title.trim()) return
+    await supabase.from('event_agenda').update({
+      time: editForm.time.trim(),
+      end_time: editForm.endTime.trim() || null,
+      title: editForm.title.trim(),
+      description: editForm.description.trim() || null,
+    }).eq('id', item.id)
     setEditingId(null)
     fetchItems()
   }
@@ -2669,7 +2682,8 @@ function AgendaSection({ eventId, eventName, onCountChange }) {
   }
 
   function startEdit(item) {
-    setEditingId(item.id); setEditTime(item.time); setEditTitle(item.title)
+    setEditingId(item.id)
+    setEditForm({ time: item.time, endTime: item.end_time || '', title: item.title, description: item.description || '' })
   }
 
   function handleDragStart(i) { dragItem.current = i }
@@ -2706,11 +2720,9 @@ function AgendaSection({ eventId, eventName, onCountChange }) {
             onClick={() => {
               const printWindow = window.open('', '_blank')
               const rows = items.map(item => {
-                const [h, m] = item.time.split(':').map(Number)
-                const ampm = h >= 12 ? 'PM' : 'AM'
-                const h12 = h % 12 || 12
-                const t = `${h12}:${String(m).padStart(2,'0')} ${ampm}`
-                return `<tr><td style="padding:8px 16px;border-bottom:1px solid #F5EDE4;font-weight:700;color:#F1745E;white-space:nowrap;">${t}</td><td style="padding:8px 16px;border-bottom:1px solid #F5EDE4;color:#4F252A;">${item.title}</td></tr>`
+                const timeRange = item.end_time ? `${fmt12(item.time)} – ${fmt12(item.end_time)}` : fmt12(item.time)
+                const desc = item.description ? `<div style="font-size:0.8rem;color:#7A5550;margin-top:2px;">${item.description}</div>` : ''
+                return `<tr><td style="padding:8px 16px;border-bottom:1px solid #F5EDE4;font-weight:700;color:#F1745E;white-space:nowrap;vertical-align:top;">${timeRange}</td><td style="padding:8px 16px;border-bottom:1px solid #F5EDE4;color:#4F252A;"><div style="font-weight:600;">${item.title}</div>${desc}</td></tr>`
               }).join('')
               printWindow.document.write(`<!DOCTYPE html><html><head><title>Agenda</title><style>body{font-family:'Nunito',sans-serif;padding:32px;color:#4F252A;}h1{color:#4F252A;font-size:1.5rem;margin-bottom:4px;}p{color:#A08070;font-size:0.9rem;margin-bottom:24px;}table{width:100%;border-collapse:collapse;}th{text-align:left;padding:8px 16px;background:#FFF0EA;color:#4F252A;font-size:0.85rem;}@media print{body{padding:16px;}}</style></head><body><h1>${eventName || 'Event Agenda'}</h1><p>Event Schedule</p><table><thead><tr><th>Time</th><th>Activity</th></tr></thead><tbody>${rows}</tbody></table></body></html>`)
               printWindow.document.close()
@@ -2737,15 +2749,23 @@ function AgendaSection({ eventId, eventName, onCountChange }) {
       {/* Add row */}
       {adding && (
         <div className="rounded-xl p-3 mt-3 mb-2 flex flex-col gap-2" style={{ backgroundColor: '#ffffff', border: `1.5px solid ${C.peach}` }}>
-          <div className="flex gap-2 flex-wrap">
-            <input type="time" value={newTime} onChange={e => setNewTime(e.target.value)}
-              style={{ ...inputStyle, width: '130px' }} />
-            <input type="text" value={newTitle} onChange={e => setNewTitle(e.target.value)}
-              placeholder="Activity description" style={{ ...inputStyle, flex: 1, minWidth: '160px' }} />
+          <div className="flex gap-2 flex-wrap items-center">
+            <div className="flex items-center gap-1.5 shrink-0">
+              <input type="time" value={newForm.time} onChange={e => setNewForm(f => ({ ...f, time: e.target.value }))}
+                style={{ ...inputStyle, width: '120px' }} />
+              <span className="text-xs font-semibold" style={{ color: C.faint }}>to</span>
+              <input type="time" value={newForm.endTime} onChange={e => setNewForm(f => ({ ...f, endTime: e.target.value }))}
+                style={{ ...inputStyle, width: '120px' }} />
+            </div>
+            <input type="text" value={newForm.title} onChange={e => setNewForm(f => ({ ...f, title: e.target.value }))}
+              placeholder="Activity name" style={{ ...inputStyle, flex: 1, minWidth: '140px' }} />
           </div>
+          <textarea value={newForm.description} onChange={e => setNewForm(f => ({ ...f, description: e.target.value }))}
+            placeholder="Description (optional) — what will happen during this time"
+            rows={2} style={{ ...inputStyle, resize: 'none', width: '100%' }} />
           {newErr && <p className="text-xs" style={{ color: '#E06464' }}>{newErr}</p>}
           <div className="flex gap-2 justify-end">
-            <button onClick={() => { setAdding(false); setNewTime(''); setNewTitle(''); setNewErr('') }}
+            <button onClick={() => { setAdding(false); setNewForm(EMPTY); setNewErr('') }}
               className="px-3 py-1.5 text-xs font-semibold rounded-xl border"
               style={{ borderColor: C.peach, color: C.muted }}>Cancel</button>
             <button onClick={handleAdd}
@@ -2778,7 +2798,7 @@ function AgendaSection({ eventId, eventName, onCountChange }) {
               onDragEnter={() => handleDragEnter(idx)}
               onDragEnd={handleDragEnd}
               onDragOver={e => e.preventDefault()}
-              className="flex items-center gap-2 rounded-xl px-3 py-2"
+              className="flex items-start gap-2 rounded-xl px-3 py-3"
               style={{ backgroundColor: '#ffffff', border: `1px solid ${C.peach}` }}>
               {/* Drag handle */}
               <div className="cursor-grab shrink-0" style={{ color: C.faint }}>
@@ -2790,19 +2810,39 @@ function AgendaSection({ eventId, eventName, onCountChange }) {
               </div>
 
               {editingId === item.id ? (
-                <>
-                  <input type="time" value={editTime} onChange={e => setEditTime(e.target.value)}
-                    style={{ ...inputStyle, width: '120px', fontSize: '0.8rem', padding: '0.3rem 0.6rem' }} />
-                  <input type="text" value={editTitle} onChange={e => setEditTitle(e.target.value)}
-                    style={{ ...inputStyle, flex: 1, fontSize: '0.8rem', padding: '0.3rem 0.6rem' }} />
-                  <button onClick={() => handleEditSave(item)} className="text-xs font-semibold px-2 py-1 rounded-lg text-white" style={{ backgroundColor: C.orange }}>Save</button>
-                  <button onClick={() => setEditingId(null)} className="text-xs font-semibold px-2 py-1 rounded-lg" style={{ border: `1px solid ${C.peach}`, color: C.muted }}>Cancel</button>
-                </>
+                <div className="flex-1 flex flex-col gap-2">
+                  <div className="flex gap-2 flex-wrap items-center">
+                    <div className="flex items-center gap-1.5">
+                      <input type="time" value={editForm.time} onChange={e => setEditForm(f => ({ ...f, time: e.target.value }))}
+                        style={{ ...inputStyle, width: '110px', fontSize: '0.8rem', padding: '0.3rem 0.6rem' }} />
+                      <span className="text-xs" style={{ color: C.faint }}>to</span>
+                      <input type="time" value={editForm.endTime} onChange={e => setEditForm(f => ({ ...f, endTime: e.target.value }))}
+                        style={{ ...inputStyle, width: '110px', fontSize: '0.8rem', padding: '0.3rem 0.6rem' }} />
+                    </div>
+                    <input type="text" value={editForm.title} onChange={e => setEditForm(f => ({ ...f, title: e.target.value }))}
+                      style={{ ...inputStyle, flex: 1, minWidth: '120px', fontSize: '0.8rem', padding: '0.3rem 0.6rem' }} />
+                  </div>
+                  <textarea value={editForm.description} onChange={e => setEditForm(f => ({ ...f, description: e.target.value }))}
+                    placeholder="Description (optional)" rows={2}
+                    style={{ ...inputStyle, resize: 'none', width: '100%', fontSize: '0.8rem', padding: '0.3rem 0.6rem' }} />
+                  <div className="flex gap-2">
+                    <button onClick={() => handleEditSave(item)} className="text-xs font-semibold px-3 py-1 rounded-lg text-white" style={{ backgroundColor: C.orange }}>Save</button>
+                    <button onClick={() => setEditingId(null)} className="text-xs font-semibold px-3 py-1 rounded-lg" style={{ border: `1px solid ${C.peach}`, color: C.muted }}>Cancel</button>
+                  </div>
+                </div>
               ) : (
                 <>
-                  <span className="text-sm font-bold shrink-0 w-24" style={{ color: C.orange }}>{(() => { const [h, m] = item.time.split(':').map(Number); const ampm = h >= 12 ? 'PM' : 'AM'; const h12 = h % 12 || 12; return `${h12}:${String(m).padStart(2,'0')} ${ampm}` })()}</span>
-                  <span className="flex-1 text-sm" style={{ color: C.text }}>{item.title}</span>
-                  {/* Three-dot menu */}
+                  <div className="shrink-0 w-36 text-left">
+                    <span className="text-sm font-bold" style={{ color: C.orange }}>
+                      {fmt12(item.time)}{item.end_time ? ` – ${fmt12(item.end_time)}` : ''}
+                    </span>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold" style={{ color: C.text }}>{item.title}</p>
+                    {item.description && (
+                      <p className="text-xs mt-0.5 leading-relaxed" style={{ color: C.muted }}>{item.description}</p>
+                    )}
+                  </div>
                   <AgendaItemMenu onEdit={() => startEdit(item)} onDelete={() => setDeleteId(item.id)} />
                 </>
               )}

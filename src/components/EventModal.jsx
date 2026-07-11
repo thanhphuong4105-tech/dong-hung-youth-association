@@ -3284,14 +3284,16 @@ export default function EventModal({ event, onClose, onEdit }) {
   // Fetch all counts on open so the summary bar is populated immediately
   useEffect(() => {
     async function fetchCounts() {
-      const [todoRes, rolesRes, danceRes, agendaRes] = await Promise.all([
+      const [todoRes, rolesRes, danceRes, agendaRes, participantsRes] = await Promise.all([
         supabase.from('event_tasks').select('id', { count: 'exact', head: true }).eq('event_id', event.id),
         supabase.from('volunteer_roles').select('id, assigned_to, assigned_general_member_id, assigned_volunteers').eq('event_id', event.id),
         supabase.from('dance_participants').select('id', { count: 'exact', head: true }).eq('event_id', event.id),
         supabase.from('event_agenda').select('id', { count: 'exact', head: true }).eq('event_id', event.id),
+        supabase.from('retreat_participants').select('id', { count: 'exact', head: true }).eq('event_id', event.id),
       ])
       setTodoCount(todoRes.count ?? 0)
       if (!agendaRes.error) setAgendaCount(agendaRes.count ?? 0)
+      if (!participantsRes.error) setParticipantsCount(participantsRes.count ?? 0)
       if (!rolesRes.error) {
         const rows = rolesRes.data || []
         setVolunteerCount(rows.length)

@@ -1742,14 +1742,24 @@ function TodoSection({ eventId, onCountChange }) {
         .eq('event_id', eventId)
         .order('sort_order', { ascending: true })
       if (error) throw error
-      const rows = (data || []).map(r => ({
-        id:               r.task_id,
-        dbId:             r.id,
-        title:            r.task_title || '',
-        due_date:         r.due_date || null,
-        status:           r.status   || 'pending',
-        assigned_members: r.assigned_members || [],
-      }))
+      const library = getTaskLibrary()
+      const libMap = {}
+      library.forEach(t => { libMap[t.id] = t.title })
+      const rows = (data || []).map(r => {
+        const title = r.task_title || libMap[r.task_id] || ''
+        // Backfill empty task_title in DB
+        if (!r.task_title && title) {
+          supabase.from('event_tasks').update({ task_title: title }).eq('id', r.id).then(() => {})
+        }
+        return {
+          id:               r.task_id,
+          dbId:             r.id,
+          title,
+          due_date:         r.due_date || null,
+          status:           r.status   || 'pending',
+          assigned_members: r.assigned_members || [],
+        }
+      })
       rows.sort((a, b) => {
         if (!a.due_date && !b.due_date) return 0
         if (!a.due_date) return 1

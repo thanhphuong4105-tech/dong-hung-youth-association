@@ -2095,138 +2095,207 @@ function LessonForm({ classId, semesterId, onSave, onClose }) {
   )
 }
 
+// ─── DB mappers ──────────────────────────────────────────────────────────────
+function semFromDB(r) { return { id: r.id, name: r.name, startDate: r.start_date || '', endDate: r.end_date || '', status: r.status || 'Upcoming', calEvents: r.cal_events || {} } }
+function semToDB(s)   { return { id: s.id, name: s.name, start_date: s.startDate || null, end_date: s.endDate || null, status: s.status || 'Upcoming', cal_events: s.calEvents || {} } }
+
+function clsFromDB(r) { return { id: r.id, semesterId: r.semester_id, className: r.class_name, level: r.level || '', teacher: r.teacher || '', assistants: r.assistants || [], dayOfWeek: r.day_of_week || 'Sunday', startTime: r.start_time || '', endTime: r.end_time || '', room: r.room || '' } }
+function clsToDB(c)   { return { id: c.id, semester_id: c.semesterId, class_name: c.className, level: c.level || null, teacher: c.teacher || null, assistants: c.assistants || [], day_of_week: c.dayOfWeek || null, start_time: c.startTime || null, end_time: c.endTime || null, room: c.room || null } }
+
+function stuFromDB(r) { return { id: r.id, semesterId: r.semester_id, classId: r.class_id || null, firstName: r.first_name || '', lastName: r.last_name || '', birthday: r.birthday || '', allergy: r.allergy || '', parents: r.parents || [], age: r.age || null } }
+function stuToDB(s)   { return { id: s.id, semester_id: s.semesterId, class_id: s.classId || null, first_name: s.firstName || null, last_name: s.lastName || null, birthday: s.birthday || null, allergy: s.allergy || null, parents: s.parents || [], age: s.age || null } }
+
+function lesFromDB(r) { return { id: r.id, semesterId: r.semester_id, classId: r.class_id, title: r.title, date: r.date || '', topic: r.topic || '', materials: r.materials || '', status: r.status || 'Planned' } }
+function lesToDB(l)   { return { id: l.id, semester_id: l.semesterId, class_id: l.classId, title: l.title, date: l.date || null, topic: l.topic || null, materials: l.materials || null, status: l.status || 'Planned' } }
+
+function attFromDB(r) { return { id: r.id, classId: r.class_id, studentId: r.student_id, date: r.date, status: r.status || '', note: r.note || '' } }
+function attToDB(a)   { return { id: a.id, class_id: a.classId, student_id: a.studentId, date: a.date, status: a.status || null, note: a.note || null } }
+
 // ─── Root Page ────────────────────────────────────────────────────────────────
-function useLocalStorage(key, init) {
-  const [value, setRaw] = useState(() => {
-    try {
-      const stored = localStorage.getItem(key)
-      return stored ? JSON.parse(stored) : init
-    } catch { return init }
-  })
-  function setValue(next) {
-    setRaw(prev => {
-      const resolved = typeof next === 'function' ? next(prev) : next
-      try { localStorage.setItem(key, JSON.stringify(resolved)) } catch {}
-      return resolved
-    })
-  }
-  return [value, setValue]
-}
-
 export default function VietnameseSchool() {
-  const [semesters,  setSemesters]  = useLocalStorage('dhya_vs_semesters',  INIT_SEMESTERS)
-  const [classes,    setClasses]    = useLocalStorage('dhya_vs_classes',     INIT_CLASSES)
-  const [students,   setStudents]   = useLocalStorage('dhya_vs_students',    INIT_STUDENTS)
-  const [attendance, setAttendance] = useLocalStorage('dhya_vs_attendance',  INIT_ATTENDANCE)
-  const [lessons,    setLessons]    = useLocalStorage('dhya_vs_lessons',     INIT_LESSONS)
-  const [registry,   setRegistry]   = useLocalStorage('dhya_student_registry', [])
+  const [semesters,  setSemesters]  = useState([])
+  const [classes,    setClasses]    = useState([])
+  const [students,   setStudents]   = useState([])
+  const [attendance, setAttendance] = useState([])
+  const [lessons,    setLessons]    = useState([])
+  const [loading,    setLoading]    = useState(true)
+  const [migrating,  setMigrating]  = useState(false)
+  const [registry,   setRegistry]   = useState(() => { try { return JSON.parse(localStorage.getItem('dhya_student_registry') || '[]') } catch { return [] } })
 
-  // Seed registry from all existing students on first load
+  // ── Fetch all data from Supabase ──────────────────────────────────────────
+  async function fetchAll() {
+    const [semRes, clsRes, stuRes, lesRes, attRes] = await Promise.all([
+      supabase.from('vs_semesters').select('*').order('created_at'),
+      supabase.from('vs_classes').select('*').order('created_at'),
+      supabase.from('vs_students').select('*').order('created_at'),
+      supabase.from('vs_lessons').select('*').order('created_at'),
+      supabase.from('vs_attendance').select('*'),
+    ])
+    setSemesters((semRes.data || []).map(semFromDB))
+    setClasses((clsRes.data || []).map(clsFromDB))
+    setStudents((stuRes.data || []).map(stuFromDB))
+    setLessons((lesRes.data || []).map(lesFromDB))
+    setAttendance((attRes.data || []).map(attFromDB))
+    setLoading(false)
+  }
+
+  useEffect(() => { fetchAll() }, [])
+
+  // ── Sync registry from students ───────────────────────────────────────────
   useEffect(() => {
     if (!students.length) return
     setRegistry(prev => {
       const updated = [...prev]
       for (const s of students) {
-        const firstName = s.firstName || (s.name || '').split(' ')[0] || ''
-        const lastName  = s.lastName  || (s.name || '').split(' ').slice(1).join(' ') || ''
-        const fullName  = `${firstName} ${lastName}`.trim()
+        const fullName = `${s.firstName} ${s.lastName}`.trim()
         if (!fullName) continue
         const exists = updated.findIndex(r => r.fullName.toLowerCase() === fullName.toLowerCase())
-        const entry = { fullName, firstName, lastName, birthday: s.birthday || '', allergy: s.allergy || '', parents: s.parents || [] }
-        if (exists >= 0) { updated[exists] = { ...updated[exists], ...entry } }
-        else { updated.push(entry) }
+        const entry = { fullName, firstName: s.firstName, lastName: s.lastName, birthday: s.birthday || '', allergy: s.allergy || '', parents: s.parents || [] }
+        if (exists >= 0) updated[exists] = { ...updated[exists], ...entry }
+        else updated.push(entry)
       }
+      try { localStorage.setItem('dhya_student_registry', JSON.stringify(updated)) } catch {}
       return updated
     })
-  }, []) // run once on mount
+  }, [students])
 
-  function saveToRegistry(form) {
-    const fullName = `${(form.firstName || '').trim()} ${(form.lastName || '').trim()}`.trim()
-    if (!fullName) return
-    const entry = { fullName, firstName: form.firstName, lastName: form.lastName, birthday: form.birthday || '', allergy: form.allergy || '', parents: form.parents || [] }
-    setRegistry(prev => {
-      const idx = prev.findIndex(r => r.fullName.toLowerCase() === fullName.toLowerCase())
-      if (idx >= 0) { const next = [...prev]; next[idx] = entry; return next }
-      return [...prev, entry]
-    })
+  // ── One-time migration from localStorage ──────────────────────────────────
+  async function migrateFromLocalStorage() {
+    setMigrating(true)
+    try {
+      const lsSems = JSON.parse(localStorage.getItem('dhya_vs_semesters') || '[]')
+      const lsCls  = JSON.parse(localStorage.getItem('dhya_vs_classes')   || '[]')
+      const lsStu  = JSON.parse(localStorage.getItem('dhya_vs_students')  || '[]')
+      const lsLes  = JSON.parse(localStorage.getItem('dhya_vs_lessons')   || '[]')
+      const lsAtt  = JSON.parse(localStorage.getItem('dhya_vs_attendance')|| '[]')
+
+      if (lsSems.length) await supabase.from('vs_semesters').upsert(lsSems.map(s => semToDB({ ...s, calEvents: s.calEvents || {} })), { onConflict: 'id' })
+      if (lsCls.length)  await supabase.from('vs_classes').upsert(lsCls.map(clsToDB), { onConflict: 'id' })
+      if (lsStu.length)  await supabase.from('vs_students').upsert(lsStu.map(s => stuToDB({ ...s, semesterId: s.semesterId, classId: s.classId || null })), { onConflict: 'id' })
+      if (lsLes.length)  await supabase.from('vs_lessons').upsert(lsLes.map(lesToDB), { onConflict: 'id' })
+      if (lsAtt.length)  await supabase.from('vs_attendance').upsert(lsAtt.map(a => attToDB({ ...a, id: a.id || `att-${Date.now()}-${Math.random()}` })), { onConflict: 'id' })
+
+      await fetchAll()
+      alert(`Migration complete! Imported ${lsSems.length} semesters, ${lsCls.length} classes, ${lsStu.length} students.`)
+    } catch (e) {
+      alert('Migration error: ' + e.message)
+    }
+    setMigrating(false)
   }
+
+  const hasLocalData = (() => {
+    try { return JSON.parse(localStorage.getItem('dhya_vs_semesters') || '[]').length > 0 } catch { return false }
+  })()
 
   // View state
   const [view, setView] = useState({ type: 'semesters' })
 
   // Drawer state
-  const [drawerType, setDrawerType] = useState(null) // 'semester' | 'editSemester' | 'class' | 'student' | 'lesson'
+  const [drawerType, setDrawerType] = useState(null)
   const [drawerClassId, setDrawerClassId] = useState(null)
   const [editingSemester, setEditingSemester] = useState(null)
   const [deletingSemester, setDeletingSemester] = useState(null)
   const [editingClass, setEditingClass] = useState(null)
   const [deletingClass, setDeletingClass] = useState(null)
 
-  function handleCreateSemester(form) {
-    setSemesters(prev => [...prev, { ...form, id: 'sem-' + Date.now() }])
+  async function handleCreateSemester(form) {
+    const id = 'sem-' + Date.now()
+    await supabase.from('vs_semesters').insert(semToDB({ ...form, id, calEvents: {} }))
     setDrawerType(null)
+    fetchAll()
   }
-  function handleEditSemester(updated) {
-    setSemesters(prev => prev.map(s => s.id === updated.id ? updated : s))
+  async function handleEditSemester(updated) {
+    await supabase.from('vs_semesters').update(semToDB(updated)).eq('id', updated.id)
     setEditingSemester(null)
     setDrawerType(null)
+    fetchAll()
   }
-  function handleDeleteSemester() {
+  async function handleDeleteSemester() {
     if (!deletingSemester) return
-    setSemesters(prev => prev.filter(s => s.id !== deletingSemester.id))
+    await supabase.from('vs_semesters').delete().eq('id', deletingSemester.id)
     setDeletingSemester(null)
+    fetchAll()
   }
-  function handleEditClass(updated) {
-    setClasses(prev => prev.map(c => c.id === updated.id ? updated : c))
+  async function handleCreateClass(form) {
+    const id = 'cls-' + Date.now()
+    await supabase.from('vs_classes').insert(clsToDB({ ...form, id }))
+    setDrawerType(null)
+    fetchAll()
+  }
+  async function handleEditClass(updated) {
+    await supabase.from('vs_classes').update(clsToDB(updated)).eq('id', updated.id)
     setEditingClass(null)
     setDrawerType(null)
+    fetchAll()
   }
-  function handleDeleteClass() {
+  async function handleDeleteClass() {
     if (!deletingClass) return
-    setClasses(prev => prev.filter(c => c.id !== deletingClass.id))
+    await supabase.from('vs_classes').delete().eq('id', deletingClass.id)
     setDeletingClass(null)
+    fetchAll()
   }
-  function handleCreateClass(form) {
-    setClasses(prev => [...prev, { ...form, id: 'cls-' + Date.now() }])
+  async function handleCreateStudent(form) {
+    const id = 'stu-' + Date.now()
+    await supabase.from('vs_students').insert(stuToDB({ ...form, id }))
     setDrawerType(null)
+    fetchAll()
   }
-  function handleCreateStudent(form) {
-    setStudents(prev => [...prev, { ...form, id: 'stu-' + Date.now() }])
-    saveToRegistry(form)
+  async function handleUpdateStudent(updated) {
+    await supabase.from('vs_students').update(stuToDB(updated)).eq('id', updated.id)
+    fetchAll()
+  }
+  async function handleDeleteStudent(id) {
+    await supabase.from('vs_students').delete().eq('id', id)
+    fetchAll()
+  }
+  async function handleCreateLesson(form) {
+    const id = 'les-' + Date.now()
+    await supabase.from('vs_lessons').insert(lesToDB({ ...form, id }))
     setDrawerType(null)
+    fetchAll()
   }
-  function handleUpdateStudent(updated) {
-    setStudents(prev => prev.map(s => s.id === updated.id ? updated : s))
-    saveToRegistry(updated)
-  }
-  function handleDeleteStudent(id) {
-    setStudents(prev => prev.filter(s => s.id !== id))
-  }
-  function handleCreateLesson(form) {
-    setLessons(prev => [...prev, { ...form, id: 'les-' + Date.now() }])
-    setDrawerType(null)
-  }
-  function handleUpdateAttendance(records, date) {
+  async function handleUpdateAttendance(records, date) {
     if (records === null) {
-      setAttendance(prev => prev.filter(a => !(a.classId === view.cls?.id && a.date === date)))
-      return
+      await supabase.from('vs_attendance').delete().eq('class_id', view.cls?.id).eq('date', date)
+    } else {
+      const rows = records.map((r, i) => attToDB({ ...r, id: r.id || `att-${Date.now()}-${i}` }))
+      await supabase.from('vs_attendance').upsert(rows, { onConflict: 'id' })
     }
-    setAttendance(prev => {
-      let updated = [...prev]
-      records.forEach((r, i) => {
-        const idx = updated.findIndex(a => a.classId === r.classId && a.date === date && a.studentId === r.studentId)
-        if (idx >= 0) updated[idx] = { ...updated[idx], ...r }
-        else updated.push({ ...r, id: `att-${Date.now()}-${i}` })
-      })
-      return updated
-    })
+    fetchAll()
+  }
+  async function handleUpdateSemesterDates(semId, dates) {
+    const sem = semesters.find(s => s.id === semId)
+    if (!sem) return
+    await supabase.from('vs_semesters').update(semToDB({ ...sem, ...dates })).eq('id', semId)
+    fetchAll()
   }
 
   const curSemester = view.semester ? (semesters.find(s => s.id === view.semester.id) || view.semester) : null
   const curClass    = view.cls
 
+  if (loading) return (
+    <div className="flex items-center justify-center py-24">
+      <div className="w-8 h-8 rounded-full border-2 animate-spin" style={{ borderColor: '#EDD0AC', borderTopColor: '#F1745E' }} />
+    </div>
+  )
+
   return (
     <div>
+      {/* Migrate banner — shown when this browser has unsaved localStorage data */}
+      {hasLocalData && semesters.length === 0 && (
+        <div className="mb-4 px-4 py-3 rounded-2xl flex items-center justify-between gap-3"
+          style={{ backgroundColor: '#FFF7F3', border: '1.5px solid #EDD0AC' }}>
+          <p className="text-sm" style={{ color: '#4F252A' }}>
+            <strong>Local data found.</strong> You have data saved on this browser. Import it to sync across all devices.
+          </p>
+          <button onClick={migrateFromLocalStorage} disabled={migrating}
+            className="shrink-0 px-4 py-1.5 text-sm font-semibold rounded-xl text-white disabled:opacity-60"
+            style={{ backgroundColor: '#F1745E' }}>
+            {migrating ? 'Importing…' : 'Import to Cloud'}
+          </button>
+        </div>
+      )}
+
       {/* Step 1 */}
       {view.type === 'semesters' && (
         <SemesterList
@@ -2253,7 +2322,7 @@ export default function VietnameseSchool() {
           onAddStudent={() => setDrawerType('student')}
           onEditClass={cls => { setEditingClass(cls); setDrawerType('editClass') }}
           onDeleteClass={cls => setDeletingClass(cls)}
-          onUpdateSemesterDates={(semId, dates) => setSemesters(prev => prev.map(s => s.id === semId ? { ...s, ...dates } : s))}
+          onUpdateSemesterDates={handleUpdateSemesterDates}
         />
       )}
 

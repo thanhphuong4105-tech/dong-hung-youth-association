@@ -2875,34 +2875,79 @@ function getDeduplicatedStudents() {
   } catch { return [] }
 }
 
+function getVSClasses() {
+  try { return JSON.parse(localStorage.getItem('dhya_vs_classes') || '[]') } catch { return [] }
+}
+
+// ─── Participant Drawer Field ─────────────────────────────────────────────────
+function PField({ label, required, children }) {
+  return (
+    <div>
+      <label className="block text-xs font-semibold uppercase tracking-wide mb-1.5" style={{ color: C.muted }}>
+        {label}{required && <span style={{ color: C.orange }}> *</span>}
+      </label>
+      {children}
+    </div>
+  )
+}
+
+const pInput = {
+  width: '100%', padding: '0.6rem 0.875rem', borderRadius: '0.75rem',
+  border: `1.5px solid #EDD0AC`, backgroundColor: '#fff',
+  color: '#4F252A', fontSize: '0.875rem', outline: 'none',
+}
+
+// ─── Participant Parent Entry ─────────────────────────────────────────────────
+function ParticipantParentEntry({ parent, index, onChange, onRemove, showRemove }) {
+  function hc(e) { onChange(index, { ...parent, [e.target.name]: e.target.value }) }
+  return (
+    <div className="rounded-2xl p-4 space-y-3" style={{ backgroundColor: C.orangeLight, border: `1.5px solid ${C.peach}` }}>
+      <div className="flex items-center justify-between">
+        <span className="text-xs font-extrabold uppercase tracking-wide" style={{ color: C.muted }}>
+          Parent / Guardian {index + 1}
+        </span>
+        {showRemove && (
+          <button type="button" onClick={() => onRemove(index)}
+            className="text-xs font-semibold hover:opacity-70 flex items-center gap-1" style={{ color: '#E06464' }}>
+            <XMarkIcon className="w-3.5 h-3.5" /> Remove
+          </button>
+        )}
+      </div>
+      <PField label="Name">
+        <input name="name" value={parent.name} onChange={hc} placeholder="Mrs. Nguyen" style={pInput} />
+      </PField>
+      <div className="grid grid-cols-2 gap-3">
+        <PField label="Phone">
+          <input name="phone" value={parent.phone || ''} onChange={hc} placeholder="757-123-4567" style={pInput} />
+        </PField>
+        <PField label="Email">
+          <input name="email" value={parent.email || ''} onChange={hc} placeholder="parent@example.com" style={pInput} />
+        </PField>
+      </div>
+    </div>
+  )
+}
+
 // ─── Retreat Participants Section ─────────────────────────────────────────────
 function RetreatParticipantsSection({ eventId, onCountChange }) {
-  const EMPTY_FORM = { name: '', birthday: '', notes: '', parents: [{ name: '', phone: '' }] }
+  const EMPTY_FORM = { firstName: '', lastName: '', birthday: '', allergy: '', classId: '', notes: '' }
+  const EMPTY_PARENT = { name: '', phone: '', email: '' }
+
   const [participants, setParticipants] = useState([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
   const [editingId, setEditingId] = useState(null)
   const [form, setForm] = useState(EMPTY_FORM)
+  const [parents, setParents] = useState([{ ...EMPTY_PARENT }])
   const [saving, setSaving] = useState(false)
   const [deleteTarget, setDeleteTarget] = useState(null)
-  const [nameQuery, setNameQuery] = useState('')
-  const [showDropdown, setShowDropdown] = useState(false)
-  const nameRef = useRef(null)
+  const [suggestions, setSuggestions] = useState([])
+  const [showSuggestions, setShowSuggestions] = useState(false)
 
   const allStudents = getDeduplicatedStudents()
-
-  const filteredStudents = nameQuery.length > 0
-    ? allStudents.filter(s => s._fullName.toLowerCase().includes(nameQuery.toLowerCase()))
-    : allStudents
+  const allClasses = getVSClasses()
 
   useEffect(() => { fetchParticipants() }, [eventId])
-
-  useEffect(() => {
-    if (!showDropdown) return
-    function close(e) { if (nameRef.current && !nameRef.current.contains(e.target)) setShowDropdown(false) }
-    document.addEventListener('mousedown', close)
-    return () => document.removeEventListener('mousedown', close)
-  }, [showDropdown])
 
   async function fetchParticipants() {
     setLoading(true)
@@ -2921,54 +2966,65 @@ function RetreatParticipantsSection({ eventId, onCountChange }) {
   function openAdd() {
     setEditingId(null)
     setForm(EMPTY_FORM)
-    setNameQuery('')
+    setParents([{ ...EMPTY_PARENT }])
+    setSuggestions([])
     setShowForm(true)
   }
 
   function openEdit(p) {
     setEditingId(p.id)
+    const nameParts = (p.name || '').split(' ')
     setForm({
-      name: p.name,
+      firstName: nameParts[0] || '',
+      lastName: nameParts.slice(1).join(' '),
       birthday: p.birthday || '',
+      allergy: p.allergy || '',
+      classId: p.classId || '',
       notes: p.notes || '',
-      parents: p.parents?.length ? p.parents : [{ name: '', phone: '' }],
     })
-    setNameQuery(p.name)
+    setParents(p.parents?.length ? p.parents.map(g => ({ name: g.name || '', phone: g.phone || '', email: g.email || '' })) : [{ ...EMPTY_PARENT }])
+    setSuggestions([])
     setShowForm(true)
   }
 
-  function selectStudent(s) {
-    const parents = s.parents?.length ? s.parents.map(p => ({ name: p.name || '', phone: p.phone || '' })) : [{ name: '', phone: '' }]
-    setForm(f => ({ ...f, name: s._fullName, birthday: s.birthday || '', parents }))
-    setNameQuery(s._fullName)
-    setShowDropdown(false)
+  function hc(e) { setForm(f => ({ ...f, [e.target.name]: e.target.value })) }
+
+  function handleFirstNameChange(e) {
+    const val = e.target.value
+    setForm(f => ({ ...f, firstName: val }))
+    if (val.trim().length < 1) { setSuggestions([]); setShowSuggestions(false); return }
+    const q = val.toLowerCase()
+    const matches = allStudents.filter(s =>
+      s._fullName.toLowerCase().includes(q) ||
+      (s.firstName || '').toLowerCase().includes(q)
+    )
+    setSuggestions(matches)
+    setShowSuggestions(matches.length > 0)
   }
 
-  function updateParent(i, field, val) {
-    setForm(f => {
-      const parents = [...f.parents]
-      parents[i] = { ...parents[i], [field]: val }
-      return { ...f, parents }
-    })
+  function applyStudent(s) {
+    setForm(f => ({ ...f, firstName: s.firstName || s._fullName, lastName: s.lastName || '', birthday: s.birthday || '', allergy: s.allergy || '' }))
+    if (s.parents?.length) setParents(s.parents.map(p => ({ name: p.name || '', phone: p.phone || '', email: p.email || '' })))
+    setSuggestions([])
+    setShowSuggestions(false)
   }
 
-  function addParent() {
-    setForm(f => ({ ...f, parents: [...f.parents, { name: '', phone: '' }] }))
-  }
-
-  function removeParent(i) {
-    setForm(f => ({ ...f, parents: f.parents.filter((_, idx) => idx !== i) }))
-  }
+  function updateParent(i, val) { setParents(p => p.map((x, idx) => idx === i ? val : x)) }
+  function addParent() { setParents(p => [...p, { ...EMPTY_PARENT }]) }
+  function removeParent(i) { setParents(p => p.filter((_, idx) => idx !== i)) }
 
   async function handleSave() {
-    if (!form.name.trim()) return
+    if (!form.firstName.trim()) return
     setSaving(true)
-    const cleanParents = form.parents.filter(p => p.name.trim() || p.phone.trim())
+    const fullName = [form.firstName.trim(), form.lastName.trim()].filter(Boolean).join(' ')
+    const cleanParents = parents.filter(p => p.name.trim() || p.phone.trim() || p.email.trim())
     const payload = {
-      name: form.name.trim(),
+      name: fullName,
       birthday: form.birthday || null,
+      allergy: form.allergy.trim(),
       notes: form.notes.trim(),
       parents: cleanParents,
+      classId: form.classId || null,
     }
     if (editingId) {
       await supabase.from('retreat_participants').update(payload).eq('id', editingId)
@@ -2986,8 +3042,6 @@ function RetreatParticipantsSection({ eventId, onCountChange }) {
     setDeleteTarget(null)
     fetchParticipants()
   }
-
-  const inputStyle = { borderColor: C.peach, color: C.text }
 
   return (
     <div>
@@ -3014,6 +3068,7 @@ function RetreatParticipantsSection({ eventId, onCountChange }) {
         <div className="space-y-2">
           {participants.map((p, i) => {
             const guardians = p.parents?.filter(g => g.name) || []
+            const cls = allClasses.find(c => c.id === p.classId)
             return (
               <div key={p.id} className="flex items-start gap-3 px-4 py-3 rounded-xl"
                 style={{ backgroundColor: '#fff', border: `1px solid ${C.peach}` }}>
@@ -3023,12 +3078,18 @@ function RetreatParticipantsSection({ eventId, onCountChange }) {
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-semibold" style={{ color: C.text }}>{p.name}</p>
-                  {p.birthday && <p className="text-xs" style={{ color: C.faint }}>DOB: {p.birthday}</p>}
+                  <div className="flex flex-wrap gap-x-3 gap-y-0.5 mt-0.5">
+                    {p.birthday && <p className="text-xs" style={{ color: C.faint }}>DOB: {p.birthday}</p>}
+                    {cls && <p className="text-xs" style={{ color: C.faint }}>{cls.className}</p>}
+                    {p.allergy && p.allergy.toLowerCase() !== 'none' && (
+                      <p className="text-xs font-semibold" style={{ color: '#E06464' }}>⚠ {p.allergy}</p>
+                    )}
+                  </div>
                   {guardians.length > 0 && (
                     <div className="mt-1 space-y-0.5">
                       {guardians.map((g, gi) => (
                         <p key={gi} className="text-xs" style={{ color: C.muted }}>
-                          👤 {g.name}{g.phone ? ` · ${g.phone}` : ''}
+                          👤 {g.name}{g.phone ? ` · ${g.phone}` : ''}{g.email ? ` · ${g.email}` : ''}
                         </p>
                       ))}
                     </div>
@@ -3042,109 +3103,101 @@ function RetreatParticipantsSection({ eventId, onCountChange }) {
         </div>
       )}
 
-      {/* Add / Edit form */}
+      {/* Left-side drawer for Add / Edit */}
       {showForm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ backgroundColor: 'rgba(0,0,0,0.35)' }}>
-          <div className="rounded-2xl p-6 w-full max-w-sm max-h-[90vh] overflow-y-auto"
-            style={{ backgroundColor: '#fff', boxShadow: '0 20px 60px rgba(0,0,0,0.18)' }}>
-            <h4 className="text-base font-bold mb-4" style={{ color: C.text }}>
-              {editingId ? 'Edit Participant' : 'Add Participant'}
-            </h4>
-            <div className="space-y-3">
+        <div className="fixed inset-0 z-50 flex justify-start">
+          <div className="absolute inset-0 bg-black/40" onClick={() => setShowForm(false)} />
+          <div className="relative flex flex-col w-full max-w-md h-full overflow-y-auto shadow-2xl"
+            style={{ backgroundColor: '#FFFCF8', borderRight: `1.5px solid ${C.peach}` }}>
+            {/* Header */}
+            <div className="flex items-center justify-between px-6 py-5 border-b shrink-0" style={{ borderColor: C.peach }}>
+              <h3 className="text-lg font-extrabold" style={{ color: C.text }}>
+                {editingId ? 'Edit Participant' : 'Add Participant'}
+              </h3>
+              <button onClick={() => setShowForm(false)} className="p-1.5 rounded-full hover:bg-orange-50">
+                <XMarkIcon className="w-5 h-5" style={{ color: C.muted }} />
+              </button>
+            </div>
 
-              {/* Name with student dropdown */}
-              <div ref={nameRef} className="relative">
-                <label className="block text-xs font-semibold mb-1" style={{ color: C.muted }}>Name *</label>
-                <input
-                  value={nameQuery}
-                  onChange={e => { setNameQuery(e.target.value); setForm(f => ({ ...f, name: e.target.value })); setShowDropdown(true) }}
-                  onFocus={() => setShowDropdown(true)}
-                  placeholder="Type to search students or enter name…"
-                  className="w-full px-3 py-2 rounded-xl text-sm border outline-none"
-                  style={inputStyle}
-                />
-                {showDropdown && filteredStudents.length > 0 && (
-                  <div className="absolute left-0 right-0 top-full mt-1 z-20 rounded-xl overflow-hidden max-h-48 overflow-y-auto"
-                    style={{ backgroundColor: '#fff', border: `1px solid ${C.peach}`, boxShadow: '0 8px 24px rgba(0,0,0,0.10)' }}>
-                    {filteredStudents.map(s => (
-                      <button key={s.id || s._fullName} type="button"
-                        onMouseDown={() => selectStudent(s)}
-                        className="w-full text-left px-3 py-2 text-sm hover:bg-orange-50 transition-colors"
-                        style={{ color: C.text }}>
-                        <span className="font-semibold">{s._fullName}</span>
-                        {s.birthday && <span className="ml-2 text-xs" style={{ color: C.faint }}>{s.birthday}</span>}
-                        {s.parents?.length > 0 && (
-                          <span className="ml-2 text-xs" style={{ color: C.faint }}>
-                            · {s.parents.map(p => p.name).filter(Boolean).join(', ')}
-                          </span>
-                        )}
-                      </button>
-                    ))}
+            {/* Body */}
+            <div className="flex-1 px-6 py-5 space-y-4">
+              {/* First / Last Name */}
+              <div className="grid grid-cols-2 gap-4">
+                <PField label="First Name" required>
+                  <div className="relative">
+                    <input name="firstName" value={form.firstName} onChange={handleFirstNameChange}
+                      onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
+                      onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
+                      placeholder="Linh" style={pInput} autoComplete="off" />
+                    {showSuggestions && (
+                      <div className="absolute left-0 top-full mt-1 z-50 w-64 rounded-2xl overflow-hidden shadow-lg"
+                        style={{ backgroundColor: '#fff', border: '1.5px solid #EDD0AC' }}>
+                        {suggestions.map((s, i) => (
+                          <button key={i} type="button" onMouseDown={() => applyStudent(s)}
+                            className="w-full text-left px-4 py-2.5 text-sm hover:bg-orange-50 flex items-center justify-between"
+                            style={{ color: '#4F252A' }}>
+                            <span className="font-semibold">{s._fullName}</span>
+                            {s.birthday && <span className="text-xs" style={{ color: '#A08070' }}>{s.birthday}</span>}
+                          </button>
+                        ))}
+                      </div>
+                    )}
                   </div>
-                )}
+                </PField>
+                <PField label="Last Name">
+                  <input name="lastName" value={form.lastName} onChange={hc} placeholder="Nguyen" style={pInput} />
+                </PField>
               </div>
 
               {/* Birthday */}
-              <div>
-                <label className="block text-xs font-semibold mb-1" style={{ color: C.muted }}>Date of Birth (optional)</label>
-                <input type="date" value={form.birthday}
-                  onChange={e => setForm(f => ({ ...f, birthday: e.target.value }))}
-                  className="w-full px-3 py-2 rounded-xl text-sm border outline-none"
-                  style={inputStyle} />
+              <PField label="Birthday">
+                <input type="date" name="birthday" value={form.birthday} onChange={hc} style={pInput} />
+              </PField>
+
+              {/* Class + Allergy */}
+              <div className="grid grid-cols-2 gap-4">
+                <PField label="Class">
+                  <select name="classId" value={form.classId} onChange={hc} style={pInput}>
+                    <option value="">— None —</option>
+                    {allClasses.map(c => <option key={c.id} value={c.id}>{c.className}</option>)}
+                  </select>
+                </PField>
+                <PField label="Allergy">
+                  <input name="allergy" value={form.allergy} onChange={hc} placeholder="e.g. Peanuts, None" style={pInput} />
+                </PField>
               </div>
 
               {/* Parents / Guardians */}
-              <div>
-                <div className="flex items-center justify-between mb-1">
-                  <label className="text-xs font-semibold" style={{ color: C.muted }}>Parent / Guardian</label>
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-extrabold uppercase tracking-wide" style={{ color: C.muted }}>Parents / Guardians</span>
                   <button type="button" onClick={addParent}
-                    className="text-xs font-semibold flex items-center gap-1 hover:opacity-80"
-                    style={{ color: C.orange }}>
-                    <PlusIcon className="w-3 h-3" /> Add another
+                    className="text-xs font-semibold flex items-center gap-1 hover:opacity-70" style={{ color: C.orange }}>
+                    <PlusIcon className="w-3.5 h-3.5" /> Add Parent
                   </button>
                 </div>
-                <div className="space-y-2">
-                  {form.parents.map((g, i) => (
-                    <div key={i} className="rounded-xl p-3 space-y-2" style={{ backgroundColor: C.orangeLight, border: `1px solid ${C.peach}` }}>
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-semibold" style={{ color: C.muted }}>Guardian {form.parents.length > 1 ? i + 1 : ''}</span>
-                        {form.parents.length > 1 && (
-                          <button type="button" onClick={() => removeParent(i)}
-                            className="text-xs hover:opacity-80" style={{ color: '#E06464' }}>Remove</button>
-                        )}
-                      </div>
-                      <input value={g.name} onChange={e => updateParent(i, 'name', e.target.value)}
-                        placeholder="Guardian name"
-                        className="w-full px-3 py-2 rounded-lg text-sm border outline-none"
-                        style={{ borderColor: C.peach, color: C.text, backgroundColor: '#fff' }} />
-                      <input value={g.phone} onChange={e => updateParent(i, 'phone', e.target.value)}
-                        placeholder="Phone number"
-                        className="w-full px-3 py-2 rounded-lg text-sm border outline-none"
-                        style={{ borderColor: C.peach, color: C.text, backgroundColor: '#fff' }} />
-                    </div>
-                  ))}
-                </div>
+                {parents.map((p, i) => (
+                  <ParticipantParentEntry key={i} parent={p} index={i} onChange={updateParent} onRemove={removeParent} showRemove={parents.length > 1} />
+                ))}
               </div>
 
               {/* Notes */}
-              <div>
-                <label className="block text-xs font-semibold mb-1" style={{ color: C.muted }}>Notes (optional)</label>
-                <textarea value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))}
-                  placeholder="Allergies, special needs, etc."
-                  rows={2}
-                  className="w-full px-3 py-2 rounded-xl text-sm border outline-none resize-none"
-                  style={inputStyle} />
-              </div>
+              <PField label="Notes (optional)">
+                <textarea name="notes" value={form.notes} onChange={hc}
+                  placeholder="Any additional notes…" rows={2}
+                  style={{ ...pInput, resize: 'none' }} />
+              </PField>
             </div>
 
-            <div className="flex gap-2 mt-5">
+            {/* Footer */}
+            <div className="px-6 py-4 border-t flex gap-3 shrink-0" style={{ borderColor: C.peach }}>
               <button onClick={() => setShowForm(false)}
-                className="flex-1 py-2 rounded-xl text-sm font-semibold border"
-                style={{ borderColor: C.peach, color: C.muted }}>Cancel</button>
-              <button onClick={handleSave} disabled={saving || !form.name.trim()}
-                className="flex-1 py-2 rounded-xl text-sm font-semibold transition-opacity disabled:opacity-50"
-                style={{ backgroundColor: C.orange, color: '#fff' }}>
-                {saving ? 'Saving…' : editingId ? 'Save Changes' : 'Add'}
+                className="flex-1 py-2.5 text-sm font-semibold rounded-2xl border"
+                style={{ borderColor: C.peach, color: C.muted, backgroundColor: '#fff' }}>Cancel</button>
+              <button onClick={handleSave} disabled={saving || !form.firstName.trim()}
+                className="flex-1 py-2.5 text-sm font-semibold rounded-2xl text-white hover:opacity-90 disabled:opacity-50"
+                style={{ background: 'linear-gradient(135deg, #F1745E, #E06464)' }}>
+                {saving ? 'Saving…' : editingId ? 'Save Changes' : 'Add Participant'}
               </button>
             </div>
           </div>

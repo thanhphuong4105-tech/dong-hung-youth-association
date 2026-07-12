@@ -2798,9 +2798,11 @@ function AgendaSection({ eventId, eventName, event, onCountChange }) {
 <html lang="vi"><head>
 <meta charset="UTF-8">
 <title>${eventName || 'Agenda'}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;600;700;800;900&display=swap" rel="stylesheet">
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: Arial, Helvetica, sans-serif; background: #fff; color: #000; padding: 32px 40px; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  body { font-family: 'Be Vietnam Pro', Arial, sans-serif; background: #fff; color: #000; padding: 32px 40px; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   @media print {
     @page { size: A4 portrait; margin: 12mm; }
     body { padding: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }

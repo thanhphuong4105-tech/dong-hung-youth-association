@@ -1,5 +1,5 @@
 ﻿import { useState, useEffect, useRef } from 'react'
-import { NavLink, Outlet, useNavigate, Link } from 'react-router-dom'
+import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
 import { useProfile } from '../hooks/useProfile'
@@ -20,6 +20,8 @@ import {
   CameraIcon,
   ArchiveBoxIcon,
   AcademicCapIcon,
+  EllipsisHorizontalIcon,
+  MusicalNoteIcon,
 } from '@heroicons/react/24/outline'
 
 const navItems = [
@@ -29,7 +31,25 @@ const navItems = [
   { to: '/vietnamese-school', label: 'Vietnamese School', icon: AcademicCapIcon },
   { to: '/tasks',             label: 'Tasks/Roles',       icon: CheckCircleIcon },
   { to: '/members',           label: 'Members',           icon: UserGroupIcon },
-  { to: '/dance-team',        label: 'Dance Team',        icon: UserGroupIcon },
+  { to: '/dance-team',        label: 'Dance Team',        icon: MusicalNoteIcon },
+  { to: '/inventory',         label: 'Inventory',         icon: ArchiveBoxIcon },
+  { to: '/budget',            label: 'Budget',            icon: CurrencyDollarIcon },
+  { to: '/profile',           label: 'Profile',           icon: UserCircleIcon },
+]
+
+// Primary bottom nav tabs (always visible on mobile)
+const bottomNavPrimary = [
+  { to: '/dashboard', label: 'Dashboard', icon: HomeIcon },
+  { to: '/calendar',  label: 'Calendar',  icon: CalendarDaysIcon },
+  { to: '/events',    label: 'Events',    icon: CalendarIcon },
+]
+
+// Secondary items shown in the "More" sheet
+const bottomNavMore = [
+  { to: '/vietnamese-school', label: 'Vietnamese School', icon: AcademicCapIcon },
+  { to: '/tasks',             label: 'Tasks & Roles',     icon: CheckCircleIcon },
+  { to: '/members',           label: 'Members',           icon: UserGroupIcon },
+  { to: '/dance-team',        label: 'Dance Team',        icon: MusicalNoteIcon },
   { to: '/inventory',         label: 'Inventory',         icon: ArchiveBoxIcon },
   { to: '/budget',            label: 'Budget',            icon: CurrencyDollarIcon },
   { to: '/profile',           label: 'Profile',           icon: UserCircleIcon },
@@ -394,6 +414,94 @@ function AvatarDropdown({ profileInitials, profileAvatar, profileName, profileEm
   )
 }
 
+/* ── Mobile Bottom Navigation ── */
+function MobileBottomNav() {
+  const location = useLocation()
+  const navigate = useNavigate()
+  const [moreOpen, setMoreOpen] = useState(false)
+
+  const isMoreActive = bottomNavMore.some(item => location.pathname === item.to)
+
+  function handleNav(to) {
+    setMoreOpen(false)
+    navigate(to)
+  }
+
+  return (
+    <>
+      {/* More sheet backdrop */}
+      {moreOpen && (
+        <div
+          className="fixed inset-0 z-40 bg-black/30 md:hidden"
+          onClick={() => setMoreOpen(false)}
+        />
+      )}
+
+      {/* More slide-up sheet */}
+      <div
+        className={`fixed bottom-16 left-0 right-0 z-50 md:hidden rounded-t-2xl overflow-hidden transition-transform duration-300 ${moreOpen ? 'translate-y-0' : 'translate-y-full'}`}
+        style={{ backgroundColor: '#FFF7F3', borderTop: '1.5px solid #F2DDD0', boxShadow: '0 -4px 24px rgba(0,0,0,0.10)' }}
+      >
+        <div className="px-2 pt-3 pb-4">
+          <div className="w-10 h-1 rounded-full mx-auto mb-4" style={{ backgroundColor: '#F2DDD0' }} />
+          <p className="text-xs font-bold px-3 mb-2" style={{ color: '#A08070' }}>MORE</p>
+          <div className="grid grid-cols-4 gap-1">
+            {bottomNavMore.map(({ to, label, icon: Icon }) => {
+              const active = location.pathname === to
+              return (
+                <button
+                  key={to}
+                  onClick={() => handleNav(to)}
+                  className="flex flex-col items-center gap-1 py-3 px-1 rounded-xl transition-colors"
+                  style={{ backgroundColor: active ? '#FFE8E0' : 'transparent' }}
+                >
+                  <Icon className="w-5 h-5" style={{ color: active ? '#F1745E' : '#7A5550' }} />
+                  <span className="text-[10px] font-semibold text-center leading-tight" style={{ color: active ? '#E06464' : '#7A5550' }}>
+                    {label}
+                  </span>
+                </button>
+              )
+            })}
+          </div>
+        </div>
+      </div>
+
+      {/* Bottom bar */}
+      <nav
+        className="fixed bottom-0 left-0 right-0 z-40 md:hidden flex items-stretch"
+        style={{ backgroundColor: '#ffffff', borderTop: '1.5px solid #F2DDD0', height: '64px' }}
+      >
+        {bottomNavPrimary.map(({ to, label, icon: Icon }) => {
+          const active = location.pathname === to
+          return (
+            <button
+              key={to}
+              onClick={() => { setMoreOpen(false); navigate(to) }}
+              className="flex-1 flex flex-col items-center justify-center gap-0.5 transition-colors"
+              style={{ color: active ? '#E06464' : '#A08070' }}
+            >
+              <Icon className="w-5 h-5" style={{ color: active ? '#F1745E' : '#A08070' }} />
+              <span className="text-[10px] font-semibold">{label}</span>
+              {active && <div className="w-1 h-1 rounded-full" style={{ backgroundColor: '#F1745E' }} />}
+            </button>
+          )
+        })}
+
+        {/* More button */}
+        <button
+          onClick={() => setMoreOpen(o => !o)}
+          className="flex-1 flex flex-col items-center justify-center gap-0.5 transition-colors"
+          style={{ color: isMoreActive || moreOpen ? '#E06464' : '#A08070' }}
+        >
+          <EllipsisHorizontalIcon className="w-5 h-5" style={{ color: isMoreActive || moreOpen ? '#F1745E' : '#A08070' }} />
+          <span className="text-[10px] font-semibold">More</span>
+          {(isMoreActive || moreOpen) && <div className="w-1 h-1 rounded-full" style={{ backgroundColor: '#F1745E' }} />}
+        </button>
+      </nav>
+    </>
+  )
+}
+
 /* ── Sidebar ── */
 function Sidebar({ onClose, orgLogo, onOrgLogoChange, canManage }) {
   return (
@@ -525,6 +633,9 @@ export default function Layout() {
     navigate('/login', { replace: true })
   }
 
+  const location = useLocation()
+  const currentPage = navItems.find(n => location.pathname === n.to)?.label || 'DHYA Management App'
+
   return (
     <div className="flex min-h-screen" style={{ backgroundColor: '#FFF7F3' }}>
       {/* Desktop sidebar */}
@@ -532,42 +643,20 @@ export default function Layout() {
         <Sidebar orgLogo={orgLogo} onOrgLogoChange={handleOrgLogoChange} canManage={canManage} />
       </div>
 
-      {/* Mobile sidebar overlay */}
-      {sidebarOpen && (
-        <div className="fixed inset-0 z-40 flex md:hidden">
-          <div className="fixed inset-0 bg-black/30" onClick={() => setSidebarOpen(false)} />
-          <div className="relative flex flex-col w-64 z-50">
-            <Sidebar onClose={() => setSidebarOpen(false)} orgLogo={orgLogo} onOrgLogoChange={handleOrgLogoChange} canManage={canManage} />
-            <button
-              className="absolute top-4 right-4 z-50 p-1 rounded-full"
-              style={{ color: '#4F252A' }}
-              onClick={() => setSidebarOpen(false)}
-            >
-              <XMarkIcon className="w-5 h-5" />
-            </button>
-          </div>
-        </div>
-      )}
-
       {/* Main content */}
       <div className="flex-1 flex flex-col">
         {/* Top header */}
         <header
-          className="px-6 md:px-8 py-3.5 flex items-center justify-between shrink-0"
+          className="px-4 md:px-8 py-3.5 flex items-center justify-between shrink-0"
           style={{ backgroundColor: '#ffffff', borderBottom: '1.5px solid #F2DDD0' }}
         >
-          <div className="flex items-center gap-3">
-            <button
-              className="md:hidden p-1 rounded-lg"
-              style={{ color: '#4F252A' }}
-              onClick={() => setSidebarOpen(true)}
-            >
-              <Bars3Icon className="w-6 h-6" />
-            </button>
-            <span className="text-sm font-semibold" style={{ color: '#4F252A' }}>
-              DHYA Management App
-            </span>
-          </div>
+          {/* Mobile: page title | Desktop: app name */}
+          <span className="text-sm font-bold md:hidden" style={{ color: '#4F252A' }}>
+            {currentPage}
+          </span>
+          <span className="text-sm font-semibold hidden md:block" style={{ color: '#4F252A' }}>
+            DHYA Management App
+          </span>
 
           <div className="flex items-center gap-2">
             <NotificationBell />
@@ -581,11 +670,14 @@ export default function Layout() {
           </div>
         </header>
 
-        {/* Page content */}
-        <main className="flex-1 p-6 md:p-8" style={{ backgroundColor: '#FFF7F3' }}>
+        {/* Page content — extra bottom padding on mobile for bottom nav */}
+        <main className="flex-1 p-4 md:p-8 pb-20 md:pb-8" style={{ backgroundColor: '#FFF7F3' }}>
           <Outlet />
         </main>
       </div>
+
+      {/* Mobile bottom navigation */}
+      <MobileBottomNav />
     </div>
   )
 }

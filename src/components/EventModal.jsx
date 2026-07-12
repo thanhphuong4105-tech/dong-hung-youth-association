@@ -3025,8 +3025,9 @@ function DocumentsSection({ eventId, eventName, onCountChange }) {
     const path = `${eventId}/${Date.now()}-${file.name}`
     const { error: upErr } = await supabase.storage.from(BUCKET).upload(path, file)
     if (upErr) { alert('Upload failed: ' + upErr.message); setUploading(false); return }
-    const { error: dbErr } = await supabase.from('event_documents').insert({ event_id: eventId, file_name: file.name, file_path: path, file_size: file.size })
+    const { data: inserted, error: dbErr } = await supabase.from('event_documents').insert({ event_id: eventId, file_name: file.name, file_path: path, file_size: file.size }).select()
     if (dbErr) { alert('Save failed: ' + dbErr.message); setUploading(false); return }
+    if (!inserted || inserted.length === 0) { alert('Save failed: no row returned. eventId=' + eventId); setUploading(false); return }
     e.target.value = ''
     setUploading(false)
     fetchDocs()

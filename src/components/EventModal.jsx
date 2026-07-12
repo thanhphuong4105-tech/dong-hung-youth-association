@@ -2840,7 +2840,7 @@ function AgendaSection({ eventId, eventName, onCountChange }) {
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-semibold" style={{ color: C.text }}>{item.title}</p>
                     {item.description && (
-                      <p className="text-xs mt-0.5 leading-relaxed" style={{ color: C.muted }}>{item.description}</p>
+                      <p className="text-xs mt-0.5 leading-relaxed whitespace-pre-wrap" style={{ color: C.muted }}>{item.description}</p>
                     )}
                   </div>
                   <AgendaItemMenu onEdit={() => startEdit(item)} onDelete={() => setDeleteId(item.id)} />

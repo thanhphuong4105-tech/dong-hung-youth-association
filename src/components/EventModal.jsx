@@ -3022,7 +3022,8 @@ function DocumentsSection({ eventId, eventName, onCountChange }) {
     if (!file) return
     if (!file.name.endsWith('.docx')) { alert('Only .docx files are supported.'); return }
     setUploading(true)
-    const path = `${eventId}/${Date.now()}-${file.name}`
+    const safeName = file.name.replace(/\s+/g, '_')
+    const path = `${eventId}/${Date.now()}-${safeName}`
     const { error: upErr } = await supabase.storage.from(BUCKET).upload(path, file)
     if (upErr) { alert('Upload failed: ' + upErr.message); setUploading(false); return }
     const { data: inserted, error: dbErr } = await supabase.from('event_documents').insert({ event_id: eventId, file_name: file.name, file_path: path, file_size: file.size }).select()

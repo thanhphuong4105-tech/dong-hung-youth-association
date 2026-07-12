@@ -2731,13 +2731,85 @@ function AgendaSection({ eventId, eventName, onCountChange }) {
         <div className="flex items-center gap-2 sm:w-auto w-full">
           <button
             onClick={() => {
-              const printWindow = window.open('', '', 'width=800,height=600,toolbar=0,menubar=0,location=0,status=0,scrollbars=1,resizable=1')
+              const printWindow = window.open('', '', 'width=900,height=700,toolbar=0,menubar=0,location=0,status=0,scrollbars=1,resizable=1')
+
+              // Parse description lines into location, instructor, and bullet points
+              function parseDesc(desc) {
+                if (!desc) return { location: '', instructor: '', bullets: [] }
+                const lines = desc.split('\n').map(l => l.trim()).filter(Boolean)
+                let location = '', instructor = ''
+                const bullets = []
+                for (const line of lines) {
+                  if (/^Đ[iị]a đi[eể]m:/i.test(line)) location = line.replace(/^Đ[iị]a đi[eể]m:\s*/i, '')
+                  else if (/^Ng[uư][oờ]i h[uư][oớ]ng d[aẫ]n:/i.test(line)) instructor = line.replace(/^Ng[uư][oờ]i h[uư][oớ]ng d[aẫ]n:\s*/i, '')
+                  else bullets.push(line)
+                }
+                return { location, instructor, bullets }
+              }
+
               const rows = items.map(item => {
-                const timeRange = item.end_time ? `${fmt12(item.time)} – ${fmt12(item.end_time)}` : fmt12(item.time)
-                const desc = item.description ? `<div style="font-size:0.8rem;color:#7A5550;margin-top:2px;white-space:pre-wrap;">${item.description}</div>` : ''
-                return `<tr><td style="padding:8px 16px;border-bottom:1px solid #F5EDE4;font-weight:700;color:#F1745E;white-space:nowrap;vertical-align:top;">${timeRange}</td><td style="padding:8px 16px;border-bottom:1px solid #F5EDE4;color:#4F252A;"><div style="font-weight:600;">${item.title}</div>${desc}</td></tr>`
+                const timeRange = item.end_time ? `${fmt12(item.time)} –<br>${fmt12(item.end_time)}` : fmt12(item.time)
+                const { location, instructor, bullets } = parseDesc(item.description)
+
+                const metaHtml = [
+                  location ? `<div style="display:flex;align-items:flex-start;gap:5px;margin-top:5px;font-size:0.82rem;color:#444;">
+                    <span style="margin-top:1px;">📍</span><span>${location}</span></div>` : '',
+                  instructor ? `<div style="display:flex;align-items:flex-start;gap:5px;margin-top:3px;font-size:0.82rem;color:#444;">
+                    <span style="margin-top:1px;">👤</span><span>${instructor}</span></div>` : '',
+                ].join('')
+
+                const bulletHtml = bullets.length
+                  ? `<ul style="margin:0;padding-left:18px;font-size:0.82rem;color:#222;line-height:1.6;">
+                      ${bullets.map(b => `<li>${b}</li>`).join('')}
+                    </ul>`
+                  : ''
+
+                const hasMeta = location || instructor
+                const rightContent = hasMeta && bulletHtml
+                  ? `<table style="width:100%;border-collapse:collapse;"><tr>
+                      <td style="vertical-align:top;padding-right:12px;width:40%;">${metaHtml}</td>
+                      <td style="vertical-align:top;border-left:2px dashed #ccc;padding-left:12px;">${bulletHtml}</td>
+                    </tr></table>`
+                  : metaHtml + bulletHtml
+
+                return `
+                  <tr>
+                    <td style="vertical-align:top;padding:0;width:130px;">
+                      <div style="background:#111;color:#fff;border-radius:10px;padding:12px 10px;text-align:center;min-height:60px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                        <div style="font-size:0.88rem;font-weight:800;line-height:1.3;">${timeRange}</div>
+                      </div>
+                    </td>
+                    <td style="vertical-align:top;padding:10px 0 10px 14px;border-left:3px dashed #bbb;">
+                      <div style="font-size:1rem;font-weight:800;margin-bottom:4px;">${item.title}</div>
+                      ${rightContent}
+                    </td>
+                  </tr>
+                  <tr><td colspan="2" style="padding:4px 0;"></td></tr>`
               }).join('')
-              printWindow.document.write(`<!DOCTYPE html><html><head><title>Agenda</title><style>body{font-family:'Nunito',sans-serif;padding:32px;color:#4F252A;}h1{color:#4F252A;font-size:1.5rem;margin-bottom:4px;}p{color:#A08070;font-size:0.9rem;margin-bottom:24px;}table{width:100%;border-collapse:collapse;}th{text-align:left;padding:8px 16px;background:#FFF0EA;color:#4F252A;font-size:0.85rem;}@media print{body{padding:16px;}}</style></head><body><h1>${eventName || 'Event Agenda'}</h1><p>Event Schedule</p><table><thead><tr><th>Time</th><th>Activity</th></tr></thead><tbody>${rows}</tbody></table></body></html>`)
+
+              printWindow.document.write(`<!DOCTYPE html><html><head><title>${eventName || 'Agenda'}</title>
+              <style>
+                @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap');
+                * { box-sizing: border-box; margin: 0; padding: 0; }
+                body { font-family: 'Nunito', sans-serif; padding: 36px 40px; color: #111; background: #fff; }
+                .header { text-align: center; margin-bottom: 28px; }
+                .header h1 { font-size: 2rem; font-weight: 900; letter-spacing: -0.5px; }
+                .header .sub { display: flex; align-items: center; justify-content: center; gap: 12px; margin-top: 8px; font-size: 1rem; color: #444; }
+                .header .sub::before, .header .sub::after { content: ''; flex: 1; height: 1.5px; background: #111; max-width: 80px; }
+                table.main { width: 100%; border-collapse: collapse; }
+                table.main td { padding: 8px 0 8px 0; }
+                .footer { text-align: center; margin-top: 24px; font-style: italic; color: #666; font-size: 0.82rem; border-top: 1.5px solid #111; padding-top: 12px; }
+                @media print { body { padding: 20px 24px; } }
+              </style>
+              </head><body>
+                <div class="header">
+                  <h1>${eventName || 'Event Agenda'}</h1>
+                  <div class="sub">Lịch trình / Event Schedule</div>
+                </div>
+                <table class="main"><tbody>${rows}</tbody></table>
+                <div class="footer">Lịch trình có thể được điều chỉnh theo thực tế chương trình.</div>
+              </body></html>`)
               printWindow.document.close()
               printWindow.focus()
               printWindow.print()

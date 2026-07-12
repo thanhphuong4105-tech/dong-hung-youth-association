@@ -2774,19 +2774,20 @@ function AgendaSection({ eventId, eventName, event, onCountChange }) {
                   : fmt12(item.time)
                 const { location, instructor, bullets } = parseDesc(item.description)
 
+                const mStyle = 'font-size:10.5px;color:#444;margin:2px 0;line-height:1.3;'
                 const locationHtml = location
-                  ? `<p style="${S.meta}">📍 Địa điểm: ${location}</p>` : ''
+                  ? `<p style="${mStyle}">📍 Địa điểm: ${location}</p>` : ''
                 const instructorHtml = instructor
-                  ? `<p style="${S.meta}">👤 Người hướng dẫn: ${instructor}</p>` : ''
+                  ? `<p style="${mStyle}">👤 Người hướng dẫn: ${instructor}</p>` : ''
                 const bulletHtml = bullets.length
-                  ? `<ul style="${S.ul}">${bullets.map(b => `<li style="${S.li}">${b}</li>`).join('')}</ul>` : ''
+                  ? `<ul style="margin:3px 0 0 14px;padding:0;">${bullets.map(b => `<li style="font-size:10.5px;color:#222;line-height:1.45;margin-bottom:1px;">${b}</li>`).join('')}</ul>` : ''
 
-                return `<div style="display:table;width:100%;border:1.5px solid #000;border-radius:10px;overflow:hidden;margin-bottom:8px;page-break-inside:avoid;break-inside:avoid;">
-                  <div style="display:table-cell;width:150px;min-width:150px;background:#000;color:#fff;text-align:center;vertical-align:middle;padding:14px 10px;">
-                    <span style="font-size:13px;font-weight:700;white-space:nowrap;line-height:1.35;">${timeStr}</span>
+                return `<div style="display:table;width:100%;border:1.5px solid #000;border-radius:8px;overflow:hidden;margin-bottom:5px;page-break-inside:avoid;break-inside:avoid;">
+                  <div style="display:table-cell;width:140px;min-width:140px;background:#000;color:#fff;text-align:center;vertical-align:middle;padding:8px 8px;">
+                    <span style="font-size:11.5px;font-weight:700;white-space:nowrap;line-height:1.3;">${timeStr}</span>
                   </div>
-                  <div style="display:table-cell;padding:12px 16px;vertical-align:top;">
-                    <p style="font-size:15px;font-weight:800;margin:0 0 5px 0;line-height:1.3;">${item.title}</p>
+                  <div style="display:table-cell;padding:8px 12px;vertical-align:top;">
+                    <p style="font-size:13px;font-weight:800;margin:0 0 3px 0;line-height:1.3;">${item.title}</p>
                     ${locationHtml}${instructorHtml}${bulletHtml}
                   </div>
                 </div>`
@@ -2802,20 +2803,20 @@ function AgendaSection({ eventId, eventName, event, onCountChange }) {
 <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;600;700;800;900&display=swap" rel="stylesheet">
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: 'Be Vietnam Pro', Arial, sans-serif; background: #fff; color: #000; padding: 32px 40px; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  body { font-family: 'Be Vietnam Pro', Arial, sans-serif; background: #fff; color: #000; padding: 20px 28px; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   @media print {
-    @page { size: A4 portrait; margin: 12mm; }
+    @page { size: A4 portrait; margin: 8mm; }
     body { padding: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   }
 </style>
 </head><body>
-  <div style="text-align:center;margin-bottom:24px;padding-bottom:16px;border-bottom:2px solid #000;">
-    <h1 style="font-size:28px;font-weight:900;margin-bottom:8px;">${eventName || 'Event Agenda'}</h1>
-    <p style="font-size:14px;color:#444;">— Lịch trình / Event Schedule —</p>
-    ${subheaderMeta ? `<p style="font-size:12px;color:#666;margin-top:6px;">${subheaderMeta}</p>` : ''}
+  <div style="text-align:center;margin-bottom:12px;padding-bottom:10px;border-bottom:2px solid #000;">
+    <h1 style="font-size:22px;font-weight:900;margin-bottom:4px;">${eventName || 'Event Agenda'}</h1>
+    <p style="font-size:12px;color:#444;">— Lịch trình / Event Schedule —</p>
+    ${subheaderMeta ? `<p style="font-size:11px;color:#666;margin-top:4px;">${subheaderMeta}</p>` : ''}
   </div>
   ${rows}
-  <div style="text-align:center;margin-top:24px;padding-top:12px;border-top:1.5px solid #000;font-style:italic;color:#666;font-size:11px;">
+  <div style="text-align:center;margin-top:10px;padding-top:8px;border-top:1.5px solid #000;font-style:italic;color:#666;font-size:10px;">
     Lịch trình có thể được điều chỉnh theo thực tế chương trình.
   </div>
 </body></html>`)

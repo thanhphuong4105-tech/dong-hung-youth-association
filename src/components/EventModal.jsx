@@ -5,6 +5,7 @@ import {
 } from '@heroicons/react/24/outline'
 import { format, parseISO } from 'date-fns'
 import { supabase } from '../lib/supabase'
+import mammoth from 'mammoth'
 
 // ─── Design tokens ────────────────────────────────────────────────────────────
 const C = {
@@ -87,6 +88,17 @@ function AgendaIcon({ size = 20 }) {
     </svg>
   )
 }
+function DocumentIcon({ size = 20 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+      <polyline points="14 2 14 8 20 8"/>
+      <line x1="16" y1="13" x2="8" y2="13"/>
+      <line x1="16" y1="17" x2="8" y2="17"/>
+      <polyline points="10 9 9 9 8 9"/>
+    </svg>
+  )
+}
 function PeopleIcon({ size = 20 }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
@@ -105,6 +117,7 @@ const NAV_CARDS = [
   { id: 'volunteer',    label: 'Volunteer Roles',  subtitle: '0 roles',        Icon: HandsIcon },
   { id: 'dance',        label: 'Dance Team',       subtitle: '0 participants', Icon: TeamIcon },
   { id: 'participants', label: 'Participants',      subtitle: '0 participants', Icon: PeopleIcon },
+  { id: 'documents',    label: 'Documents',         subtitle: '0 files',        Icon: DocumentIcon },
 ]
 
 // ─── Date helpers ─────────────────────────────────────────────────────────────
@@ -2898,6 +2911,179 @@ function AgendaItemMenu({ onEdit, onDelete }) {
   )
 }
 
+// ─── Documents Section ────────────────────────────────────────────────────────
+const BUCKET = 'event-documents'
+
+function fmtBytes(b) {
+  if (!b) return ''
+  if (b < 1024) return `${b} B`
+  if (b < 1024 * 1024) return `${(b / 1024).toFixed(1)} KB`
+  return `${(b / 1024 / 1024).toFixed(1)} MB`
+}
+
+function DocumentsSection({ eventId, eventName, onCountChange }) {
+  const [docs, setDocs] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [uploading, setUploading] = useState(false)
+  const [deleteTarget, setDeleteTarget] = useState(null)
+  const [printing, setPrinting] = useState(null)
+  const fileRef = useRef(null)
+
+  useEffect(() => { fetchDocs() }, [eventId])
+
+  async function fetchDocs() {
+    setLoading(true)
+    const { data } = await supabase.from('event_documents').select('*').eq('event_id', eventId).order('created_at')
+    const rows = data || []
+    setDocs(rows)
+    onCountChange(rows.length)
+    setLoading(false)
+  }
+
+  async function handleUpload(e) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    if (!file.name.endsWith('.docx')) { alert('Only .docx files are supported.'); return }
+    setUploading(true)
+    const path = `${eventId}/${Date.now()}-${file.name}`
+    const { error: upErr } = await supabase.storage.from(BUCKET).upload(path, file)
+    if (upErr) { alert('Upload failed: ' + upErr.message); setUploading(false); return }
+    await supabase.from('event_documents').insert({ event_id: eventId, file_name: file.name, file_path: path, file_size: file.size })
+    e.target.value = ''
+    setUploading(false)
+    fetchDocs()
+  }
+
+  async function handleDelete(doc) {
+    await supabase.storage.from(BUCKET).remove([doc.file_path])
+    await supabase.from('event_documents').delete().eq('id', doc.id)
+    setDeleteTarget(null)
+    fetchDocs()
+  }
+
+  async function handleDownload(doc) {
+    const { data } = await supabase.storage.from(BUCKET).createSignedUrl(doc.file_path, 60)
+    if (!data?.signedUrl) return
+    const a = document.createElement('a')
+    a.href = data.signedUrl
+    a.download = doc.file_name
+    a.click()
+  }
+
+  async function handlePrint(doc) {
+    setPrinting(doc.id)
+    try {
+      const { data } = await supabase.storage.from(BUCKET).createSignedUrl(doc.file_path, 60)
+      if (!data?.signedUrl) throw new Error('Could not get file URL')
+      const response = await fetch(data.signedUrl)
+      const arrayBuffer = await response.arrayBuffer()
+      const result = await mammoth.convertToHtml({ arrayBuffer })
+      const win = window.open('', '', 'width=900,height=700,toolbar=0,menubar=0,location=0,scrollbars=1,resizable=1')
+      win.document.write(`<!DOCTYPE html><html><head><title>${doc.file_name}</title><style>
+        body { font-family: 'Times New Roman', serif; padding: 40px 60px; color: #111; line-height: 1.6; }
+        h1,h2,h3 { color: #4F252A; } table { border-collapse: collapse; width: 100%; }
+        td,th { border: 1px solid #ccc; padding: 6px 10px; }
+        @media print { body { padding: 20px; } }
+      </style></head><body>
+        <h2 style="color:#4F252A;margin-bottom:4px;">${eventName || 'Event'}</h2>
+        <p style="color:#A08070;font-size:0.85rem;margin-bottom:24px;">${doc.file_name}</p>
+        ${result.value}
+      </body></html>`)
+      win.document.close()
+      win.focus()
+      win.print()
+    } catch (err) {
+      alert('Print failed: ' + err.message)
+    }
+    setPrinting(null)
+  }
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-base font-bold" style={{ color: C.text }}>
+          Documents <span className="text-sm font-normal" style={{ color: C.faint }}>({docs.length})</span>
+        </h3>
+        <button onClick={() => fileRef.current?.click()} disabled={uploading}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-semibold transition-colors hover:opacity-90 disabled:opacity-60"
+          style={{ backgroundColor: C.orange, color: '#fff' }}>
+          <PlusIcon className="w-4 h-4" /> {uploading ? 'Uploading…' : 'Upload .docx'}
+        </button>
+        <input ref={fileRef} type="file" accept=".docx" className="hidden" onChange={handleUpload} />
+      </div>
+
+      {loading ? (
+        <p className="text-sm text-center py-6" style={{ color: C.faint }}>Loading…</p>
+      ) : docs.length === 0 ? (
+        <DanceEmptyState
+          icon={<DocumentIcon size={28} />}
+          label="No documents yet"
+          sub="Upload .docx files to attach them to this event"
+        />
+      ) : (
+        <div className="space-y-2">
+          {docs.map(doc => (
+            <div key={doc.id} className="flex items-center gap-3 px-4 py-3 rounded-xl"
+              style={{ backgroundColor: '#fff', border: `1px solid ${C.peach}` }}>
+              <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
+                style={{ backgroundColor: C.orangeLight, color: C.orange }}>
+                <DocumentIcon size={18} />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold truncate" style={{ color: C.text }}>{doc.file_name}</p>
+                <p className="text-xs" style={{ color: C.faint }}>
+                  {fmtBytes(doc.file_size)} · {new Date(doc.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                </p>
+              </div>
+              <div className="flex items-center gap-1 shrink-0">
+                <button onClick={() => handlePrint(doc)} disabled={printing === doc.id}
+                  className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold border hover:bg-orange-50 disabled:opacity-50"
+                  style={{ borderColor: C.peach, color: C.muted }}>
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/>
+                    <rect x="6" y="14" width="12" height="8"/>
+                  </svg>
+                  {printing === doc.id ? 'Loading…' : 'Print'}
+                </button>
+                <button onClick={() => handleDownload(doc)}
+                  className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold border hover:bg-orange-50"
+                  style={{ borderColor: C.peach, color: C.muted }}>
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+                  </svg>
+                  Download
+                </button>
+                <button onClick={() => setDeleteTarget(doc)}
+                  className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-red-50"
+                  style={{ color: '#E06464' }}>
+                  <XMarkIcon className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {deleteTarget && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ backgroundColor: 'rgba(0,0,0,0.35)' }}>
+          <div className="rounded-2xl p-6 w-full max-w-xs text-center" style={{ backgroundColor: '#fff', boxShadow: '0 20px 60px rgba(0,0,0,0.18)' }}>
+            <p className="text-sm font-semibold mb-1" style={{ color: C.text }}>Delete this document?</p>
+            <p className="text-xs mb-4" style={{ color: C.faint }}>{deleteTarget.file_name}</p>
+            <div className="flex gap-2">
+              <button onClick={() => setDeleteTarget(null)}
+                className="flex-1 py-2 rounded-xl text-sm font-semibold border"
+                style={{ borderColor: C.peach, color: C.muted }}>Cancel</button>
+              <button onClick={() => handleDelete(deleteTarget)}
+                className="flex-1 py-2 rounded-xl text-sm font-semibold"
+                style={{ backgroundColor: '#E06464', color: '#fff' }}>Delete</button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ─── Helpers for student deduplication ───────────────────────────────────────
 function getDeduplicatedStudents() {
   try {
@@ -3273,27 +3459,31 @@ export default function EventModal({ event, onClose, onEdit }) {
   const [danceCount, setDanceCount] = useState(null)
   const [agendaCount, setAgendaCount] = useState(null)
   const [participantsCount, setParticipantsCount] = useState(null)
+  const [documentsCount, setDocumentsCount] = useState(null)
   const handleTodoCount = useCallback(n => setTodoCount(n), [])
   const handleVolunteerCount = useCallback(n => setVolunteerCount(n), [])
   const handleAssignedVolunteerCount = useCallback(n => setAssignedVolunteerCount(n), [])
   const handleDanceCount = useCallback(n => setDanceCount(n), [])
   const handleAgendaCount = useCallback(n => setAgendaCount(n), [])
   const handleParticipantsCount = useCallback(n => setParticipantsCount(n), [])
+  const handleDocumentsCount = useCallback(n => setDocumentsCount(n), [])
   const dateInfo = parseDateInfo(event.start_date)
 
   // Fetch all counts on open so the summary bar is populated immediately
   useEffect(() => {
     async function fetchCounts() {
-      const [todoRes, rolesRes, danceRes, agendaRes, participantsRes] = await Promise.all([
+      const [todoRes, rolesRes, danceRes, agendaRes, participantsRes, docsRes] = await Promise.all([
         supabase.from('event_tasks').select('id', { count: 'exact', head: true }).eq('event_id', event.id),
         supabase.from('volunteer_roles').select('id, assigned_to, assigned_general_member_id, assigned_volunteers').eq('event_id', event.id),
         supabase.from('dance_participants').select('id', { count: 'exact', head: true }).eq('event_id', event.id),
         supabase.from('event_agenda').select('id', { count: 'exact', head: true }).eq('event_id', event.id),
         supabase.from('retreat_participants').select('id', { count: 'exact', head: true }).eq('event_id', event.id),
+        supabase.from('event_documents').select('id', { count: 'exact', head: true }).eq('event_id', event.id),
       ])
       setTodoCount(todoRes.count ?? 0)
       if (!agendaRes.error) setAgendaCount(agendaRes.count ?? 0)
       if (!participantsRes.error) setParticipantsCount(participantsRes.count ?? 0)
+      if (!docsRes.error) setDocumentsCount(docsRes.count ?? 0)
       if (!rolesRes.error) {
         const rows = rolesRes.data || []
         setVolunteerCount(rows.length)
@@ -3416,6 +3606,8 @@ export default function EventModal({ event, onClose, onEdit }) {
                   ? `${agendaCount} item${agendaCount !== 1 ? 's' : ''}`
                   : card.id === 'participants' && participantsCount !== null
                   ? `${participantsCount} participant${participantsCount !== 1 ? 's' : ''}`
+                  : card.id === 'documents' && documentsCount !== null
+                  ? `${documentsCount} file${documentsCount !== 1 ? 's' : ''}`
                   : card.subtitle
               return (
                 <button key={card.id} onClick={() => toggleSection(card.id)}
@@ -3448,6 +3640,7 @@ export default function EventModal({ event, onClose, onEdit }) {
               {activeSection === 'dance' && event.event_type === 'temple_main' && <DanceTeamSection eventId={event.id} onCountChange={handleDanceCount} />}
               {activeSection === 'agenda'       && <AgendaSection eventId={event.id} eventName={event.title} onCountChange={handleAgendaCount} />}
               {activeSection === 'participants' && event.event_type === 'retreat' && <RetreatParticipantsSection eventId={event.id} onCountChange={handleParticipantsCount} />}
+              {activeSection === 'documents' && <DocumentsSection eventId={event.id} eventName={event.title} onCountChange={handleDocumentsCount} />}
             </div>
           )}
         </div>

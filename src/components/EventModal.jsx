@@ -2812,8 +2812,6 @@ function AgendaSection({ eventId, eventName, event, onCountChange }) {
 </head><body>
   <div style="text-align:center;margin-bottom:12px;padding-bottom:10px;border-bottom:2px solid #000;">
     <h1 style="font-size:22px;font-weight:900;margin-bottom:4px;">${eventName || 'Event Agenda'}</h1>
-    <p style="font-size:12px;color:#444;">— Lịch trình / Event Schedule —</p>
-    ${subheaderMeta ? `<p style="font-size:11px;color:#666;margin-top:4px;">${subheaderMeta}</p>` : ''}
   </div>
   ${rows}
 </body></html>`)

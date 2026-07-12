@@ -2816,9 +2816,6 @@ function AgendaSection({ eventId, eventName, event, onCountChange }) {
     ${subheaderMeta ? `<p style="font-size:11px;color:#666;margin-top:4px;">${subheaderMeta}</p>` : ''}
   </div>
   ${rows}
-  <div style="text-align:center;margin-top:10px;padding-top:8px;border-top:1.5px solid #000;font-style:italic;color:#666;font-size:10px;">
-    Lịch trình có thể được điều chỉnh theo thực tế chương trình.
-  </div>
 </body></html>`)
               printWindow.document.close()
               printWindow.focus()

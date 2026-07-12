@@ -2721,7 +2721,7 @@ function AgendaSection({ eventId, eventName, onCountChange }) {
               const printWindow = window.open('', '', 'width=800,height=600,toolbar=0,menubar=0,location=0,status=0,scrollbars=1,resizable=1')
               const rows = items.map(item => {
                 const timeRange = item.end_time ? `${fmt12(item.time)} – ${fmt12(item.end_time)}` : fmt12(item.time)
-                const desc = item.description ? `<div style="font-size:0.8rem;color:#7A5550;margin-top:2px;">${item.description}</div>` : ''
+                const desc = item.description ? `<div style="font-size:0.8rem;color:#7A5550;margin-top:2px;white-space:pre-wrap;">${item.description}</div>` : ''
                 return `<tr><td style="padding:8px 16px;border-bottom:1px solid #F5EDE4;font-weight:700;color:#F1745E;white-space:nowrap;vertical-align:top;">${timeRange}</td><td style="padding:8px 16px;border-bottom:1px solid #F5EDE4;color:#4F252A;"><div style="font-weight:600;">${item.title}</div>${desc}</td></tr>`
               }).join('')
               printWindow.document.write(`<!DOCTYPE html><html><head><title>Agenda</title><style>body{font-family:'Nunito',sans-serif;padding:32px;color:#4F252A;}h1{color:#4F252A;font-size:1.5rem;margin-bottom:4px;}p{color:#A08070;font-size:0.9rem;margin-bottom:24px;}table{width:100%;border-collapse:collapse;}th{text-align:left;padding:8px 16px;background:#FFF0EA;color:#4F252A;font-size:0.85rem;}@media print{body{padding:16px;}}</style></head><body><h1>${eventName || 'Event Agenda'}</h1><p>Event Schedule</p><table><thead><tr><th>Time</th><th>Activity</th></tr></thead><tbody>${rows}</tbody></table></body></html>`)

@@ -165,7 +165,7 @@ export default function Dashboard() {
     const todayStr = today.toISOString().slice(0,10)
     const cutoffStr = cutoff.toISOString().slice(0,10)
     Promise.all([
-      supabase.from('event_tasks').select('*').gte('due_date', todayStr).lte('due_date', cutoffStr).order('due_date'),
+      supabase.from('event_tasks').select('*').gte('due_date', todayStr).lte('due_date', cutoffStr).neq('status', 'done').order('due_date'),
       supabase.from('profiles').select('id, full_name'),
       supabase.from('general_members').select('id, full_name'),
     ]).then(([taskRes, pRes, gRes]) => {

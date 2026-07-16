@@ -134,7 +134,7 @@ export default function Dashboard() {
       supabase.from('profiles').select('id', { count: 'exact', head: true }),
       supabase.from('general_members').select('id', { count: 'exact', head: true }),
       supabase.from('budget_items').select('amount, category'),
-      supabase.from('events').select('id, title, start_date, location').gte('start_date', today).order('start_date', { ascending: true }).limit(5),
+      supabase.from('events').select('id, title, start_date, end_date, location, image_url').gte('start_date', today).order('start_date', { ascending: true }).limit(5),
     ])
 
     const memberCount = (profilesRes.count ?? 0) + (generalRes.count ?? 0)
@@ -242,26 +242,60 @@ export default function Dashboard() {
             </div>
             {upcomingEvents.length === 0 ? (
               <p className="text-sm py-6 text-center" style={{ color: '#A08070' }}>No upcoming events.</p>
-            ) : upcomingEvents.slice(0, 3).map((ev, i) => {
-              const d = new Date(ev.start_date)
-              const month = d.toLocaleDateString('en-US', { month: 'short' }).toUpperCase()
-              const day = d.getDate()
-              const time = fmtTimeMobile(ev.start_date)
-              return (
-                <div key={ev.id} className="flex items-center gap-3 px-4 py-3"
-                  style={{ borderBottom: i < Math.min(upcomingEvents.length, 3) - 1 ? '1px solid #F5EDE4' : 'none' }}>
-                  <div className="w-10 h-10 rounded-xl flex flex-col items-center justify-center shrink-0"
-                    style={{ backgroundColor: '#FFF0EC', border: '1px solid #EFCAC8' }}>
-                    <span className="text-[9px] font-extrabold uppercase" style={{ color: '#E06464' }}>{month}</span>
-                    <span className="text-sm font-extrabold leading-tight" style={{ color: '#4F252A' }}>{day}</span>
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-bold truncate" style={{ color: '#4F252A' }}>{ev.title}</p>
-                    <p className="text-xs truncate" style={{ color: '#A08070' }}>{time}{ev.location ? ` · ${ev.location}` : ''}</p>
-                  </div>
-                </div>
-              )
-            })}
+            ) : (
+              <div className="px-3 py-2 space-y-2">
+                {upcomingEvents.slice(0, 3).map(ev => {
+                  const EVENT_COLORS = [
+                    { bg: '#FDE8E0', icon: '🏮' },
+                    { bg: '#FEF3DC', icon: '🌸' },
+                    { bg: '#E8F0FE', icon: '🎉' },
+                    { bg: '#F0FDE8', icon: '🏕️' },
+                    { bg: '#FDE8F0', icon: '🏛️' },
+                  ]
+                  const pick = EVENT_COLORS[(ev.title?.charCodeAt(0) || 0) % EVENT_COLORS.length]
+                  const upcoming = true
+                  const time = fmtTimeMobile(ev.start_date)
+                  const endTime = fmtTimeMobile(ev.end_date)
+                  return (
+                    <button key={ev.id} onClick={() => navigate('/events')}
+                      className="w-full text-left rounded-2xl overflow-hidden flex items-stretch"
+                      style={{ backgroundColor: '#ffffff', border: '1px solid #EDD0AC', minHeight: '80px' }}>
+                      {/* Thumbnail */}
+                      <div className="w-20 shrink-0 flex items-center justify-center"
+                        style={{ backgroundColor: pick.bg }}>
+                        {ev.image_url
+                          ? <img src={ev.image_url} alt="" className="w-full h-full object-cover" />
+                          : <span className="text-2xl">{pick.icon}</span>
+                        }
+                      </div>
+                      {/* Info */}
+                      <div className="flex-1 min-w-0 px-3 py-2.5">
+                        <div className="flex items-start justify-between gap-1">
+                          <p className="text-sm font-bold leading-tight flex-1 min-w-0" style={{ color: '#4F252A' }}>{ev.title}</p>
+                          <span className="shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full"
+                            style={{ backgroundColor: '#FEF0EE', color: '#E06464', border: '1px solid #FBC3B9' }}>
+                            Upcoming
+                          </span>
+                        </div>
+                        {ev.start_date && (
+                          <p className="text-xs mt-1" style={{ color: '#A08070' }}>
+                            📅 {new Date(ev.start_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                          </p>
+                        )}
+                        {time && (
+                          <p className="text-xs mt-0.5" style={{ color: '#A08070' }}>
+                            🕐 {time}{endTime ? ` – ${endTime}` : ''}
+                          </p>
+                        )}
+                        {ev.location && (
+                          <p className="text-xs mt-0.5 truncate" style={{ color: '#A08070' }}>📍 {ev.location}</p>
+                        )}
+                      </div>
+                    </button>
+                  )
+                })}
+              </div>
+            )}
             <div className="px-4 py-3" style={{ borderTop: '1px solid #F5EDE4' }}>
               <button onClick={() => navigate('/calendar')} className="text-xs font-semibold" style={{ color: '#F1745E' }}>
                 View full calendar →

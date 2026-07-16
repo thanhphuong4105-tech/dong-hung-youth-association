@@ -39,7 +39,7 @@ const navItems = [
 const BOTTOM_NAV = [
   { to: '/dashboard',         label: 'Dashboard', icon: HomeIcon },
   { to: '/events',            label: 'Events',    icon: CalendarIcon },
-  { to: '/vietnamese-school', label: 'School',    icon: AcademicCapIcon },
+  { to: '/vietnamese-school', label: 'Viet School', icon: AcademicCapIcon },
   { to: '/members',           label: 'Members',   icon: UserGroupIcon },
   { to: '/budget',            label: 'Budget',    icon: CurrencyDollarIcon },
 ]

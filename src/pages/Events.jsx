@@ -411,6 +411,108 @@ export default function Events() {
 
   return (
     <div>
+      {/* ── Mobile layout ── */}
+      <div className="block md:hidden" style={{ backgroundColor: '#FFF7F3', minHeight: '100vh', paddingBottom: 'calc(80px + env(safe-area-inset-bottom))' }}>
+        {/* Header */}
+        <div className="px-4 pt-5 pb-3">
+          <h1 className="text-2xl font-extrabold" style={{ color: '#4F252A', fontFamily: "'Nunito', sans-serif" }}>Events</h1>
+        </div>
+
+        {/* Search + filter */}
+        <div className="px-4 flex gap-2 mb-4">
+          <div className="flex-1 flex items-center gap-2 px-3 py-2.5 rounded-2xl" style={{ backgroundColor: '#ffffff', border: '1px solid #EDD0AC' }}>
+            <MagnifyingGlassIcon className="w-4 h-4 shrink-0" style={{ color: '#A08070' }} />
+            <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search events..."
+              className="flex-1 text-sm bg-transparent outline-none" style={{ color: '#4F252A' }} />
+          </div>
+          <button className="w-10 h-10 rounded-2xl flex items-center justify-center shrink-0"
+            style={{ backgroundColor: '#ffffff', border: '1px solid #EDD0AC' }}>
+            <FunnelIcon className="w-4 h-4" style={{ color: '#A08070' }} />
+          </button>
+        </div>
+
+        {/* + New Event button */}
+        {canManage && (
+          <div className="px-4 mb-4">
+            <button onClick={() => setShowTypePicker(true)}
+              className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl text-sm font-bold text-white"
+              style={{ backgroundColor: '#F1745E' }}>
+              <PlusIcon className="w-4 h-4" /> New Event
+            </button>
+          </div>
+        )}
+
+        {/* Upcoming / Past tabs */}
+        <div className="px-4 flex gap-2 mb-4">
+          {['upcoming', 'past'].map(t => (
+            <button key={t} onClick={() => setTab(t)}
+              className="px-4 py-1.5 rounded-full text-xs font-bold capitalize"
+              style={tab === t
+                ? { backgroundColor: '#F1745E', color: '#fff' }
+                : { backgroundColor: '#ffffff', color: '#A08070', border: '1px solid #EDD0AC' }}>
+              {t === 'upcoming' ? 'Upcoming' : 'Past'}
+            </button>
+          ))}
+        </div>
+
+        {/* Event cards */}
+        <div className="px-4 space-y-3">
+          {filtered.map(ev => {
+            const upcoming = isUpcoming(ev)
+            return (
+              <button key={ev.id} onClick={() => setSelectedEvent(ev)}
+                className="w-full text-left rounded-2xl overflow-hidden flex items-stretch gap-0"
+                style={{ backgroundColor: '#ffffff', border: '1px solid #EDD0AC', minHeight: '88px' }}>
+                {/* Thumbnail */}
+                <div className="w-24 shrink-0 flex items-center justify-center" style={{ backgroundColor: '#FEF0EE' }}>
+                  {ev.image_url
+                    ? <img src={ev.image_url} alt="" className="w-full h-full object-cover" />
+                    : <span className="text-3xl">
+                        {ev.event_type === 'retreat' ? '🏕️' : ev.event_type === 'temple_main' ? '🏛️' : '🎉'}
+                      </span>
+                  }
+                </div>
+                {/* Content */}
+                <div className="flex-1 min-w-0 px-3 py-3">
+                  <div className="flex items-start justify-between gap-2">
+                    <p className="text-sm font-bold leading-tight" style={{ color: '#4F252A', flex: 1, minWidth: 0 }}>{ev.title}</p>
+                    <span className="shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full"
+                      style={upcoming
+                        ? { backgroundColor: '#FEF0EE', color: '#E06464', border: '1px solid #FBC3B9' }
+                        : { backgroundColor: '#F5F0EB', color: '#A08070', border: '1px solid #EDD0AC' }}>
+                      {upcoming ? 'Upcoming' : 'Past'}
+                    </span>
+                  </div>
+                  {ev.start_date && (
+                    <p className="text-xs mt-1 flex items-center gap-1" style={{ color: '#A08070' }}>
+                      <span>📅</span>
+                      <span>{fmtEventDate(ev.start_date).split('·')[0].trim()}</span>
+                    </p>
+                  )}
+                  {(ev.start_date || ev.end_date) && (
+                    <p className="text-xs mt-0.5 flex items-center gap-1" style={{ color: '#A08070' }}>
+                      <span>🕐</span>
+                      <span>{fmtTime(ev.start_date)}{ev.end_date ? ` – ${fmtEndTime(ev.end_date)}` : ''}</span>
+                    </p>
+                  )}
+                  {ev.location && (
+                    <p className="text-xs mt-0.5 flex items-center gap-1 truncate" style={{ color: '#A08070' }}>
+                      <span>📍</span>
+                      <span className="truncate">{ev.location}</span>
+                    </p>
+                  )}
+                </div>
+              </button>
+            )
+          })}
+          {filtered.length === 0 && (
+            <p className="text-sm text-center py-10" style={{ color: '#A08070' }}>No events found.</p>
+          )}
+        </div>
+      </div>
+
+      {/* ── Desktop layout ── */}
+      <div className="hidden md:block">
       {/* ── Header ── */}
       <div className="flex items-start justify-between mb-6 gap-4">
         <div>
@@ -549,6 +651,8 @@ export default function Events() {
           </div>
         </div>
       )}
+
+      </div>{/* end desktop block */}
 
       {/* ── Modals ── */}
       {selectedEvent && (

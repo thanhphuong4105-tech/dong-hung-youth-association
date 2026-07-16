@@ -85,6 +85,83 @@ export default function Budget() {
 
   return (
     <div>
+      {/* ── Mobile layout ── */}
+      <div className="block md:hidden" style={{ backgroundColor: '#FFF7F3', minHeight: '100vh', paddingBottom: 'calc(80px + env(safe-area-inset-bottom))' }}>
+        <div className="px-4 pt-5 pb-3">
+          <h1 className="text-2xl font-extrabold" style={{ color: '#4F252A', fontFamily: "'Nunito', sans-serif" }}>Budget</h1>
+          <p className="text-sm mt-0.5" style={{ color: '#7A5550' }}>Monitor income, expenses, and balances.</p>
+        </div>
+
+        {/* Metric cards */}
+        <div className="px-4 space-y-3 mb-4">
+          {summaryCards.map(({ key, label, sub, Icon }) => (
+            <div key={key} className="flex items-center gap-4 rounded-2xl p-4"
+              style={{ backgroundColor: '#ffffff', border: '1px solid #EDD0AC' }}>
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ backgroundColor: '#FEF0EE' }}>
+                <Icon className="w-5 h-5" style={{ color: '#F1745E' }} />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-xs font-semibold" style={{ color: '#A08070' }}>{label}</p>
+                <p className="text-xl font-extrabold" style={{ color: '#4F252A' }}>
+                  {loading ? '—' : fmt(summaryValues[key])}
+                </p>
+                <p className="text-xs" style={{ color: '#A08070' }}>{sub}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Recent transactions */}
+        <div className="px-4">
+          <p className="text-sm font-extrabold mb-3" style={{ color: '#4F252A' }}>Recent Transactions</p>
+          {loading ? (
+            <div className="flex justify-center py-10">
+              <div className="w-8 h-8 rounded-full border-4 animate-spin" style={{ borderColor: '#EDD0AC', borderTopColor: '#F1745E' }} />
+            </div>
+          ) : items.length === 0 ? (
+            <p className="text-sm text-center py-8" style={{ color: '#A08070' }}>No transactions yet.</p>
+          ) : (
+            <div className="rounded-2xl overflow-hidden" style={{ backgroundColor: '#ffffff', border: '1px solid #EDD0AC' }}>
+              {items.slice(0, 20).map((item, i) => {
+                const isIncome = item.category === 'Income'
+                return (
+                  <div key={item.id} className="flex items-center gap-3 px-4 py-3"
+                    style={{ borderBottom: i < Math.min(items.length, 20) - 1 ? '1px solid #F5EDE4' : 'none' }}>
+                    <div className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0"
+                      style={{ backgroundColor: isIncome ? '#F0FDF4' : '#FEF2F2' }}>
+                      {isIncome
+                        ? <BanknotesIcon className="w-4 h-4" style={{ color: '#16A34A' }} />
+                        : <CreditCardIcon className="w-4 h-4" style={{ color: '#DC2626' }} />
+                      }
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold truncate" style={{ color: '#4F252A' }}>{item.label}</p>
+                      <p className="text-xs truncate" style={{ color: '#A08070' }}>{item.category}{item.events?.title ? ` · ${item.events.title}` : ''}</p>
+                    </div>
+                    <span className="shrink-0 text-sm font-bold" style={{ color: isIncome ? '#16A34A' : '#DC2626' }}>
+                      {isIncome ? '+' : '-'}{fmt(Math.abs(item.amount))}
+                    </span>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+        </div>
+
+        {/* Floating Add button */}
+        {canManage && (
+          <div className="fixed left-4 right-4 z-30" style={{ bottom: 'calc(72px + env(safe-area-inset-bottom))' }}>
+            <button onClick={openModal}
+              className="w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl text-sm font-bold text-white shadow-lg"
+              style={{ backgroundColor: '#F1745E' }}>
+              <PlusIcon className="w-4 h-4" /> Add Entry
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* ── Desktop layout ── */}
+      <div className="hidden md:block">
       <div className="flex items-start justify-between mb-8 gap-4">
         <div>
           <h2 className="text-4xl mb-1" style={{ color: '#4F252A' }}>Budget</h2>
@@ -158,6 +235,8 @@ export default function Budget() {
           })}
         </div>
       )}
+
+      </div>{/* end desktop block */}
 
       {showModal && (
         <Modal title="Add Budget Entry" onClose={closeModal}>

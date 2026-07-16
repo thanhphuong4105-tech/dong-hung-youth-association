@@ -276,6 +276,90 @@ export default function Members() {
 
   return (
     <div>
+      {/* ── Mobile layout ── */}
+      <div className="block md:hidden" style={{ backgroundColor: '#FFF7F3', minHeight: '100vh', paddingBottom: 'calc(80px + env(safe-area-inset-bottom))' }}>
+        <div className="px-4 pt-5 pb-2">
+          <h1 className="text-2xl font-extrabold" style={{ color: '#4F252A', fontFamily: "'Nunito', sans-serif" }}>Members</h1>
+          <p className="text-sm mt-0.5" style={{ color: '#7A5550' }}>View and manage organization members.</p>
+        </div>
+
+        {/* Search */}
+        <div className="px-4 mb-4 mt-2">
+          <div className="flex items-center gap-2 px-3 py-2.5 rounded-2xl" style={{ backgroundColor: '#ffffff', border: '1px solid #EDD0AC' }}>
+            <MagnifyingGlassIcon className="w-4 h-4 shrink-0" style={{ color: '#A08070' }} />
+            <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search members..."
+              className="flex-1 text-sm bg-transparent outline-none" style={{ color: '#4F252A' }} />
+          </div>
+        </div>
+
+        {/* Add Member button */}
+        {canManage && (
+          <div className="px-4 mb-4">
+            <button onClick={openAdd}
+              className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl text-sm font-bold text-white"
+              style={{ backgroundColor: '#F1745E' }}>
+              <PlusIcon className="w-4 h-4" /> Add Member
+            </button>
+          </div>
+        )}
+
+        {/* Stats strip */}
+        <div className="px-4 mb-4">
+          <div className="rounded-2xl p-4" style={{ backgroundColor: '#ffffff', border: '1px solid #EDD0AC' }}>
+            <div className="flex items-center justify-between">
+              <div className="text-center flex-1">
+                <p className="text-[10px] font-semibold" style={{ color: '#A08070' }}>Founder</p>
+                <p className="text-xs font-bold mt-0.5" style={{ color: '#4F252A' }}>Ven. Thích Chúc Đỗ</p>
+              </div>
+              <div className="w-px h-8" style={{ backgroundColor: '#EDD0AC' }} />
+              <div className="text-center flex-1 px-2">
+                <p className="text-[10px] font-semibold" style={{ color: '#A08070' }}>Total Members</p>
+                <p className="text-xl font-extrabold mt-0.5" style={{ color: '#4F252A' }}>{allMembers.length}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Member list */}
+        <div className="px-4 space-y-2">
+          {loading ? (
+            <div className="flex justify-center py-10">
+              <div className="w-8 h-8 rounded-full border-4 animate-spin" style={{ borderColor: '#EDD0AC', borderTopColor: '#F1745E' }} />
+            </div>
+          ) : filtered.length === 0 ? (
+            <p className="text-sm text-center py-10" style={{ color: '#A08070' }}>No members found.</p>
+          ) : filtered.map((m, i) => {
+            const badge = ROLE_BADGE[m.role] || ROLE_BADGE['Member']
+            const avatarColor = AVATAR_COLORS[i % AVATAR_COLORS.length]
+            return (
+              <div key={m._type + m._id}
+                className="flex items-center gap-3 p-3 rounded-2xl"
+                style={{ backgroundColor: '#ffffff', border: '1px solid #EDD0AC' }}>
+                {m.avatar_url ? (
+                  <img src={m.avatar_url} alt={m.name} className="w-10 h-10 rounded-full object-cover shrink-0" />
+                ) : (
+                  <div className="w-10 h-10 rounded-full flex items-center justify-center text-white text-sm font-bold shrink-0"
+                    style={{ backgroundColor: avatarColor }}>
+                    {initials(m.name)}
+                  </div>
+                )}
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-bold truncate" style={{ color: '#4F252A' }}>{m.name}</p>
+                  {m.phap_danh && <p className="text-xs truncate" style={{ color: '#A08070' }}>{m.phap_danh}</p>}
+                </div>
+                <span className="shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full"
+                  style={{ backgroundColor: badge.bg, color: badge.color, border: `1px solid ${badge.border}` }}>
+                  {m.role}
+                </span>
+                <svg className="w-4 h-4 shrink-0" style={{ color: '#A08070' }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M9 18l6-6-6-6"/></svg>
+              </div>
+            )
+          })}
+        </div>
+      </div>
+
+      {/* ── Desktop layout ── */}
+      <div className="hidden md:block">
       {/* Header */}
       <div className="flex items-start justify-between mb-8 gap-4">
         <div>
@@ -432,6 +516,8 @@ export default function Members() {
           </table>
         </div>
       )}
+
+      </div>{/* end desktop block */}
 
       {/* Add / Edit Drawer (general members only) */}
       {drawer && (

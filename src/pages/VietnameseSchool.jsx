@@ -297,6 +297,71 @@ function SemesterList({ semesters, classes, students, onOpen, onCreateSemester, 
 
   return (
     <div>
+      {/* ── Mobile layout ── */}
+      <div className="block md:hidden" style={{ backgroundColor: '#FFF7F3', minHeight: '100vh', paddingBottom: 'calc(80px + env(safe-area-inset-bottom))' }}>
+        <div className="px-4 pt-5 pb-3">
+          <h1 className="text-2xl font-extrabold" style={{ color: '#4F252A', fontFamily: "'Nunito', sans-serif" }}>Vietnamese School</h1>
+          <p className="text-sm mt-0.5" style={{ color: '#7A5550' }}>Manage semesters, students, and classes.</p>
+        </div>
+
+        <div className="px-4 mb-4">
+          <button onClick={onCreateSemester}
+            className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl text-sm font-bold text-white"
+            style={{ backgroundColor: '#F1745E' }}>
+            <PlusIcon className="w-4 h-4" /> Create Semester
+          </button>
+        </div>
+
+        <div className="px-4 space-y-3">
+          {sorted.length === 0 ? (
+            <p className="text-sm text-center py-10" style={{ color: '#A08070' }}>No semesters yet.</p>
+          ) : sorted.map(sem => {
+            const stats = statsFor(sem)
+            const sc = STATUS_COLORS[sem.status] || STATUS_COLORS.Upcoming
+            const n = sem.name?.toLowerCase() || ''
+            const emoji = n.includes('spring') ? '🌸' : n.includes('fall') || n.includes('autumn') ? '🍂' : n.includes('summer') ? '☀️' : n.includes('winter') ? '❄️' : '📅'
+            return (
+              <button key={sem.id} onClick={() => onOpen(sem)}
+                className="w-full text-left rounded-2xl p-4"
+                style={{ backgroundColor: '#ffffff', border: sem.status === 'Active' ? '2px solid #F1745E' : '1px solid #EDD0AC' }}>
+                <div className="flex items-start justify-between gap-2 mb-3">
+                  <div className="flex items-center gap-3 flex-1 min-w-0">
+                    <span className="text-2xl shrink-0">{emoji}</span>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-base font-extrabold truncate" style={{ color: '#4F252A' }}>{sem.name}</p>
+                      <p className="text-xs" style={{ color: '#A08070' }}>{fmt(sem.startDate)} – {fmt(sem.endDate)}</p>
+                    </div>
+                  </div>
+                  <span className="shrink-0 text-[10px] font-extrabold uppercase tracking-wider px-2.5 py-1 rounded-full"
+                    style={{ backgroundColor: sc.bg, color: sc.color, border: `1px solid ${sc.border}` }}>
+                    {sem.status}
+                  </span>
+                </div>
+                <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-1.5">
+                    <UserGroupIcon className="w-4 h-4" style={{ color: '#A08070' }} />
+                    <span className="text-xs font-bold" style={{ color: '#4F252A' }}>{stats.students}</span>
+                    <span className="text-xs" style={{ color: '#A08070' }}>Students</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <AcademicCapIcon className="w-4 h-4" style={{ color: '#A08070' }} />
+                    <span className="text-xs font-bold" style={{ color: '#4F252A' }}>{stats.classes}</span>
+                    <span className="text-xs" style={{ color: '#A08070' }}>Classes</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <UserIcon className="w-4 h-4" style={{ color: '#A08070' }} />
+                    <span className="text-xs font-bold" style={{ color: '#4F252A' }}>{stats.teachers}</span>
+                    <span className="text-xs" style={{ color: '#A08070' }}>Teachers</span>
+                  </div>
+                </div>
+              </button>
+            )
+          })}
+        </div>
+      </div>
+
+      {/* ── Desktop layout ── */}
+      <div className="hidden md:block">
       <div className="flex items-start justify-between mb-6">
         <div>
           <h2 className="text-4xl font-extrabold mb-1" style={{ color: C.burgundy, fontFamily: "'Nunito', sans-serif" }}>Vietnamese School</h2>
@@ -373,6 +438,7 @@ function SemesterList({ semesters, classes, students, onOpen, onCreateSemester, 
           )
         })}
       </div>
+      </div>{/* end desktop block */}
     </div>
   )
 }

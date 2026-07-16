@@ -20,7 +20,6 @@ import {
   CameraIcon,
   ArchiveBoxIcon,
   AcademicCapIcon,
-  EllipsisHorizontalIcon,
   MusicalNoteIcon,
 } from '@heroicons/react/24/outline'
 
@@ -37,22 +36,12 @@ const navItems = [
   { to: '/profile',           label: 'Profile',           icon: UserCircleIcon },
 ]
 
-// Primary bottom nav tabs (always visible on mobile)
-const bottomNavPrimary = [
-  { to: '/dashboard', label: 'Dashboard', icon: HomeIcon },
-  { to: '/calendar',  label: 'Calendar',  icon: CalendarDaysIcon },
-  { to: '/events',    label: 'Events',    icon: CalendarIcon },
-]
-
-// Secondary items shown in the "More" sheet
-const bottomNavMore = [
-  { to: '/vietnamese-school', label: 'Vietnamese School', icon: AcademicCapIcon },
-  { to: '/tasks',             label: 'Tasks & Roles',     icon: CheckCircleIcon },
-  { to: '/members',           label: 'Members',           icon: UserGroupIcon },
-  { to: '/dance-team',        label: 'Dance Team',        icon: MusicalNoteIcon },
-  { to: '/inventory',         label: 'Inventory',         icon: ArchiveBoxIcon },
-  { to: '/budget',            label: 'Budget',            icon: CurrencyDollarIcon },
-  { to: '/profile',           label: 'Profile',           icon: UserCircleIcon },
+const BOTTOM_NAV = [
+  { to: '/dashboard',         label: 'Dashboard', icon: HomeIcon },
+  { to: '/events',            label: 'Events',    icon: CalendarIcon },
+  { to: '/vietnamese-school', label: 'School',    icon: AcademicCapIcon },
+  { to: '/members',           label: 'Members',   icon: UserGroupIcon },
+  { to: '/budget',            label: 'Budget',    icon: CurrencyDollarIcon },
 ]
 
 function userInitials(name, email) {
@@ -418,87 +407,36 @@ function AvatarDropdown({ profileInitials, profileAvatar, profileName, profileEm
 function MobileBottomNav() {
   const location = useLocation()
   const navigate = useNavigate()
-  const [moreOpen, setMoreOpen] = useState(false)
-
-  const isMoreActive = bottomNavMore.some(item => location.pathname === item.to)
-
-  function handleNav(to) {
-    setMoreOpen(false)
-    navigate(to)
-  }
 
   return (
-    <>
-      {/* More sheet backdrop */}
-      {moreOpen && (
-        <div
-          className="fixed inset-0 z-40 bg-black/30 md:hidden"
-          onClick={() => setMoreOpen(false)}
-        />
-      )}
-
-      {/* More slide-up sheet */}
-      <div
-        className={`fixed bottom-16 left-0 right-0 z-50 md:hidden rounded-t-2xl overflow-hidden transition-transform duration-300 ${moreOpen ? 'translate-y-0' : 'translate-y-full'}`}
-        style={{ backgroundColor: '#FFF7F3', borderTop: '1.5px solid #F2DDD0', boxShadow: '0 -4px 24px rgba(0,0,0,0.10)' }}
-      >
-        <div className="px-2 pt-3 pb-4">
-          <div className="w-10 h-1 rounded-full mx-auto mb-4" style={{ backgroundColor: '#F2DDD0' }} />
-          <p className="text-xs font-bold px-3 mb-2" style={{ color: '#A08070' }}>MORE</p>
-          <div className="grid grid-cols-4 gap-1">
-            {bottomNavMore.map(({ to, label, icon: Icon }) => {
-              const active = location.pathname === to
-              return (
-                <button
-                  key={to}
-                  onClick={() => handleNav(to)}
-                  className="flex flex-col items-center gap-1 py-3 px-1 rounded-xl transition-colors"
-                  style={{ backgroundColor: active ? '#FFE8E0' : 'transparent' }}
-                >
-                  <Icon className="w-5 h-5" style={{ color: active ? '#F1745E' : '#7A5550' }} />
-                  <span className="text-[10px] font-semibold text-center leading-tight" style={{ color: active ? '#E06464' : '#7A5550' }}>
-                    {label}
-                  </span>
-                </button>
-              )
-            })}
-          </div>
-        </div>
-      </div>
-
-      {/* Bottom bar */}
-      <nav
-        className="fixed bottom-0 left-0 right-0 z-40 md:hidden flex items-stretch"
-        style={{ backgroundColor: '#ffffff', borderTop: '1.5px solid #F2DDD0', height: '64px' }}
-      >
-        {bottomNavPrimary.map(({ to, label, icon: Icon }) => {
-          const active = location.pathname === to
-          return (
-            <button
-              key={to}
-              onClick={() => { setMoreOpen(false); navigate(to) }}
-              className="flex-1 flex flex-col items-center justify-center gap-0.5 transition-colors"
-              style={{ color: active ? '#E06464' : '#A08070' }}
-            >
-              <Icon className="w-5 h-5" style={{ color: active ? '#F1745E' : '#A08070' }} />
-              <span className="text-[10px] font-semibold">{label}</span>
-              {active && <div className="w-1 h-1 rounded-full" style={{ backgroundColor: '#F1745E' }} />}
-            </button>
-          )
-        })}
-
-        {/* More button */}
-        <button
-          onClick={() => setMoreOpen(o => !o)}
-          className="flex-1 flex flex-col items-center justify-center gap-0.5 transition-colors"
-          style={{ color: isMoreActive || moreOpen ? '#E06464' : '#A08070' }}
-        >
-          <EllipsisHorizontalIcon className="w-5 h-5" style={{ color: isMoreActive || moreOpen ? '#F1745E' : '#A08070' }} />
-          <span className="text-[10px] font-semibold">More</span>
-          {(isMoreActive || moreOpen) && <div className="w-1 h-1 rounded-full" style={{ backgroundColor: '#F1745E' }} />}
-        </button>
-      </nav>
-    </>
+    <nav
+      className="fixed bottom-0 left-0 right-0 z-40 md:hidden"
+      style={{
+        backgroundColor: '#ffffff',
+        borderTop: '1px solid #EDD0AC',
+        display: 'grid',
+        gridTemplateColumns: 'repeat(5, 1fr)',
+        padding: '8px 4px calc(8px + env(safe-area-inset-bottom))',
+      }}
+    >
+      {BOTTOM_NAV.map(({ to, label, icon: Icon }) => {
+        const active = location.pathname === to
+        return (
+          <button
+            key={to}
+            onClick={() => navigate(to)}
+            className="flex flex-col items-center justify-center gap-0.5 py-1"
+            style={{ color: active ? '#F1745E' : '#A08070' }}
+          >
+            <Icon className="w-5 h-5" />
+            <span className="text-[10px] font-semibold">{label}</span>
+            {active && (
+              <div className="w-1 h-1 rounded-full mt-0.5" style={{ backgroundColor: '#F1745E' }} />
+            )}
+          </button>
+        )
+      })}
+    </nav>
   )
 }
 
@@ -671,7 +609,7 @@ export default function Layout() {
         </header>
 
         {/* Page content — extra bottom padding on mobile for bottom nav */}
-        <main className="flex-1 p-4 md:p-8 pb-20 md:pb-8" style={{ backgroundColor: '#FFF7F3' }}>
+        <main className="flex-1 p-0 md:p-8" style={{ backgroundColor: '#FFF7F3' }}>
           <Outlet />
         </main>
       </div>

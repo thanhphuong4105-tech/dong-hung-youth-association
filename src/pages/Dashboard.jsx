@@ -195,8 +195,110 @@ export default function Dashboard() {
     { label: 'Budget Balance',  value: stats.balance !== null ? fmt(stats.balance)    : '—', sub: 'Current available balance',  Icon: CurrencyDollarIcon },
   ]
 
+  function fmtTimeMobile(dateStr) {
+    if (!dateStr) return ''
+    try {
+      const t = dateStr.split('T')[1]
+      if (!t) return ''
+      const [h, m] = t.split(':').map(Number)
+      const ampm = h >= 12 ? 'PM' : 'AM'
+      return `${h % 12 || 12}:${String(m).padStart(2, '0')} ${ampm}`
+    } catch { return '' }
+  }
+
   return (
     <div>
+      {/* ── Mobile layout ── */}
+      <div className="block md:hidden" style={{ backgroundColor: '#FFF7F3', minHeight: '100vh', paddingBottom: 'calc(80px + env(safe-area-inset-bottom))' }}>
+        {/* Mobile page header */}
+        <div className="px-4 pt-5 pb-2">
+          <h1 className="text-2xl font-extrabold" style={{ color: '#4F252A', fontFamily: "'Nunito', sans-serif" }}>Dashboard</h1>
+          <p className="text-sm mt-0.5" style={{ color: '#7A5550' }}>Welcome back! Here's what's happening.</p>
+        </div>
+
+        <div className="px-4 space-y-3 mt-2">
+          {/* Stat cards - stacked */}
+          {cards.map(c => (
+            <div key={c.label} className="flex items-center gap-4 rounded-2xl p-4"
+              style={{ backgroundColor: '#ffffff', border: '1px solid #EDD0AC' }}>
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
+                style={{ backgroundColor: '#FEF0EE' }}>
+                <c.Icon className="w-5 h-5" style={{ color: '#F1745E' }} />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-xs font-semibold" style={{ color: '#A08070' }}>{c.label}</p>
+                <p className="text-xl font-extrabold" style={{ color: '#4F252A' }}>{c.value}</p>
+                <p className="text-xs" style={{ color: '#A08070' }}>{c.sub}</p>
+              </div>
+              <svg className="w-4 h-4 shrink-0" style={{ color: '#A08070' }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M9 18l6-6-6-6"/></svg>
+            </div>
+          ))}
+
+          {/* Upcoming Events */}
+          <div className="rounded-2xl overflow-hidden" style={{ backgroundColor: '#ffffff', border: '1px solid #EDD0AC' }}>
+            <div className="flex items-center justify-between px-4 py-3" style={{ borderBottom: '1px solid #F5EDE4' }}>
+              <p className="text-sm font-extrabold" style={{ color: '#4F252A' }}>Upcoming Events</p>
+              <button onClick={() => navigate('/events')} className="text-xs font-semibold" style={{ color: '#F1745E' }}>View all</button>
+            </div>
+            {upcomingEvents.length === 0 ? (
+              <p className="text-sm py-6 text-center" style={{ color: '#A08070' }}>No upcoming events.</p>
+            ) : upcomingEvents.slice(0, 3).map((ev, i) => {
+              const d = new Date(ev.start_date)
+              const month = d.toLocaleDateString('en-US', { month: 'short' }).toUpperCase()
+              const day = d.getDate()
+              const time = fmtTimeMobile(ev.start_date)
+              return (
+                <div key={ev.id} className="flex items-center gap-3 px-4 py-3"
+                  style={{ borderBottom: i < Math.min(upcomingEvents.length, 3) - 1 ? '1px solid #F5EDE4' : 'none' }}>
+                  <div className="w-10 h-10 rounded-xl flex flex-col items-center justify-center shrink-0"
+                    style={{ backgroundColor: '#FFF0EC', border: '1px solid #EFCAC8' }}>
+                    <span className="text-[9px] font-extrabold uppercase" style={{ color: '#E06464' }}>{month}</span>
+                    <span className="text-sm font-extrabold leading-tight" style={{ color: '#4F252A' }}>{day}</span>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-bold truncate" style={{ color: '#4F252A' }}>{ev.title}</p>
+                    <p className="text-xs truncate" style={{ color: '#A08070' }}>{time}{ev.location ? ` · ${ev.location}` : ''}</p>
+                  </div>
+                </div>
+              )
+            })}
+            <div className="px-4 py-3" style={{ borderTop: '1px solid #F5EDE4' }}>
+              <button onClick={() => navigate('/calendar')} className="text-xs font-semibold" style={{ color: '#F1745E' }}>
+                View full calendar →
+              </button>
+            </div>
+          </div>
+
+          {/* Quick Actions */}
+          <div>
+            <p className="text-sm font-extrabold mb-3" style={{ color: '#4F252A' }}>Quick Actions</p>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '10px' }}>
+              {[
+                { label: 'Dance Team',    path: '/dance-team', Icon: MusicalNoteIcon,          desc: 'Team roster & schedule' },
+                { label: 'Inventory',     path: '/inventory',  Icon: ArchiveBoxIcon,            desc: 'Track áo dài & items' },
+                { label: 'Tasks / Roles', path: '/tasks',      Icon: ClipboardDocumentListIcon, desc: 'Assign & track tasks' },
+                { label: 'Calendar',      path: '/calendar',   Icon: CalendarIcon,              desc: 'View upcoming dates' },
+              ].map(({ label, path, Icon, desc }) => (
+                <button key={path} onClick={() => navigate(path)}
+                  className="flex items-center gap-3 p-3 rounded-2xl text-left"
+                  style={{ backgroundColor: '#ffffff', border: '1px solid #EDD0AC' }}>
+                  <div className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0"
+                    style={{ backgroundColor: '#FEF0EE' }}>
+                    <Icon className="w-4 h-4" style={{ color: '#F1745E' }} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-bold leading-tight" style={{ color: '#4F252A' }}>{label}</p>
+                    <p className="text-[10px] leading-snug" style={{ color: '#A08070' }}>{desc}</p>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ── Desktop layout ── */}
+      <div className="hidden md:block">
       {/* Page heading */}
       <div className="mb-8">
         <h2 className="text-4xl font-extrabold mb-1" style={{ color: '#4F252A', fontFamily: "'Nunito', sans-serif" }}>Dashboard</h2>
@@ -369,6 +471,7 @@ export default function Dashboard() {
         </div>
       </div>
 
+      </div>{/* end desktop block */}
     </div>
   )
 }

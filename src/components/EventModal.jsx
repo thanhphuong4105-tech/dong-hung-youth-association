@@ -3803,8 +3803,8 @@ export default function EventModal({ event, onClose, onEdit }) {
             <SummaryItem icon={<UserGroupIcon className="w-5 h-5" />} label="Volunteers" value={assignedVolunteerCount !== null ? `${assignedVolunteerCount}` : '—'} />
           </div>
 
-          {/* ── Mobile 5-column tab grid ── */}
-          <div className="md:hidden px-4 pt-3 pb-0"
+          {/* ── Tab grid (all screen sizes) ── */}
+          <div className="px-4 md:px-6 pt-3 pb-0"
             style={{ display: 'grid', gridTemplateColumns: 'repeat(5, minmax(0, 1fr))', gap: '6px' }}>
             {visibleNavCards.map(card => {
               const active = activeSection === card.id
@@ -3830,42 +3830,11 @@ export default function EventModal({ event, onClose, onEdit }) {
             })}
           </div>
 
-          {/* ── Desktop nav cards grid ── */}
-          <div className="hidden md:grid grid-cols-2 sm:grid-cols-4 gap-3 mx-6 mt-5 mb-5">
-            {visibleNavCards.map(card => {
-              const active = activeSection === card.id
-              return (
-                <button key={card.id} onClick={() => toggleSection(card.id)}
-                  className="flex items-center gap-2 px-3 py-3 rounded-2xl text-left transition-all"
-                  style={{
-                    backgroundColor: active ? C.orangeLight : '#ffffff',
-                    border: `1.5px solid ${active ? C.orange : C.peach}`,
-                    boxShadow: active ? '0 2px 16px rgba(230,106,44,0.14)' : '0 2px 8px rgba(0,0,0,0.04)',
-                  }}>
-                  <div className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0"
-                    style={{ backgroundColor: active ? C.orangeMid : C.orangeLight, color: C.orange }}>
-                    <card.Icon size={16} />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-semibold whitespace-nowrap" style={{ color: active ? C.orange : C.text, fontSize: '0.78rem' }}>{card.label}</p>
-                    <p className="mt-0.5 whitespace-nowrap" style={{ color: C.faint, fontSize: '0.7rem' }}>{getSubtitle(card)}</p>
-                  </div>
-                  <ChevronRightIcon className="w-3.5 h-3.5 shrink-0 transition-transform"
-                    style={{ color: active ? C.orange : C.faint, transform: active ? 'rotate(90deg)' : 'none' }} />
-                </button>
-              )
-            })}
-          </div>
 
-          {/* ── Mobile section content ── */}
-          <div className="md:hidden px-4 pt-3" style={{ paddingBottom: 'calc(88px + env(safe-area-inset-bottom))' }}>
-            {activeSection && sectionContent}
-          </div>
-
-          {/* ── Desktop section content ── */}
-          <div className="hidden md:block mx-6 mb-6">
+          {/* ── Section content ── */}
+          <div className="px-4 md:px-6 pt-3 md:pb-6" style={{ paddingBottom: 'calc(88px + env(safe-area-inset-bottom))' }}>
             {activeSection && (
-              <div className="rounded-2xl p-5" style={{ backgroundColor: '#FFF7F3', border: `1px solid ${C.peach}` }}>
+              <div className="rounded-2xl p-4 md:p-5" style={{ backgroundColor: '#FFF7F3', border: `1px solid ${C.peach}` }}>
                 {sectionContent}
               </div>
             )}

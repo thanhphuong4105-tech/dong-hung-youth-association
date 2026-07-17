@@ -114,7 +114,7 @@ function PeopleIcon({ size = 20 }) {
 const NAV_CARDS = [
   { id: 'agenda',       label: 'Agenda',          subtitle: '0 items',        Icon: AgendaIcon },
   { id: 'todo',         label: 'To-do List',      subtitle: '0 tasks',        Icon: TodoIcon },
-  { id: 'volunteer',    label: 'Volunteer Roles',  subtitle: '0 roles',        Icon: HandsIcon },
+  { id: 'volunteer',    label: 'Volunteers',        subtitle: '0 assignees',    Icon: HandsIcon },
   { id: 'dance',        label: 'Dance Team',       subtitle: '0 participants', Icon: TeamIcon },
   { id: 'participants', label: 'Participants',      subtitle: '0 participants', Icon: PeopleIcon },
   { id: 'documents',    label: 'Documents',         subtitle: '0 files',        Icon: DocumentIcon },
@@ -3685,7 +3685,7 @@ export default function EventModal({ event, onClose, onEdit }) {
 
   function getSubtitle(card) {
     if (card.id === 'todo' && todoCount !== null)               return `${todoCount} task${todoCount !== 1 ? 's' : ''}`
-    if (card.id === 'volunteer' && volunteerCount !== null)     return `${volunteerCount} role${volunteerCount !== 1 ? 's' : ''}`
+    if (card.id === 'volunteer' && assignedVolunteerCount !== null) return `${assignedVolunteerCount} assignee${assignedVolunteerCount !== 1 ? 's' : ''}`
     if (card.id === 'dance' && danceCount !== null)             return `${danceCount} participant${danceCount !== 1 ? 's' : ''}`
     if (card.id === 'agenda' && agendaCount !== null)           return `${agendaCount} item${agendaCount !== 1 ? 's' : ''}`
     if (card.id === 'participants' && participantsCount !== null) return `${participantsCount} participant${participantsCount !== 1 ? 's' : ''}`

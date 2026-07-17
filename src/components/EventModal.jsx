@@ -3822,7 +3822,8 @@ export default function EventModal({ event, onClose, onEdit }) {
                     textAlign: 'center',
                   }}>
                   <card.Icon size={18} />
-                  <span style={{ wordBreak: 'normal', overflowWrap: 'break-word', maxWidth: '100%', padding: '0 2px', fontSize: '11px', fontWeight: 600, lineHeight: 1.2 }}>
+                  <span className="whitespace-nowrap overflow-hidden text-[9px] md:text-[11px] md:whitespace-normal md:overflow-visible"
+                    style={{ fontWeight: 600, lineHeight: 1.2, maxWidth: '100%', padding: '0 2px' }}>
                     {card.label}
                   </span>
                   <span style={{ fontSize: '10px', fontWeight: 400, color: active ? C.orange : C.faint, lineHeight: 1.1 }}>

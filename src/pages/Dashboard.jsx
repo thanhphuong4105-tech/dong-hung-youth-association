@@ -216,25 +216,55 @@ export default function Dashboard() {
           <p className="text-sm mt-0.5" style={{ color: '#7A5550' }}>Welcome back! Here's what's happening.</p>
         </div>
 
-        <div className="px-4 space-y-3 mt-2">
-          {/* Stat cards - stacked */}
-          {cards.map(c => (
-            <div key={c.label} className="flex items-center gap-4 rounded-2xl p-4"
-              style={{ backgroundColor: '#ffffff', border: '1px solid #EDD0AC' }}>
-              <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
-                style={{ backgroundColor: '#FEF0EE' }}>
-                <c.Icon className="w-5 h-5" style={{ color: '#F1745E' }} />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-xs font-semibold" style={{ color: '#A08070' }}>{c.label}</p>
-                <p className="text-xl font-extrabold" style={{ color: '#4F252A' }}>{c.value}</p>
-                <p className="text-xs" style={{ color: '#A08070' }}>{c.sub}</p>
-              </div>
-              <svg className="w-4 h-4 shrink-0" style={{ color: '#A08070' }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M9 18l6-6-6-6"/></svg>
+        <div className="mt-2 space-y-4">
+          {/* Quick Actions */}
+          <div className="px-4">
+            <p className="text-sm font-extrabold mb-3" style={{ color: '#4F252A' }}>Quick Actions</p>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '10px' }}>
+              {[
+                { label: 'Dance Team',    path: '/dance-team', Icon: MusicalNoteIcon,          desc: 'Team roster & schedule' },
+                { label: 'Inventory',     path: '/inventory',  Icon: ArchiveBoxIcon,            desc: 'Track áo dài & items' },
+                { label: 'Tasks / Roles', path: '/tasks',      Icon: ClipboardDocumentListIcon, desc: 'Assign & track tasks' },
+                { label: 'Calendar',      path: '/calendar',   Icon: CalendarIcon,              desc: 'View upcoming dates' },
+              ].map(({ label, path, Icon, desc }) => (
+                <button key={path} onClick={() => navigate(path)}
+                  className="flex items-center gap-3 p-3 rounded-2xl text-left"
+                  style={{ backgroundColor: '#ffffff', border: '1px solid #EDD0AC' }}>
+                  <div className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0"
+                    style={{ backgroundColor: '#FEF0EE' }}>
+                    <Icon className="w-4 h-4" style={{ color: '#F1745E' }} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-bold leading-tight" style={{ color: '#4F252A' }}>{label}</p>
+                    <p className="text-[10px] leading-snug" style={{ color: '#A08070' }}>{desc}</p>
+                  </div>
+                </button>
+              ))}
             </div>
-          ))}
+          </div>
+
+          {/* Stat cards - horizontal scroll row */}
+          <div className="overflow-x-auto px-4 pb-1">
+            <div className="flex gap-3" style={{ minWidth: 'max-content' }}>
+              {cards.map(c => (
+                <div key={c.label} className="flex flex-col gap-2 rounded-2xl p-4"
+                  style={{ backgroundColor: '#ffffff', border: '1px solid #EDD0AC', width: '140px' }}>
+                  <div className="w-11 h-11 rounded-xl flex items-center justify-center"
+                    style={{ backgroundColor: '#FEF0EE' }}>
+                    <c.Icon className="w-6 h-6" style={{ color: '#F1745E' }} />
+                  </div>
+                  <div>
+                    <p className="text-[11px] font-semibold" style={{ color: '#A08070' }}>{c.label}</p>
+                    <p className="text-2xl font-extrabold leading-tight" style={{ color: '#4F252A' }}>{c.value}</p>
+                    <p className="text-[11px]" style={{ color: '#A08070' }}>{c.sub}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
 
           {/* Upcoming Events */}
+          <div className="px-4">
           <div className="rounded-2xl overflow-hidden" style={{ backgroundColor: '#ffffff', border: '1px solid #EDD0AC' }}>
             <div className="flex items-center justify-between px-4 py-3" style={{ borderBottom: '1px solid #F5EDE4' }}>
               <p className="text-sm font-extrabold" style={{ color: '#4F252A' }}>Upcoming Events</p>
@@ -302,31 +332,6 @@ export default function Dashboard() {
               </button>
             </div>
           </div>
-
-          {/* Quick Actions */}
-          <div>
-            <p className="text-sm font-extrabold mb-3" style={{ color: '#4F252A' }}>Quick Actions</p>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '10px' }}>
-              {[
-                { label: 'Dance Team',    path: '/dance-team', Icon: MusicalNoteIcon,          desc: 'Team roster & schedule' },
-                { label: 'Inventory',     path: '/inventory',  Icon: ArchiveBoxIcon,            desc: 'Track áo dài & items' },
-                { label: 'Tasks / Roles', path: '/tasks',      Icon: ClipboardDocumentListIcon, desc: 'Assign & track tasks' },
-                { label: 'Calendar',      path: '/calendar',   Icon: CalendarIcon,              desc: 'View upcoming dates' },
-              ].map(({ label, path, Icon, desc }) => (
-                <button key={path} onClick={() => navigate(path)}
-                  className="flex items-center gap-3 p-3 rounded-2xl text-left"
-                  style={{ backgroundColor: '#ffffff', border: '1px solid #EDD0AC' }}>
-                  <div className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0"
-                    style={{ backgroundColor: '#FEF0EE' }}>
-                    <Icon className="w-4 h-4" style={{ color: '#F1745E' }} />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs font-bold leading-tight" style={{ color: '#4F252A' }}>{label}</p>
-                    <p className="text-[10px] leading-snug" style={{ color: '#A08070' }}>{desc}</p>
-                  </div>
-                </button>
-              ))}
-            </div>
           </div>
         </div>
       </div>

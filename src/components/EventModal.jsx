@@ -3683,6 +3683,16 @@ export default function EventModal({ event, onClose, onEdit }) {
     (card.id !== 'participants' || event.event_type === 'retreat')
   )
 
+  function getCount(card) {
+    if (card.id === 'todo')          return todoCount ?? null
+    if (card.id === 'volunteer')     return assignedVolunteerCount ?? null
+    if (card.id === 'dance')         return danceCount ?? null
+    if (card.id === 'agenda')        return agendaCount ?? null
+    if (card.id === 'participants')  return participantsCount ?? null
+    if (card.id === 'documents')     return documentsCount ?? null
+    return null
+  }
+
   function getSubtitle(card) {
     if (card.id === 'todo' && todoCount !== null)               return `${todoCount} task${todoCount !== 1 ? 's' : ''}`
     if (card.id === 'volunteer' && assignedVolunteerCount !== null) return `${assignedVolunteerCount} assignee${assignedVolunteerCount !== 1 ? 's' : ''}`
@@ -3826,7 +3836,11 @@ export default function EventModal({ event, onClose, onEdit }) {
                     style={{ fontWeight: 600, lineHeight: 1.2, maxWidth: '100%', padding: '0 2px' }}>
                     {card.label}
                   </span>
-                  <span style={{ fontSize: '10px', fontWeight: 400, color: active ? C.orange : C.faint, lineHeight: 1.1 }}>
+                  {/* Mobile: number only. Desktop: full subtitle */}
+                  <span className="md:hidden" style={{ fontSize: '10px', fontWeight: 400, color: active ? C.orange : C.faint, lineHeight: 1.1 }}>
+                    {getCount(card) ?? '—'}
+                  </span>
+                  <span className="hidden md:inline" style={{ fontSize: '10px', fontWeight: 400, color: active ? C.orange : C.faint, lineHeight: 1.1 }}>
                     {count}
                   </span>
                 </button>

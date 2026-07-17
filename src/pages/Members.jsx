@@ -332,8 +332,9 @@ export default function Members() {
             const badge = ROLE_BADGE[m.role] || ROLE_BADGE['Member']
             const avatarColor = AVATAR_COLORS[i % AVATAR_COLORS.length]
             return (
-              <div key={m._type + m._id}
-                className="flex items-center gap-3 p-3 rounded-2xl"
+              <button key={m._type + m._id}
+                onClick={() => openEdit(m)}
+                className="w-full flex items-center gap-3 p-3 rounded-2xl text-left"
                 style={{ backgroundColor: '#ffffff', border: '1px solid #EDD0AC' }}>
                 {m.avatar_url ? (
                   <img src={m.avatar_url} alt={m.name} className="w-10 h-10 rounded-full object-cover shrink-0" />
@@ -352,7 +353,7 @@ export default function Members() {
                   {m.role}
                 </span>
                 <svg className="w-4 h-4 shrink-0" style={{ color: '#A08070' }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M9 18l6-6-6-6"/></svg>
-              </div>
+              </button>
             )
           })}
         </div>

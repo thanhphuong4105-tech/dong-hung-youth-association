@@ -410,11 +410,10 @@ function MobileBottomNav() {
 
   return (
     <nav
-      className="fixed bottom-0 left-0 right-0 z-[60] md:hidden"
+      className="fixed bottom-0 left-0 right-0 z-[60] md:hidden grid"
       style={{
         backgroundColor: '#ffffff',
         borderTop: '1px solid #EDD0AC',
-        display: 'grid',
         gridTemplateColumns: 'repeat(5, 1fr)',
         padding: '8px 4px calc(8px + env(safe-area-inset-bottom))',
       }}

@@ -3808,22 +3808,25 @@ export default function EventModal({ event, onClose, onEdit }) {
             style={{ display: 'grid', gridTemplateColumns: 'repeat(5, minmax(0, 1fr))', gap: '6px' }}>
             {visibleNavCards.map(card => {
               const active = activeSection === card.id
+              const count = getSubtitle(card)
               return (
                 <button key={card.id} onClick={() => setActiveSection(card.id)}
                   style={{
-                    minWidth: 0, minHeight: '58px', padding: '7px 3px',
+                    minWidth: 0, minHeight: '72px', padding: '8px 4px',
                     border: `1px solid ${active ? C.orange : C.peach}`,
                     borderRadius: '12px',
                     backgroundColor: active ? '#FFF0ED' : '#ffffff',
                     display: 'flex', flexDirection: 'column', alignItems: 'center',
-                    justifyContent: 'center', gap: '4px',
+                    justifyContent: 'center', gap: '3px',
                     color: active ? C.orange : C.muted,
-                    fontSize: '9px', lineHeight: 1.1, fontWeight: 600,
                     textAlign: 'center',
                   }}>
-                  <card.Icon size={16} />
-                  <span style={{ wordBreak: 'normal', overflowWrap: 'break-word', maxWidth: '100%', padding: '0 2px' }}>
+                  <card.Icon size={18} />
+                  <span style={{ wordBreak: 'normal', overflowWrap: 'break-word', maxWidth: '100%', padding: '0 2px', fontSize: '11px', fontWeight: 600, lineHeight: 1.2 }}>
                     {card.label}
+                  </span>
+                  <span style={{ fontSize: '10px', fontWeight: 400, color: active ? C.orange : C.faint, lineHeight: 1.1 }}>
+                    {count}
                   </span>
                 </button>
               )

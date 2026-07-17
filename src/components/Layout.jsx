@@ -410,7 +410,7 @@ function MobileBottomNav() {
 
   return (
     <nav
-      className="fixed bottom-0 left-0 right-0 z-40 md:hidden"
+      className="fixed bottom-0 left-0 right-0 z-[60] md:hidden"
       style={{
         backgroundColor: '#ffffff',
         borderTop: '1px solid #EDD0AC',

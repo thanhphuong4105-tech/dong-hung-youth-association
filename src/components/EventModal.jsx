@@ -2726,7 +2726,7 @@ function AgendaSection({ eventId, eventName, event, onCountChange }) {
       <div className="flex items-start justify-between mb-1 flex-wrap gap-2">
         <div>
           <h3 className="text-base font-bold" style={{ color: C.text, fontFamily: "'Nunito', sans-serif", fontSize: '1.1rem' }}>Agenda</h3>
-          <p className="text-xs mt-0.5" style={{ color: C.faint }}>Add the schedule for this event. Items can be reordered.</p>
+          <p className="text-xs mt-0.5" style={{ color: C.faint }}>Add and manage the event schedule.</p>
         </div>
         <div className="flex items-center gap-2 sm:w-auto w-full">
           <button
@@ -2880,64 +2880,138 @@ function AgendaSection({ eventId, eventName, event, onCountChange }) {
             style={{ backgroundColor: C.orange }}>+ Add Agenda</button>
         </div>
       ) : (
-        <div className="mt-3 space-y-2">
-          {items.map((item, idx) => (
-            <div key={item.id}
-              draggable
-              onDragStart={() => handleDragStart(idx)}
-              onDragEnter={() => handleDragEnter(idx)}
-              onDragEnd={handleDragEnd}
-              onDragOver={e => e.preventDefault()}
-              className="flex items-start gap-2 rounded-xl px-3 py-3"
-              style={{ backgroundColor: '#ffffff', border: `1px solid ${C.peach}` }}>
-              {/* Drag handle */}
-              <div className="cursor-grab shrink-0" style={{ color: C.faint }}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                  <circle cx="9" cy="5" r="1.5"/><circle cx="15" cy="5" r="1.5"/>
-                  <circle cx="9" cy="12" r="1.5"/><circle cx="15" cy="12" r="1.5"/>
-                  <circle cx="9" cy="19" r="1.5"/><circle cx="15" cy="19" r="1.5"/>
-                </svg>
-              </div>
+        <div className="mt-3" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          {items.map((item, idx) => {
+            const { location: loc, instructor, bullets } = (() => {
+              if (!item.description) return { location: '', instructor: '', bullets: [] }
+              const lines = item.description.split('\n').map(l => l.trim()).filter(Boolean)
+              let location = '', instructor = ''
+              const bullets = []
+              for (const line of lines) {
+                if (/^Đ[iị]a đi[eể]m:/i.test(line)) location = line.replace(/^Đ[iị]a đi[eể]m:\s*/i, '')
+                else if (/^Ng[uư][oờ]i h[uư][oớ]ng d[aẫ]n:/i.test(line)) instructor = line.replace(/^Ng[uư][oờ]i h[uư][oớ]ng d[aẫ]n:\s*/i, '')
+                else bullets.push(line)
+              }
+              return { location, instructor, bullets }
+            })()
 
-              {editingId === item.id ? (
-                <div className="flex-1 flex flex-col gap-2">
-                  <div className="flex gap-2 flex-wrap items-center">
-                    <div className="flex items-center gap-1.5">
-                      <input type="time" value={editForm.time} onChange={e => setEditForm(f => ({ ...f, time: e.target.value }))}
-                        style={{ ...inputStyle, width: '110px', fontSize: '0.8rem', padding: '0.3rem 0.6rem' }} />
-                      <span className="text-xs" style={{ color: C.faint }}>to</span>
-                      <input type="time" value={editForm.endTime} onChange={e => setEditForm(f => ({ ...f, endTime: e.target.value }))}
-                        style={{ ...inputStyle, width: '110px', fontSize: '0.8rem', padding: '0.3rem 0.6rem' }} />
+            const editForm_ = editingId === item.id
+
+            return (
+              <div key={item.id}>
+                {/* ── Mobile timeline item ── */}
+                <div className="md:hidden" style={{ position: 'relative', paddingLeft: '14px', boxSizing: 'border-box' }}>
+                  {/* Coral dot */}
+                  <div style={{
+                    position: 'absolute', left: 0, top: '16px',
+                    width: '8px', height: '8px', borderRadius: '999px',
+                    backgroundColor: '#fff', border: `1.5px solid ${C.orange}`,
+                  }} />
+                  {editForm_ ? (
+                    <div className="rounded-xl p-3 flex flex-col gap-2"
+                      style={{ backgroundColor: '#ffffff', border: `1px solid ${C.peach}` }}>
+                      <div className="flex gap-2 flex-wrap items-center">
+                        <input type="time" value={editForm.time} onChange={e => setEditForm(f => ({ ...f, time: e.target.value }))}
+                          style={{ ...inputStyle, width: '110px', fontSize: '0.8rem', padding: '0.3rem 0.6rem' }} />
+                        <span style={{ color: C.faint, fontSize: '0.75rem' }}>to</span>
+                        <input type="time" value={editForm.endTime} onChange={e => setEditForm(f => ({ ...f, endTime: e.target.value }))}
+                          style={{ ...inputStyle, width: '110px', fontSize: '0.8rem', padding: '0.3rem 0.6rem' }} />
+                        <input type="text" value={editForm.title} onChange={e => setEditForm(f => ({ ...f, title: e.target.value }))}
+                          style={{ ...inputStyle, flex: 1, minWidth: '120px', fontSize: '0.8rem', padding: '0.3rem 0.6rem' }} />
+                      </div>
+                      <textarea value={editForm.description} onChange={e => setEditForm(f => ({ ...f, description: e.target.value }))}
+                        placeholder="Description (optional)" rows={2}
+                        style={{ ...inputStyle, resize: 'none', width: '100%', fontSize: '0.8rem', padding: '0.3rem 0.6rem' }} />
+                      <div className="flex gap-2">
+                        <button onClick={() => handleEditSave(item)} className="text-xs font-semibold px-3 py-1 rounded-lg text-white" style={{ backgroundColor: C.orange }}>Save</button>
+                        <button onClick={() => setEditingId(null)} className="text-xs font-semibold px-3 py-1 rounded-lg" style={{ border: `1px solid ${C.peach}`, color: C.muted }}>Cancel</button>
+                      </div>
                     </div>
-                    <input type="text" value={editForm.title} onChange={e => setEditForm(f => ({ ...f, title: e.target.value }))}
-                      style={{ ...inputStyle, flex: 1, minWidth: '120px', fontSize: '0.8rem', padding: '0.3rem 0.6rem' }} />
-                  </div>
-                  <textarea value={editForm.description} onChange={e => setEditForm(f => ({ ...f, description: e.target.value }))}
-                    placeholder="Description (optional)" rows={2}
-                    style={{ ...inputStyle, resize: 'none', width: '100%', fontSize: '0.8rem', padding: '0.3rem 0.6rem' }} />
-                  <div className="flex gap-2">
-                    <button onClick={() => handleEditSave(item)} className="text-xs font-semibold px-3 py-1 rounded-lg text-white" style={{ backgroundColor: C.orange }}>Save</button>
-                    <button onClick={() => setEditingId(null)} className="text-xs font-semibold px-3 py-1 rounded-lg" style={{ border: `1px solid ${C.peach}`, color: C.muted }}>Cancel</button>
-                  </div>
+                  ) : (
+                    <div style={{
+                      display: 'grid', gridTemplateColumns: '52px minmax(0,1fr) 32px',
+                      gap: '8px', padding: '11px 8px 11px 10px',
+                      border: `1px solid ${C.peach}`, borderRadius: '12px',
+                      backgroundColor: '#ffffff', boxSizing: 'border-box',
+                    }}>
+                      {/* Time column */}
+                      <div style={{ fontSize: '9px', lineHeight: 1.35, color: C.muted, whiteSpace: 'normal' }}>
+                        <span style={{ display: 'block' }}>{fmt12(item.time)}</span>
+                        {item.end_time && <span style={{ display: 'block' }}>– {fmt12(item.end_time)}</span>}
+                      </div>
+                      {/* Content */}
+                      <div style={{ minWidth: 0 }}>
+                        <p style={{ margin: '0 0 3px', fontSize: '12px', lineHeight: 1.3, fontWeight: 600, color: C.text, wordBreak: 'normal', overflowWrap: 'break-word' }}>
+                          {item.title}
+                        </p>
+                        {loc && <p style={{ margin: '1px 0', fontSize: '9px', lineHeight: 1.35, color: C.muted, overflowWrap: 'break-word', wordBreak: 'normal' }}>Địa điểm: {loc}</p>}
+                        {instructor && <p style={{ margin: '1px 0', fontSize: '9px', lineHeight: 1.35, color: C.muted, overflowWrap: 'break-word', wordBreak: 'normal' }}>Người hướng dẫn: {instructor}</p>}
+                        {bullets.map((b, bi) => <p key={bi} style={{ margin: '1px 0', fontSize: '9px', lineHeight: 1.35, color: C.muted, overflowWrap: 'break-word' }}>{b}</p>)}
+                      </div>
+                      {/* Menu */}
+                      <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                        <AgendaItemMenu onEdit={() => startEdit(item)} onDelete={() => setDeleteId(item.id)} />
+                      </div>
+                    </div>
+                  )}
                 </div>
-              ) : (
-                <>
-                  <div className="shrink-0 w-36 text-left">
-                    <span className="text-sm font-bold" style={{ color: C.orange }}>
-                      {fmt12(item.time)}{item.end_time ? ` – ${fmt12(item.end_time)}` : ''}
-                    </span>
+
+                {/* ── Desktop item (unchanged) ── */}
+                <div className="hidden md:flex items-start gap-2 rounded-xl px-3 py-3"
+                  draggable
+                  onDragStart={() => handleDragStart(idx)}
+                  onDragEnter={() => handleDragEnter(idx)}
+                  onDragEnd={handleDragEnd}
+                  onDragOver={e => e.preventDefault()}
+                  style={{ backgroundColor: '#ffffff', border: `1px solid ${C.peach}` }}>
+                  <div className="cursor-grab shrink-0" style={{ color: C.faint }}>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                      <circle cx="9" cy="5" r="1.5"/><circle cx="15" cy="5" r="1.5"/>
+                      <circle cx="9" cy="12" r="1.5"/><circle cx="15" cy="12" r="1.5"/>
+                      <circle cx="9" cy="19" r="1.5"/><circle cx="15" cy="19" r="1.5"/>
+                    </svg>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold" style={{ color: C.text }}>{item.title}</p>
-                    {item.description && (
-                      <p className="text-xs mt-0.5 leading-relaxed whitespace-pre-wrap" style={{ color: C.muted }}>{item.description}</p>
-                    )}
-                  </div>
-                  <AgendaItemMenu onEdit={() => startEdit(item)} onDelete={() => setDeleteId(item.id)} />
-                </>
-              )}
-            </div>
-          ))}
+                  {editForm_ ? (
+                    <div className="flex-1 flex flex-col gap-2">
+                      <div className="flex gap-2 flex-wrap items-center">
+                        <div className="flex items-center gap-1.5">
+                          <input type="time" value={editForm.time} onChange={e => setEditForm(f => ({ ...f, time: e.target.value }))}
+                            style={{ ...inputStyle, width: '110px', fontSize: '0.8rem', padding: '0.3rem 0.6rem' }} />
+                          <span className="text-xs" style={{ color: C.faint }}>to</span>
+                          <input type="time" value={editForm.endTime} onChange={e => setEditForm(f => ({ ...f, endTime: e.target.value }))}
+                            style={{ ...inputStyle, width: '110px', fontSize: '0.8rem', padding: '0.3rem 0.6rem' }} />
+                        </div>
+                        <input type="text" value={editForm.title} onChange={e => setEditForm(f => ({ ...f, title: e.target.value }))}
+                          style={{ ...inputStyle, flex: 1, minWidth: '120px', fontSize: '0.8rem', padding: '0.3rem 0.6rem' }} />
+                      </div>
+                      <textarea value={editForm.description} onChange={e => setEditForm(f => ({ ...f, description: e.target.value }))}
+                        placeholder="Description (optional)" rows={2}
+                        style={{ ...inputStyle, resize: 'none', width: '100%', fontSize: '0.8rem', padding: '0.3rem 0.6rem' }} />
+                      <div className="flex gap-2">
+                        <button onClick={() => handleEditSave(item)} className="text-xs font-semibold px-3 py-1 rounded-lg text-white" style={{ backgroundColor: C.orange }}>Save</button>
+                        <button onClick={() => setEditingId(null)} className="text-xs font-semibold px-3 py-1 rounded-lg" style={{ border: `1px solid ${C.peach}`, color: C.muted }}>Cancel</button>
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="shrink-0 w-36 text-left">
+                        <span className="text-sm font-bold" style={{ color: C.orange }}>
+                          {fmt12(item.time)}{item.end_time ? ` – ${fmt12(item.end_time)}` : ''}
+                        </span>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold" style={{ color: C.text }}>{item.title}</p>
+                        {item.description && (
+                          <p className="text-xs mt-0.5 leading-relaxed whitespace-pre-wrap" style={{ color: C.muted }}>{item.description}</p>
+                        )}
+                      </div>
+                      <AgendaItemMenu onEdit={() => startEdit(item)} onDelete={() => setDeleteId(item.id)} />
+                    </>
+                  )}
+                </div>
+              </div>
+            )
+          })}
         </div>
       )}
 
@@ -3693,8 +3767,35 @@ export default function EventModal({ event, onClose, onEdit }) {
         {/* ── Scrollable body ── */}
         <div className="overflow-y-auto flex-1">
 
-          {/* ── Event summary card ── */}
-          <div className="mx-4 mt-4 mb-0 md:mx-6 md:mt-5 rounded-2xl p-4 grid grid-cols-2 gap-4"
+          {/* ── Mobile info card (internal cell borders) ── */}
+          <div className="md:hidden mx-4 mt-4 rounded-2xl overflow-hidden"
+            style={{ backgroundColor: '#ffffff', border: `1px solid ${C.peach}` }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr' }}>
+              {[
+                { icon: <MapPinIcon className="w-4 h-4" />, label: 'Location', value: event.location || '—', sub: null },
+                { icon: <CalendarDaysIcon className="w-4 h-4" />, label: 'Date', value: dateInfo ? dateInfo.date : '—', sub: dateInfo ? dateInfo.dayOfWeek : null },
+                { icon: <ClockSvg />, label: 'Time', value: dateInfo ? dateInfo.time : '—', sub: null },
+                { icon: <UserGroupIcon className="w-4 h-4" />, label: 'Volunteers', value: assignedVolunteerCount !== null ? `${assignedVolunteerCount}` : '—', sub: null },
+              ].map((f, i) => (
+                <div key={i} className="flex gap-2 items-start" style={{
+                  padding: '13px',
+                  borderRight: i % 2 === 0 ? `1px solid ${C.peach}` : 'none',
+                  borderBottom: i < 2 ? `1px solid ${C.peach}` : 'none',
+                  minWidth: 0,
+                }}>
+                  <span style={{ color: C.orange, marginTop: '2px', flexShrink: 0 }}>{f.icon}</span>
+                  <div style={{ minWidth: 0 }}>
+                    <span style={{ display: 'block', fontSize: '10px', color: C.faint, textTransform: 'uppercase', letterSpacing: '0.04em' }}>{f.label}</span>
+                    <strong style={{ display: 'block', marginTop: '2px', fontSize: '12px', fontWeight: 600, color: C.text, lineHeight: 1.3, wordBreak: 'normal', overflowWrap: 'break-word' }}>{f.value}</strong>
+                    {f.sub && <small style={{ display: 'block', fontSize: '11px', color: C.muted }}>{f.sub}</small>}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* ── Desktop info card ── */}
+          <div className="hidden md:grid mx-6 mt-5 rounded-2xl p-4 grid-cols-4 gap-4"
             style={{ backgroundColor: '#ffffff', border: `1px solid ${C.peach}` }}>
             <SummaryItem icon={<MapPinIcon className="w-5 h-5" />} label="Location" value={event.location || '—'} />
             <SummaryItem icon={<CalendarDaysIcon className="w-5 h-5" />} label="Date" value={dateInfo ? dateInfo.date : '—'} sub={dateInfo ? dateInfo.dayOfWeek : null} />
@@ -3702,27 +3803,31 @@ export default function EventModal({ event, onClose, onEdit }) {
             <SummaryItem icon={<UserGroupIcon className="w-5 h-5" />} label="Volunteers" value={assignedVolunteerCount !== null ? `${assignedVolunteerCount}` : '—'} />
           </div>
 
-          {/* ── Mobile horizontal tab row ── */}
-          <div className="md:hidden overflow-x-auto px-4 pt-4 pb-1" style={{ borderBottom: `1px solid ${C.peach}` }}>
-            <div className="flex gap-2 min-w-max pb-2">
-              {visibleNavCards.map(card => {
-                const active = activeSection === card.id
-                return (
-                  <button key={card.id} onClick={() => setActiveSection(card.id)}
-                    className="flex flex-col items-center gap-1 px-3 py-2 rounded-2xl transition-all"
-                    style={{ backgroundColor: active ? '#FEF0EE' : 'transparent' }}>
-                    <div className="w-10 h-10 rounded-2xl flex items-center justify-center"
-                      style={{ backgroundColor: active ? '#FFE8E0' : '#F5F0EB', color: active ? C.orange : C.muted }}>
-                      <card.Icon size={18} />
-                    </div>
-                    <span className="text-[10px] font-semibold whitespace-nowrap"
-                      style={{ color: active ? C.orange : C.muted }}>
-                      {card.label}
-                    </span>
-                  </button>
-                )
-              })}
-            </div>
+          {/* ── Mobile 5-column tab grid ── */}
+          <div className="md:hidden px-4 pt-3 pb-0"
+            style={{ display: 'grid', gridTemplateColumns: 'repeat(5, minmax(0, 1fr))', gap: '6px' }}>
+            {visibleNavCards.map(card => {
+              const active = activeSection === card.id
+              return (
+                <button key={card.id} onClick={() => setActiveSection(card.id)}
+                  style={{
+                    minWidth: 0, minHeight: '58px', padding: '7px 3px',
+                    border: `1px solid ${active ? C.orange : C.peach}`,
+                    borderRadius: '12px',
+                    backgroundColor: active ? '#FFF0ED' : '#ffffff',
+                    display: 'flex', flexDirection: 'column', alignItems: 'center',
+                    justifyContent: 'center', gap: '4px',
+                    color: active ? C.orange : C.muted,
+                    fontSize: '9px', lineHeight: 1.1, fontWeight: 600,
+                    textAlign: 'center',
+                  }}>
+                  <card.Icon size={16} />
+                  <span style={{ wordBreak: 'normal', overflowWrap: 'break-word', maxWidth: '100%', padding: '0 2px' }}>
+                    {card.label}
+                  </span>
+                </button>
+              )
+            })}
           </div>
 
           {/* ── Desktop nav cards grid ── */}
@@ -3752,13 +3857,9 @@ export default function EventModal({ event, onClose, onEdit }) {
             })}
           </div>
 
-          {/* ── Mobile section content (always visible, switches with tab) ── */}
-          <div className="md:hidden p-4 pt-4">
-            {activeSection && (
-              <div className="rounded-2xl p-4" style={{ backgroundColor: '#FFF7F3', border: `1px solid ${C.peach}` }}>
-                {sectionContent}
-              </div>
-            )}
+          {/* ── Mobile section content ── */}
+          <div className="md:hidden px-4 pt-3" style={{ paddingBottom: 'calc(88px + env(safe-area-inset-bottom))' }}>
+            {activeSection && sectionContent}
           </div>
 
           {/* ── Desktop section content ── */}

@@ -1,7 +1,7 @@
 ﻿import { useState, useEffect, useCallback, useRef } from 'react'
 import {
   XMarkIcon, PencilIcon, MapPinIcon, CalendarDaysIcon, ClockIcon,
-  UserGroupIcon, PlusIcon, DocumentDuplicateIcon, BellAlertIcon, ChevronRightIcon,
+  UserGroupIcon, PlusIcon, DocumentDuplicateIcon, BellAlertIcon, ChevronRightIcon, ChevronLeftIcon,
 } from '@heroicons/react/24/outline'
 import { format, parseISO } from 'date-fns'
 import { supabase } from '../lib/supabase'
@@ -3532,7 +3532,7 @@ function RetreatParticipantsSection({ eventId, onCountChange }) {
 
 // ─── Main modal ───────────────────────────────────────────────────────────────
 export default function EventModal({ event, onClose, onEdit }) {
-  const [activeSection, setActiveSection] = useState(null)
+  const [activeSection, setActiveSection] = useState('agenda')
   const [todoCount, setTodoCount] = useState(null)
   const [volunteerCount, setVolunteerCount] = useState(null)
   const [assignedVolunteerCount, setAssignedVolunteerCount] = useState(null)
@@ -3604,18 +3604,67 @@ export default function EventModal({ event, onClose, onEdit }) {
     setActiveSection(prev => prev === id ? null : id)
   }
 
+  const visibleNavCards = NAV_CARDS.filter(card =>
+    (card.id !== 'dance' || event.event_type === 'temple_main') &&
+    (card.id !== 'participants' || event.event_type === 'retreat')
+  )
+
+  function getSubtitle(card) {
+    if (card.id === 'todo' && todoCount !== null)               return `${todoCount} task${todoCount !== 1 ? 's' : ''}`
+    if (card.id === 'volunteer' && volunteerCount !== null)     return `${volunteerCount} role${volunteerCount !== 1 ? 's' : ''}`
+    if (card.id === 'dance' && danceCount !== null)             return `${danceCount} participant${danceCount !== 1 ? 's' : ''}`
+    if (card.id === 'agenda' && agendaCount !== null)           return `${agendaCount} item${agendaCount !== 1 ? 's' : ''}`
+    if (card.id === 'participants' && participantsCount !== null) return `${participantsCount} participant${participantsCount !== 1 ? 's' : ''}`
+    if (card.id === 'documents' && documentsCount !== null)     return `${documentsCount} file${documentsCount !== 1 ? 's' : ''}`
+    return card.subtitle
+  }
+
+  const sectionContent = (
+    <>
+      {activeSection === 'todo'         && <TodoSection eventId={event.id} onCountChange={handleTodoCount} />}
+      {activeSection === 'volunteer'    && <VolunteerSection eventId={event.id} onCountChange={handleVolunteerCount} onAssignedCountChange={handleAssignedVolunteerCount} />}
+      {activeSection === 'dance'        && event.event_type === 'temple_main' && <DanceTeamSection eventId={event.id} onCountChange={handleDanceCount} />}
+      {activeSection === 'agenda'       && <AgendaSection eventId={event.id} eventName={event.title} event={event} onCountChange={handleAgendaCount} />}
+      {activeSection === 'participants' && event.event_type === 'retreat' && <RetreatParticipantsSection eventId={event.id} onCountChange={handleParticipantsCount} />}
+      {activeSection === 'documents'    && <DocumentsSection eventId={event.id} eventName={event.title} onCountChange={handleDocumentsCount} />}
+    </>
+  )
+
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6"
+      className="fixed inset-0 z-50 md:flex md:items-center md:justify-center md:p-6"
       style={{ backgroundColor: 'rgba(50, 30, 10, 0.4)', backdropFilter: 'blur(2px)' }}
       onClick={handleBackdrop}
     >
       <div
-        className="relative w-full max-w-3xl rounded-3xl flex flex-col"
-        style={{ backgroundColor: C.cream, boxShadow: '0 24px 64px rgba(0,0,0,0.20)', border: `1.5px solid ${C.peach}`, maxHeight: '90vh' }}
+        className="relative w-full h-full md:h-auto md:max-w-3xl md:rounded-3xl flex flex-col overflow-hidden"
+        style={{ backgroundColor: C.cream, boxShadow: '0 24px 64px rgba(0,0,0,0.20)', border: `1.5px solid ${C.peach}`, maxHeight: '100dvh' }}
       >
-        {/* ── Header ── */}
-        <div className="flex items-start justify-between p-6 pb-4 shrink-0 rounded-t-3xl"
+
+        {/* ── Mobile header ── */}
+        <div className="md:hidden shrink-0" style={{ backgroundColor: C.cream }}>
+          {/* Back + Close row */}
+          <div className="flex items-center justify-between px-3 pt-4 pb-1">
+            <button onClick={onClose} className="p-2 -ml-1 rounded-full" style={{ color: C.muted }}>
+              <ChevronLeftIcon className="w-5 h-5" />
+            </button>
+            <button onClick={onClose} className="p-2 -mr-1 rounded-full" style={{ color: C.muted }}>
+              <XMarkIcon className="w-5 h-5" />
+            </button>
+          </div>
+          {/* Title block */}
+          <div className="px-4 pb-3" style={{ borderBottom: `1px solid ${C.peach}` }}>
+            <h2 className="text-2xl font-extrabold leading-tight" style={{ color: C.text, fontFamily: "'Nunito', sans-serif" }}>
+              {event.title}
+            </h2>
+            {event.description && (
+              <p className="text-sm mt-1" style={{ color: C.muted }}>{event.description}</p>
+            )}
+          </div>
+        </div>
+
+        {/* ── Desktop header ── */}
+        <div className="hidden md:flex items-start justify-between p-6 pb-4 shrink-0 rounded-t-3xl"
           style={{ backgroundColor: C.cream, borderBottom: `1px solid ${C.peach}` }}>
           <div className="flex-1 min-w-0 pr-4">
             <div className="flex items-center gap-3 flex-wrap">
@@ -3641,54 +3690,45 @@ export default function EventModal({ event, onClose, onEdit }) {
           </button>
         </div>
 
-        <div className="p-6 pt-5 overflow-y-auto flex-1">
-          {/* ── Event summary row ── */}
-          <div className="rounded-2xl p-4 mb-5 grid grid-cols-2 sm:grid-cols-4 gap-4"
+        {/* ── Scrollable body ── */}
+        <div className="overflow-y-auto flex-1">
+
+          {/* ── Event summary card ── */}
+          <div className="mx-4 mt-4 mb-0 md:mx-6 md:mt-5 rounded-2xl p-4 grid grid-cols-2 gap-4"
             style={{ backgroundColor: '#ffffff', border: `1px solid ${C.peach}` }}>
-            <SummaryItem
-              icon={<MapPinIcon className="w-5 h-5" />}
-              label="Location"
-              value={event.location || '—'}
-            />
-            <SummaryItem
-              icon={<CalendarDaysIcon className="w-5 h-5" />}
-              label="Date"
-              value={dateInfo ? dateInfo.date : '—'}
-              sub={dateInfo ? dateInfo.dayOfWeek : null}
-            />
-            <SummaryItem
-              icon={<ClockSvg />}
-              label="Time"
-              value={dateInfo ? dateInfo.time : '—'}
-            />
-            <SummaryItem
-              icon={<UserGroupIcon className="w-5 h-5" />}
-              label="Volunteers"
-              value={assignedVolunteerCount !== null ? `${assignedVolunteerCount}` : '—'}
-            />
+            <SummaryItem icon={<MapPinIcon className="w-5 h-5" />} label="Location" value={event.location || '—'} />
+            <SummaryItem icon={<CalendarDaysIcon className="w-5 h-5" />} label="Date" value={dateInfo ? dateInfo.date : '—'} sub={dateInfo ? dateInfo.dayOfWeek : null} />
+            <SummaryItem icon={<ClockSvg />} label="Time" value={dateInfo ? dateInfo.time : '—'} />
+            <SummaryItem icon={<UserGroupIcon className="w-5 h-5" />} label="Volunteers" value={assignedVolunteerCount !== null ? `${assignedVolunteerCount}` : '—'} />
           </div>
 
-          {/* ── Navigation cards ── */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5">
-            {NAV_CARDS.filter(card =>
-              (card.id !== 'dance' || event.event_type === 'temple_main') &&
-              (card.id !== 'participants' || event.event_type === 'retreat')
-            ).map(card => {
+          {/* ── Mobile horizontal tab row ── */}
+          <div className="md:hidden overflow-x-auto px-4 pt-4 pb-1" style={{ borderBottom: `1px solid ${C.peach}` }}>
+            <div className="flex gap-2 min-w-max pb-2">
+              {visibleNavCards.map(card => {
+                const active = activeSection === card.id
+                return (
+                  <button key={card.id} onClick={() => setActiveSection(card.id)}
+                    className="flex flex-col items-center gap-1 px-3 py-2 rounded-2xl transition-all"
+                    style={{ backgroundColor: active ? '#FEF0EE' : 'transparent' }}>
+                    <div className="w-10 h-10 rounded-2xl flex items-center justify-center"
+                      style={{ backgroundColor: active ? '#FFE8E0' : '#F5F0EB', color: active ? C.orange : C.muted }}>
+                      <card.Icon size={18} />
+                    </div>
+                    <span className="text-[10px] font-semibold whitespace-nowrap"
+                      style={{ color: active ? C.orange : C.muted }}>
+                      {card.label}
+                    </span>
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+
+          {/* ── Desktop nav cards grid ── */}
+          <div className="hidden md:grid grid-cols-2 sm:grid-cols-4 gap-3 mx-6 mt-5 mb-5">
+            {visibleNavCards.map(card => {
               const active = activeSection === card.id
-              const subtitle =
-                card.id === 'todo' && todoCount !== null
-                  ? `${todoCount} task${todoCount !== 1 ? 's' : ''}`
-                  : card.id === 'volunteer' && volunteerCount !== null
-                  ? `${volunteerCount} role${volunteerCount !== 1 ? 's' : ''}`
-                  : card.id === 'dance' && danceCount !== null
-                  ? `${danceCount} participant${danceCount !== 1 ? 's' : ''}`
-                  : card.id === 'agenda' && agendaCount !== null
-                  ? `${agendaCount} item${agendaCount !== 1 ? 's' : ''}`
-                  : card.id === 'participants' && participantsCount !== null
-                  ? `${participantsCount} participant${participantsCount !== 1 ? 's' : ''}`
-                  : card.id === 'documents' && documentsCount !== null
-                  ? `${documentsCount} file${documentsCount !== 1 ? 's' : ''}`
-                  : card.subtitle
               return (
                 <button key={card.id} onClick={() => toggleSection(card.id)}
                   className="flex items-center gap-2 px-3 py-3 rounded-2xl text-left transition-all"
@@ -3703,7 +3743,7 @@ export default function EventModal({ event, onClose, onEdit }) {
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="font-semibold whitespace-nowrap" style={{ color: active ? C.orange : C.text, fontSize: '0.78rem' }}>{card.label}</p>
-                    <p className="mt-0.5 whitespace-nowrap" style={{ color: C.faint, fontSize: '0.7rem' }}>{subtitle}</p>
+                    <p className="mt-0.5 whitespace-nowrap" style={{ color: C.faint, fontSize: '0.7rem' }}>{getSubtitle(card)}</p>
                   </div>
                   <ChevronRightIcon className="w-3.5 h-3.5 shrink-0 transition-transform"
                     style={{ color: active ? C.orange : C.faint, transform: active ? 'rotate(90deg)' : 'none' }} />
@@ -3712,17 +3752,24 @@ export default function EventModal({ event, onClose, onEdit }) {
             })}
           </div>
 
-          {/* ── Section content ── */}
-          {activeSection && (
-            <div className="rounded-2xl p-5" style={{ backgroundColor: '#FFF7F3', border: `1px solid ${C.peach}` }}>
-              {activeSection === 'todo'      && <TodoSection eventId={event.id} onCountChange={handleTodoCount} />}
-              {activeSection === 'volunteer' && <VolunteerSection eventId={event.id} onCountChange={handleVolunteerCount} onAssignedCountChange={handleAssignedVolunteerCount} />}
-              {activeSection === 'dance' && event.event_type === 'temple_main' && <DanceTeamSection eventId={event.id} onCountChange={handleDanceCount} />}
-              {activeSection === 'agenda'       && <AgendaSection eventId={event.id} eventName={event.title} event={event} onCountChange={handleAgendaCount} />}
-              {activeSection === 'participants' && event.event_type === 'retreat' && <RetreatParticipantsSection eventId={event.id} onCountChange={handleParticipantsCount} />}
-              {activeSection === 'documents' && <DocumentsSection eventId={event.id} eventName={event.title} onCountChange={handleDocumentsCount} />}
-            </div>
-          )}
+          {/* ── Mobile section content (always visible, switches with tab) ── */}
+          <div className="md:hidden p-4 pt-4">
+            {activeSection && (
+              <div className="rounded-2xl p-4" style={{ backgroundColor: '#FFF7F3', border: `1px solid ${C.peach}` }}>
+                {sectionContent}
+              </div>
+            )}
+          </div>
+
+          {/* ── Desktop section content ── */}
+          <div className="hidden md:block mx-6 mb-6">
+            {activeSection && (
+              <div className="rounded-2xl p-5" style={{ backgroundColor: '#FFF7F3', border: `1px solid ${C.peach}` }}>
+                {sectionContent}
+              </div>
+            )}
+          </div>
+
         </div>
       </div>
     </div>

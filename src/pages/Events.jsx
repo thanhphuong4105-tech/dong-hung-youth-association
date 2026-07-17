@@ -414,8 +414,15 @@ export default function Events() {
       {/* ── Mobile layout ── */}
       <div className="block md:hidden" style={{ backgroundColor: '#FFF7F3', minHeight: '100vh', paddingBottom: 'calc(80px + env(safe-area-inset-bottom))' }}>
         {/* Header */}
-        <div className="px-4 pt-5 pb-3">
+        <div className="px-4 pt-5 pb-3 flex items-center justify-between gap-3">
           <h1 className="text-2xl font-extrabold" style={{ color: '#4F252A', fontFamily: "'Nunito', sans-serif" }}>Events</h1>
+          {canManage && (
+            <button onClick={() => setShowTypePicker(true)}
+              className="shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold text-white"
+              style={{ backgroundColor: '#F1745E' }}>
+              <PlusIcon className="w-3.5 h-3.5" /> New Event
+            </button>
+          )}
         </div>
 
         {/* Search + filter */}
@@ -430,17 +437,6 @@ export default function Events() {
             <FunnelIcon className="w-4 h-4" style={{ color: '#A08070' }} />
           </button>
         </div>
-
-        {/* + New Event button */}
-        {canManage && (
-          <div className="px-4 mb-4">
-            <button onClick={() => setShowTypePicker(true)}
-              className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl text-sm font-bold text-white"
-              style={{ backgroundColor: '#F1745E' }}>
-              <PlusIcon className="w-4 h-4" /> New Event
-            </button>
-          </div>
-        )}
 
         {/* Upcoming / Past tabs */}
         <div className="px-4 flex gap-2 mb-4">

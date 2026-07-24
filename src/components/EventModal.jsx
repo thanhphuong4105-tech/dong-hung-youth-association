@@ -3430,7 +3430,13 @@ function RetreatParticipantsSection({ eventId, eventName, onCountChange }) {
   function printParticipants() {
     function fmtDate(d) {
       if (!d) return ''
-      try { return new Date(d + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) } catch { return d }
+      try {
+        const dt = new Date(d + 'T00:00:00')
+        const mm = String(dt.getMonth() + 1).padStart(2, '0')
+        const dd = String(dt.getDate()).padStart(2, '0')
+        const yyyy = dt.getFullYear()
+        return `${mm}/${dd}/${yyyy}`
+      } catch { return d }
     }
     function calcAge(birthday) {
       if (!birthday) return ''
@@ -3451,19 +3457,19 @@ function RetreatParticipantsSection({ eventId, eventName, onCountChange }) {
         .map(ph => `<div style="white-space:nowrap">${ph}</div>`).join('') || '—'
       const hasAllergy = p.allergy && p.allergy.trim() && p.allergy.toLowerCase() !== 'none' && p.allergy.toLowerCase() !== 'n/a'
       const allergyText = hasAllergy ? `<span style="font-weight:600">${p.allergy}</span>` : 'None'
-      const paidText = p.paid ? '<span style="color:#15803D;font-weight:700">✓ Paid</span>' : '<span style="color:#999">—</span>'
-      const rowBg = i % 2 === 1 ? '#f5f5f5' : '#fff'
+      const paidText = p.paid ? '<span style="color:#000;font-weight:700;white-space:nowrap">✓ Paid</span>' : '<span style="color:#999">—</span>'
+      const rowBg = i % 2 === 1 ? '#f9f9f9' : '#fff'
       return `<tr style="background:${rowBg}">
-        <td style="text-align:center;font-size:12px">${i + 1}</td>
-        <td><div style="font-weight:600;white-space:nowrap">${p.name || '—'}</div></td>
-        <td style="text-align:center">${calcAge(p.birthday)}</td>
-        <td style="white-space:nowrap">${fmtDate(p.birthday)}</td>
-        <td>${parentNames}</td>
-        <td>${phones}</td>
-        <td>${allergyText}</td>
-        <td style="white-space:nowrap">${p.clothesSize || '—'}</td>
-        <td>${paidText}</td>
-        <td style="color:#555;font-size:11px">${p.notes || ''}</td>
+        <td style="text-align:center;vertical-align:middle">${i + 1}</td>
+        <td style="vertical-align:middle"><div style="font-weight:600;white-space:nowrap">${p.name || '—'}</div></td>
+        <td style="text-align:center;vertical-align:middle">${calcAge(p.birthday)}</td>
+        <td style="white-space:nowrap;vertical-align:middle">${fmtDate(p.birthday)}</td>
+        <td style="vertical-align:middle">${parentNames}</td>
+        <td style="vertical-align:middle">${phones}</td>
+        <td style="vertical-align:middle">${allergyText}</td>
+        <td style="white-space:nowrap;vertical-align:middle;text-align:center">${p.clothesSize || '—'}</td>
+        <td style="vertical-align:middle;text-align:center">${paidText}</td>
+        <td style="color:#555;font-size:11px;vertical-align:middle">${p.notes || ''}</td>
       </tr>`
     }).join('')
 
@@ -3490,7 +3496,7 @@ function RetreatParticipantsSection({ eventId, eventName, onCountChange }) {
   .class-header { font-size: 16px; font-weight: 700; padding: 6px 12px; background: #e8e8e8; color: #000; border-bottom: 1.5px solid #000; font-family: Arial, sans-serif; }
   table { width: 100%; border-collapse: collapse; font-size: 11px; font-family: Arial, sans-serif; color: #000; }
   th { padding: 6px 8px; text-align: left; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: #000; background: #f0f0f0; border-bottom: 1px solid #000; white-space: nowrap; }
-  td { padding: 6px 8px; vertical-align: top; border-bottom: 1px solid #e0e0e0; color: #000; font-size: 11px; }
+  td { padding: 6px 8px; vertical-align: middle; border-bottom: 1px solid #e0e0e0; color: #000; font-size: 11px; }
   tr:last-child td { border-bottom: none; }
   tr:nth-child(even) td { background: #f9f9f9; }
   @media print {

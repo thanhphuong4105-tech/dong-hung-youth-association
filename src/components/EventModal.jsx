@@ -3707,7 +3707,6 @@ function RetreatParticipantsSection({ eventId, eventName, onCountChange }) {
                   <p className="text-sm font-semibold" style={{ color: form.paid ? '#15803D' : C.text }}>
                     {form.paid ? 'Paid ✓' : 'Mark as Paid'}
                   </p>
-                  <p className="text-xs" style={{ color: C.faint }}>Toggle to track payment status</p>
                 </div>
               </button>
 

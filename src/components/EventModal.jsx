@@ -3445,19 +3445,21 @@ function RetreatParticipantsSection({ eventId, eventName, onCountChange }) {
 
     const rows = participants.map((p, i) => {
       const guardians = p.parents?.filter(g => g.name) || []
-      const parentNames = guardians.map(g => g.name).filter(Boolean).join('<br>')
-      const phones = guardians.map(g => g.phone).filter(Boolean).join('<br>')
+      const parentNames = guardians.map(g => g.name).filter(Boolean)
+        .map(n => `<div style="white-space:nowrap">${n}</div>`).join('') || '—'
+      const phones = guardians.map(g => g.phone).filter(Boolean)
+        .map(ph => `<div style="white-space:nowrap">${ph}</div>`).join('') || '—'
       const hasAllergy = p.allergy && p.allergy.trim() && p.allergy.toLowerCase() !== 'none' && p.allergy.toLowerCase() !== 'n/a'
       const allergyText = hasAllergy ? `<span style="font-weight:600">${p.allergy}</span>` : 'None'
       const paidText = p.paid ? '<span style="color:#15803D;font-weight:700">✓ Paid</span>' : '<span style="color:#999">—</span>'
       const rowBg = i % 2 === 1 ? '#f5f5f5' : '#fff'
       return `<tr style="background:${rowBg}">
         <td style="text-align:center;font-size:12px">${i + 1}</td>
-        <td><div style="font-weight:600">${p.name || '—'}</div></td>
+        <td><div style="font-weight:600;white-space:nowrap">${p.name || '—'}</div></td>
         <td style="text-align:center">${calcAge(p.birthday)}</td>
-        <td>${fmtDate(p.birthday)}</td>
-        <td>${parentNames || '—'}</td>
-        <td>${phones || '—'}</td>
+        <td style="white-space:nowrap">${fmtDate(p.birthday)}</td>
+        <td>${parentNames}</td>
+        <td>${phones}</td>
         <td>${allergyText}</td>
         <td>${paidText}</td>
         <td style="color:#555;font-size:11px">${p.notes || ''}</td>

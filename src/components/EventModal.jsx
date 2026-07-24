@@ -3341,7 +3341,7 @@ function RetreatParticipantsSection({ eventId, eventName, onCountChange }) {
       if (!a.birthday && !b.birthday) return 0
       if (!a.birthday) return 1
       if (!b.birthday) return -1
-      return new Date(a.birthday) - new Date(b.birthday)
+      return new Date(b.birthday) - new Date(a.birthday)
     })
     setParticipants(rows)
     onCountChange(rows.length)

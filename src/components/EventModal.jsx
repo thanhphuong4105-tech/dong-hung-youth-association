@@ -3337,7 +3337,12 @@ function RetreatParticipantsSection({ eventId, eventName, onCountChange }) {
       .eq('event_id', eventId)
       .order('sort_order')
       .order('created_at')
-    const rows = data || []
+    const rows = (data || []).slice().sort((a, b) => {
+      if (!a.birthday && !b.birthday) return 0
+      if (!a.birthday) return 1
+      if (!b.birthday) return -1
+      return new Date(a.birthday) - new Date(b.birthday)
+    })
     setParticipants(rows)
     onCountChange(rows.length)
     setLoading(false)

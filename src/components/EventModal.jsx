@@ -3688,27 +3688,6 @@ function RetreatParticipantsSection({ eventId, eventName, onCountChange }) {
                 </PField>
               </div>
 
-              {/* Parents / Guardians */}
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-extrabold uppercase tracking-wide" style={{ color: C.muted }}>Parents / Guardians</span>
-                  <button type="button" onClick={addParent}
-                    className="text-xs font-semibold flex items-center gap-1 hover:opacity-70" style={{ color: C.orange }}>
-                    <PlusIcon className="w-3.5 h-3.5" /> Add Parent
-                  </button>
-                </div>
-                {parents.map((p, i) => (
-                  <ParticipantParentEntry key={i} parent={p} index={i} onChange={updateParent} onRemove={removeParent} showRemove={parents.length > 1} />
-                ))}
-              </div>
-
-              {/* Notes */}
-              <PField label="Notes (optional)">
-                <textarea name="notes" value={form.notes} onChange={hc}
-                  placeholder="Any additional notes…" rows={2}
-                  style={{ ...pInput, resize: 'none' }} />
-              </PField>
-
               {/* Paid */}
               <button type="button" onClick={() => setForm(f => ({ ...f, paid: !f.paid }))}
                 className="flex items-center gap-3 px-4 py-3 rounded-2xl w-full text-left transition-all"
@@ -3731,6 +3710,27 @@ function RetreatParticipantsSection({ eventId, eventName, onCountChange }) {
                   <p className="text-xs" style={{ color: C.faint }}>Toggle to track payment status</p>
                 </div>
               </button>
+
+              {/* Parents / Guardians */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-extrabold uppercase tracking-wide" style={{ color: C.muted }}>Parents / Guardians</span>
+                  <button type="button" onClick={addParent}
+                    className="text-xs font-semibold flex items-center gap-1 hover:opacity-70" style={{ color: C.orange }}>
+                    <PlusIcon className="w-3.5 h-3.5" /> Add Parent
+                  </button>
+                </div>
+                {parents.map((p, i) => (
+                  <ParticipantParentEntry key={i} parent={p} index={i} onChange={updateParent} onRemove={removeParent} showRemove={parents.length > 1} />
+                ))}
+              </div>
+
+              {/* Notes */}
+              <PField label="Notes (optional)">
+                <textarea name="notes" value={form.notes} onChange={hc}
+                  placeholder="Any additional notes…" rows={2}
+                  style={{ ...pInput, resize: 'none' }} />
+              </PField>
             </div>
 
             {/* Footer */}

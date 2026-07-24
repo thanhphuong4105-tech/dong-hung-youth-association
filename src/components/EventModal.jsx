@@ -3539,10 +3539,10 @@ function RetreatParticipantsSection({ eventId, eventName, onCountChange }) {
           <th style="width:80px">Birthday</th>
           <th style="width:140px">Parent / Guardian</th>
           <th style="width:100px">Phone</th>
-          <th style="width:80px">Allergy</th>
-          <th style="width:40px">Size</th>
-          <th style="width:45px">Paid</th>
-          <th>Notes</th>
+          <th style="width:100px">Allergy</th>
+          <th style="width:60px">Size</th>
+          <th style="width:60px">Paid</th>
+          <th style="width:120px">Notes</th>
         </tr></thead>
         <tbody>${rows || '<tr><td colspan="10" style="text-align:center;padding:20px;color:#888">No participants yet.</td></tr>'}</tbody>
       </table>

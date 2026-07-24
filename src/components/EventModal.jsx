@@ -3481,32 +3481,28 @@ function RetreatParticipantsSection({ eventId, eventName, onCountChange }) {
   #btn-print { background: #F1745E; color: #fff; }
   #btn-zoom-in, #btn-zoom-out { background: #555; color: #fff; font-size: 18px; padding: 5px 14px; }
   #zoom-label { color: #ccc; font-size: 13px; min-width: 44px; text-align: center; }
-  #preview-area { padding: 72px 24px 40px; display: flex; flex-direction: column; align-items: center; gap: 24px; }
-  .page-sheet { background: #fff; width: 257mm; padding: 12mm 14mm; transform-origin: top center; box-shadow: 0 4px 32px rgba(0,0,0,0.5); }
+  #preview-area { padding: 72px 40px 60px; display: flex; flex-direction: column; align-items: flex-start; overflow-x: auto; }
+  .sheet-wrap { display: inline-block; }
+  .page-sheet { background: #fff; width: 277mm; padding: 12mm 14mm; box-shadow: 0 4px 32px rgba(0,0,0,0.5); }
   .doc-title { font-family: Arial, sans-serif; font-weight: 800; font-size: 22px; color: #000; margin-bottom: 2px; text-align: center; text-transform: uppercase; }
   .doc-sub { font-size: 13px; color: #333; margin-bottom: 18px; text-align: center; font-weight: 700; }
   .class-block { border: 1.5px solid #000; }
-  .class-header { font-size: 20px; font-weight: 700; padding: 6px 12px; background: #e8e8e8; color: #000; border-bottom: 1.5px solid #000; font-family: Arial, sans-serif; }
-  table { width: 100%; border-collapse: collapse; font-size: 12px; font-family: Arial, sans-serif; color: #000; }
-  th { padding: 7px 12px; text-align: left; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: #000; background: #f0f0f0; border-bottom: 1px solid #000; white-space: nowrap; }
-  td { padding: 8px 12px; vertical-align: middle; border-bottom: 1px solid #ccc; color: #000; font-size: 12px; }
+  .class-header { font-size: 16px; font-weight: 700; padding: 6px 12px; background: #e8e8e8; color: #000; border-bottom: 1.5px solid #000; font-family: Arial, sans-serif; }
+  table { width: 100%; border-collapse: collapse; font-size: 11px; font-family: Arial, sans-serif; color: #000; }
+  th { padding: 6px 8px; text-align: left; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: #000; background: #f0f0f0; border-bottom: 1px solid #000; white-space: nowrap; }
+  td { padding: 6px 8px; vertical-align: top; border-bottom: 1px solid #e0e0e0; color: #000; font-size: 11px; }
   tr:last-child td { border-bottom: none; }
+  tr:nth-child(even) td { background: #f9f9f9; }
   @media print {
     #toolbar { display: none !important; }
     body { background: #fff !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-    *, *::before, *::after { color: #000 !important; -webkit-text-fill-color: #000 !important; }
-    #preview-area { padding: 0 !important; gap: 0 !important; display: block !important; }
-    .page-sheet { width: 100% !important; padding: 10mm 12mm !important; box-shadow: none !important; transform: none !important; background: #fff !important; }
-    .doc-title { font-size: 22px !important; font-weight: 800 !important; text-align: center !important; text-transform: uppercase !important; margin-bottom: 2px !important; }
-    .doc-sub { font-size: 13px !important; font-weight: 700 !important; text-align: center !important; margin-bottom: 18px !important; }
-    .class-block { border: 1.5px solid #000 !important; }
-    .class-header { font-size: 20px !important; font-weight: 700 !important; padding: 6px 12px !important; background: #e8e8e8 !important; border-bottom: 1.5px solid #000 !important; }
-    table { font-size: 12px !important; border-collapse: collapse !important; }
-    th { font-size: 12px !important; font-weight: 700 !important; padding: 7px 12px !important; background: #f0f0f0 !important; border-bottom: 1px solid #000 !important; text-transform: uppercase !important; }
-    td { font-size: 12px !important; padding: 8px 12px !important; border-bottom: 1px solid #ccc !important; }
-    tr:nth-child(odd) td { background: #fff !important; }
-    tr:nth-child(even) td { background: #f5f5f5 !important; }
-    @page { margin: 10mm 12mm; size: A4 landscape; }
+    #preview-area { padding: 0 !important; overflow: visible !important; }
+    .sheet-wrap { display: block !important; zoom: 1 !important; }
+    .page-sheet { width: 100% !important; padding: 8mm 10mm !important; box-shadow: none !important; zoom: 1 !important; }
+    table { font-size: 10pt !important; }
+    th { font-size: 9pt !important; padding: 5px 6px !important; }
+    td { font-size: 10pt !important; padding: 5px 6px !important; }
+    @page { margin: 8mm 10mm; size: A4 landscape; }
   }
 </style>
 </head>
@@ -3518,6 +3514,7 @@ function RetreatParticipantsSection({ eventId, eventName, onCountChange }) {
   <button id="btn-print">🖨 Print</button>
 </div>
 <div id="preview-area">
+  <div class="sheet-wrap">
   <div class="page-sheet">
     <div class="doc-title">${title} Participant List</div>
     <div class="doc-sub">Danh Sách Học Sinh Khóa Tu</div>
@@ -3529,17 +3526,18 @@ function RetreatParticipantsSection({ eventId, eventName, onCountChange }) {
       </table>
     </div>
   </div>
+  </div>
 </div>
 <script>
-  var zoom = 0.85;
+  var zoomLevel = 0.85;
   function applyZoom() {
-    var sheets = document.querySelectorAll('.page-sheet');
-    sheets.forEach(function(s) { s.style.transform = 'scale(' + zoom + ')'; });
-    document.getElementById('zoom-label').textContent = Math.round(zoom * 100) + '%';
+    var wrap = document.querySelector('.sheet-wrap');
+    wrap.style.zoom = zoomLevel;
+    document.getElementById('zoom-label').textContent = Math.round(zoomLevel * 100) + '%';
   }
   applyZoom();
-  document.getElementById('btn-zoom-in').onclick = function() { zoom = Math.min(zoom + 0.1, 2); applyZoom(); };
-  document.getElementById('btn-zoom-out').onclick = function() { zoom = Math.max(zoom - 0.1, 0.3); applyZoom(); };
+  document.getElementById('btn-zoom-in').onclick = function() { zoomLevel = Math.min(zoomLevel + 0.1, 2); applyZoom(); };
+  document.getElementById('btn-zoom-out').onclick = function() { zoomLevel = Math.max(zoomLevel - 0.1, 0.3); applyZoom(); };
   document.getElementById('btn-print').onclick = function() { window.print(); };
 </script>
 </body>

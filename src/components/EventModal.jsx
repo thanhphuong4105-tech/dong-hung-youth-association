@@ -3461,6 +3461,7 @@ function RetreatParticipantsSection({ eventId, eventName, onCountChange }) {
         <td>${parentNames}</td>
         <td>${phones}</td>
         <td>${allergyText}</td>
+        <td style="white-space:nowrap">${p.clothesSize || '—'}</td>
         <td>${paidText}</td>
         <td style="color:#555;font-size:11px">${p.notes || ''}</td>
       </tr>`
@@ -3481,7 +3482,7 @@ function RetreatParticipantsSection({ eventId, eventName, onCountChange }) {
   #btn-zoom-in, #btn-zoom-out { background: #555; color: #fff; font-size: 18px; padding: 5px 14px; }
   #zoom-label { color: #ccc; font-size: 13px; min-width: 44px; text-align: center; }
   #preview-area { padding: 72px 24px 40px; display: flex; flex-direction: column; align-items: center; gap: 24px; }
-  .page-sheet { background: #fff; width: 280mm; padding: 14mm 16mm; transform-origin: top center; box-shadow: 0 4px 32px rgba(0,0,0,0.5); }
+  .page-sheet { background: #fff; width: 257mm; padding: 12mm 14mm; transform-origin: top center; box-shadow: 0 4px 32px rgba(0,0,0,0.5); }
   .doc-title { font-family: Arial, sans-serif; font-weight: 800; font-size: 22px; color: #000; margin-bottom: 2px; text-align: center; text-transform: uppercase; }
   .doc-sub { font-size: 13px; color: #333; margin-bottom: 18px; text-align: center; font-weight: 700; }
   .class-block { border: 1.5px solid #000; }
@@ -3523,8 +3524,8 @@ function RetreatParticipantsSection({ eventId, eventName, onCountChange }) {
     <div class="class-block">
       <div class="class-header">Participants – ${participants.length} total</div>
       <table>
-        <thead><tr><th>No.</th><th>Name</th><th>Age</th><th>Birthday</th><th>Parent / Guardian</th><th>Phone</th><th>Allergy</th><th>Paid</th><th>Notes</th></tr></thead>
-        <tbody>${rows || '<tr><td colspan="8" style="text-align:center;padding:20px;color:#888">No participants yet.</td></tr>'}</tbody>
+        <thead><tr><th>No.</th><th>Name</th><th>Age</th><th>Birthday</th><th>Parent / Guardian</th><th>Phone</th><th>Allergy</th><th>Size</th><th>Paid</th><th>Notes</th></tr></thead>
+        <tbody>${rows || '<tr><td colspan="10" style="text-align:center;padding:20px;color:#888">No participants yet.</td></tr>'}</tbody>
       </table>
     </div>
   </div>

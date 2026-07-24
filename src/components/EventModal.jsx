@@ -3310,7 +3310,7 @@ function ParticipantParentEntry({ parent, index, onChange, onRemove, showRemove 
 
 // ─── Retreat Participants Section ─────────────────────────────────────────────
 function RetreatParticipantsSection({ eventId, eventName, onCountChange }) {
-  const EMPTY_FORM = { firstName: '', lastName: '', birthday: '', allergy: '', classId: '', notes: '' }
+  const EMPTY_FORM = { firstName: '', lastName: '', birthday: '', allergy: '', classId: '', notes: '', paid: false }
   const EMPTY_PARENT = { name: '', phone: '', email: '' }
 
   const [participants, setParticipants] = useState([])
@@ -3361,6 +3361,7 @@ function RetreatParticipantsSection({ eventId, eventName, onCountChange }) {
       allergy: p.allergy || '',
       classId: p.classId || '',
       notes: p.notes || '',
+      paid: p.paid ?? false,
     })
     setParents(p.parents?.length ? p.parents.map(g => ({ name: g.name || '', phone: g.phone || '', email: g.email || '' })) : [{ ...EMPTY_PARENT }])
     setSuggestions([])
@@ -3405,6 +3406,7 @@ function RetreatParticipantsSection({ eventId, eventName, onCountChange }) {
       notes: form.notes.trim(),
       parents: cleanParents,
       classId: form.classId || null,
+      paid: form.paid,
     }
     if (editingId) {
       await supabase.from('retreat_participants').update(payload).eq('id', editingId)
@@ -3445,6 +3447,7 @@ function RetreatParticipantsSection({ eventId, eventName, onCountChange }) {
       const phones = guardians.map(g => g.phone).filter(Boolean).join('<br>')
       const hasAllergy = p.allergy && p.allergy.trim() && p.allergy.toLowerCase() !== 'none' && p.allergy.toLowerCase() !== 'n/a'
       const allergyText = hasAllergy ? `<span style="font-weight:600">${p.allergy}</span>` : 'None'
+      const paidText = p.paid ? '<span style="color:#15803D;font-weight:700">✓ Paid</span>' : '<span style="color:#999">—</span>'
       const rowBg = i % 2 === 1 ? '#f5f5f5' : '#fff'
       return `<tr style="background:${rowBg}">
         <td style="text-align:center;font-size:12px">${i + 1}</td>
@@ -3454,6 +3457,7 @@ function RetreatParticipantsSection({ eventId, eventName, onCountChange }) {
         <td>${parentNames || '—'}</td>
         <td>${phones || '—'}</td>
         <td>${allergyText}</td>
+        <td>${paidText}</td>
         <td style="color:#555;font-size:11px">${p.notes || ''}</td>
       </tr>`
     }).join('')
@@ -3515,7 +3519,7 @@ function RetreatParticipantsSection({ eventId, eventName, onCountChange }) {
     <div class="class-block">
       <div class="class-header">Participants – ${participants.length} total</div>
       <table>
-        <thead><tr><th>No.</th><th>Name</th><th>Age</th><th>Birthday</th><th>Parent / Guardian</th><th>Phone</th><th>Allergy</th><th>Notes</th></tr></thead>
+        <thead><tr><th>No.</th><th>Name</th><th>Age</th><th>Birthday</th><th>Parent / Guardian</th><th>Phone</th><th>Allergy</th><th>Paid</th><th>Notes</th></tr></thead>
         <tbody>${rows || '<tr><td colspan="8" style="text-align:center;padding:20px;color:#888">No participants yet.</td></tr>'}</tbody>
       </table>
     </div>
@@ -3586,7 +3590,15 @@ function RetreatParticipantsSection({ eventId, eventName, onCountChange }) {
                   {i + 1}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold" style={{ color: C.text }}>{p.name}</p>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <p className="text-sm font-semibold" style={{ color: C.text }}>{p.name}</p>
+                    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full"
+                      style={p.paid
+                        ? { backgroundColor: '#F0FDF4', color: '#15803D', border: '1px solid #86EFAC' }
+                        : { backgroundColor: '#FFF7F3', color: '#A08070', border: '1px solid #EDD0AC' }}>
+                      {p.paid ? '✓ Paid' : 'Unpaid'}
+                    </span>
+                  </div>
                   <div className="flex flex-wrap gap-x-3 gap-y-0.5 mt-0.5">
                     {p.birthday && <p className="text-xs" style={{ color: C.faint }}>DOB: {p.birthday}</p>}
                     {cls && <p className="text-xs" style={{ color: C.faint }}>{cls.className}</p>}
@@ -3696,6 +3708,29 @@ function RetreatParticipantsSection({ eventId, eventName, onCountChange }) {
                   placeholder="Any additional notes…" rows={2}
                   style={{ ...pInput, resize: 'none' }} />
               </PField>
+
+              {/* Paid */}
+              <button type="button" onClick={() => setForm(f => ({ ...f, paid: !f.paid }))}
+                className="flex items-center gap-3 px-4 py-3 rounded-2xl w-full text-left transition-all"
+                style={{
+                  backgroundColor: form.paid ? '#F0FDF4' : '#ffffff',
+                  border: `1.5px solid ${form.paid ? '#4ADE80' : C.peach}`,
+                }}>
+                <div className="w-5 h-5 rounded flex items-center justify-center shrink-0 transition-all"
+                  style={{ backgroundColor: form.paid ? '#22C55E' : '#ffffff', border: `2px solid ${form.paid ? '#22C55E' : C.peach}` }}>
+                  {form.paid && (
+                    <svg width="11" height="11" viewBox="0 0 12 12" fill="none">
+                      <path d="M2 6l3 3 5-5" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                  )}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold" style={{ color: form.paid ? '#15803D' : C.text }}>
+                    {form.paid ? 'Paid ✓' : 'Mark as Paid'}
+                  </p>
+                  <p className="text-xs" style={{ color: C.faint }}>Toggle to track payment status</p>
+                </div>
+              </button>
             </div>
 
             {/* Footer */}

@@ -3309,7 +3309,7 @@ function ParticipantParentEntry({ parent, index, onChange, onRemove, showRemove 
 }
 
 // ─── Retreat Participants Section ─────────────────────────────────────────────
-function RetreatParticipantsSection({ eventId, onCountChange }) {
+function RetreatParticipantsSection({ eventId, eventName, onCountChange }) {
   const EMPTY_FORM = { firstName: '', lastName: '', birthday: '', allergy: '', classId: '', notes: '' }
   const EMPTY_PARENT = { name: '', phone: '', email: '' }
 
@@ -3423,17 +3423,146 @@ function RetreatParticipantsSection({ eventId, onCountChange }) {
     fetchParticipants()
   }
 
+  function printParticipants() {
+    function fmtDate(d) {
+      if (!d) return ''
+      try { return new Date(d + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) } catch { return d }
+    }
+    function calcAge(birthday) {
+      if (!birthday) return ''
+      try {
+        const today = new Date(), dob = new Date(birthday + 'T00:00:00')
+        let a = today.getFullYear() - dob.getFullYear()
+        const m = today.getMonth() - dob.getMonth()
+        if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) a--
+        return a >= 0 ? a : ''
+      } catch { return '' }
+    }
+
+    const rows = participants.map((p, i) => {
+      const guardians = p.parents?.filter(g => g.name) || []
+      const parentNames = guardians.map(g => g.name).filter(Boolean).join('<br>')
+      const phones = guardians.map(g => g.phone).filter(Boolean).join('<br>')
+      const hasAllergy = p.allergy && p.allergy.trim() && p.allergy.toLowerCase() !== 'none' && p.allergy.toLowerCase() !== 'n/a'
+      const allergyText = hasAllergy ? `<span style="font-weight:600">${p.allergy}</span>` : 'None'
+      const rowBg = i % 2 === 1 ? '#f5f5f5' : '#fff'
+      return `<tr style="background:${rowBg}">
+        <td style="text-align:center;font-size:12px">${i + 1}</td>
+        <td><div style="font-weight:600">${p.name || '—'}</div></td>
+        <td style="text-align:center">${calcAge(p.birthday)}</td>
+        <td>${fmtDate(p.birthday)}</td>
+        <td>${parentNames || '—'}</td>
+        <td>${phones || '—'}</td>
+        <td>${allergyText}</td>
+        <td style="color:#555;font-size:11px">${p.notes || ''}</td>
+      </tr>`
+    }).join('')
+
+    const title = eventName || 'Retreat'
+    const html = `<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8"/>
+<title>Participant List – ${title}</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #2a2a2a; font-family: Arial, sans-serif; }
+  #toolbar { position: fixed; top: 0; left: 0; right: 0; height: 52px; z-index: 100; background: #3a3a3a; display: flex; align-items: center; justify-content: center; gap: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.4); }
+  #toolbar button { padding: 7px 18px; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; }
+  #btn-print { background: #F1745E; color: #fff; }
+  #btn-zoom-in, #btn-zoom-out { background: #555; color: #fff; font-size: 18px; padding: 5px 14px; }
+  #zoom-label { color: #ccc; font-size: 13px; min-width: 44px; text-align: center; }
+  #preview-area { padding: 72px 24px 40px; display: flex; flex-direction: column; align-items: center; gap: 24px; }
+  .page-sheet { background: #fff; width: 280mm; padding: 14mm 16mm; transform-origin: top center; box-shadow: 0 4px 32px rgba(0,0,0,0.5); }
+  .doc-title { font-family: Arial, sans-serif; font-weight: 800; font-size: 22px; color: #000; margin-bottom: 2px; text-align: center; text-transform: uppercase; }
+  .doc-sub { font-size: 13px; color: #333; margin-bottom: 18px; text-align: center; font-weight: 700; }
+  .class-block { border: 1.5px solid #000; }
+  .class-header { font-size: 20px; font-weight: 700; padding: 6px 12px; background: #e8e8e8; color: #000; border-bottom: 1.5px solid #000; font-family: Arial, sans-serif; }
+  table { width: 100%; border-collapse: collapse; font-size: 12px; font-family: Arial, sans-serif; color: #000; }
+  th { padding: 7px 12px; text-align: left; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: #000; background: #f0f0f0; border-bottom: 1px solid #000; white-space: nowrap; }
+  td { padding: 8px 12px; vertical-align: middle; border-bottom: 1px solid #ccc; color: #000; font-size: 12px; }
+  tr:last-child td { border-bottom: none; }
+  @media print {
+    #toolbar { display: none !important; }
+    body { background: #fff !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    *, *::before, *::after { color: #000 !important; -webkit-text-fill-color: #000 !important; }
+    #preview-area { padding: 0 !important; gap: 0 !important; display: block !important; }
+    .page-sheet { width: 100% !important; padding: 10mm 12mm !important; box-shadow: none !important; transform: none !important; background: #fff !important; }
+    .doc-title { font-size: 22px !important; font-weight: 800 !important; text-align: center !important; text-transform: uppercase !important; margin-bottom: 2px !important; }
+    .doc-sub { font-size: 13px !important; font-weight: 700 !important; text-align: center !important; margin-bottom: 18px !important; }
+    .class-block { border: 1.5px solid #000 !important; }
+    .class-header { font-size: 20px !important; font-weight: 700 !important; padding: 6px 12px !important; background: #e8e8e8 !important; border-bottom: 1.5px solid #000 !important; }
+    table { font-size: 12px !important; border-collapse: collapse !important; }
+    th { font-size: 12px !important; font-weight: 700 !important; padding: 7px 12px !important; background: #f0f0f0 !important; border-bottom: 1px solid #000 !important; text-transform: uppercase !important; }
+    td { font-size: 12px !important; padding: 8px 12px !important; border-bottom: 1px solid #ccc !important; }
+    tr:nth-child(odd) td { background: #fff !important; }
+    tr:nth-child(even) td { background: #f5f5f5 !important; }
+    @page { margin: 10mm 12mm; size: A4 landscape; }
+  }
+</style>
+</head>
+<body>
+<div id="toolbar">
+  <button id="btn-zoom-out">−</button>
+  <span id="zoom-label">85%</span>
+  <button id="btn-zoom-in">+</button>
+  <button id="btn-print">🖨 Print</button>
+</div>
+<div id="preview-area">
+  <div class="page-sheet">
+    <div class="doc-title">${title} Participant List</div>
+    <div class="doc-sub">Danh Sách Học Sinh Khóa Tu</div>
+    <div class="class-block">
+      <div class="class-header">Participants – ${participants.length} total</div>
+      <table>
+        <thead><tr><th>No.</th><th>Name</th><th>Age</th><th>Birthday</th><th>Parent / Guardian</th><th>Phone</th><th>Allergy</th><th>Notes</th></tr></thead>
+        <tbody>${rows || '<tr><td colspan="8" style="text-align:center;padding:20px;color:#888">No participants yet.</td></tr>'}</tbody>
+      </table>
+    </div>
+  </div>
+</div>
+<script>
+  var zoom = 0.85;
+  function applyZoom() {
+    var sheets = document.querySelectorAll('.page-sheet');
+    sheets.forEach(function(s) { s.style.transform = 'scale(' + zoom + ')'; });
+    document.getElementById('zoom-label').textContent = Math.round(zoom * 100) + '%';
+  }
+  applyZoom();
+  document.getElementById('btn-zoom-in').onclick = function() { zoom = Math.min(zoom + 0.1, 2); applyZoom(); };
+  document.getElementById('btn-zoom-out').onclick = function() { zoom = Math.max(zoom - 0.1, 0.3); applyZoom(); };
+  document.getElementById('btn-print').onclick = function() { window.print(); };
+</script>
+</body>
+</html>`
+
+    const w = window.open('', '_blank', 'width=1100,height=950')
+    w.document.write(html)
+    w.document.close()
+  }
+
   return (
     <div>
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
         <h3 className="text-base font-bold" style={{ color: C.text }}>
           Participants <span className="text-sm font-normal" style={{ color: C.faint }}>({participants.length})</span>
         </h3>
-        <button onClick={openAdd}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-semibold transition-colors hover:opacity-90"
-          style={{ backgroundColor: C.orange, color: '#fff' }}>
-          <PlusIcon className="w-4 h-4" /> Add Participant
-        </button>
+        <div className="flex items-center gap-2">
+          <button onClick={printParticipants}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-xl border hover:opacity-80 transition-opacity"
+            style={{ borderColor: C.peach, color: C.muted, backgroundColor: '#ffffff' }}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/>
+              <rect x="6" y="14" width="12" height="8"/>
+            </svg>
+            Print
+          </button>
+          <button onClick={openAdd}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-semibold transition-colors hover:opacity-90"
+            style={{ backgroundColor: C.orange, color: '#fff' }}>
+            <PlusIcon className="w-4 h-4" /> Add Participant
+          </button>
+        </div>
       </div>
 
       {loading ? (
@@ -3709,7 +3838,7 @@ export default function EventModal({ event, onClose, onEdit }) {
       {activeSection === 'volunteer'    && <VolunteerSection eventId={event.id} onCountChange={handleVolunteerCount} onAssignedCountChange={handleAssignedVolunteerCount} />}
       {activeSection === 'dance'        && event.event_type === 'temple_main' && <DanceTeamSection eventId={event.id} onCountChange={handleDanceCount} />}
       {activeSection === 'agenda'       && <AgendaSection eventId={event.id} eventName={event.title} event={event} onCountChange={handleAgendaCount} />}
-      {activeSection === 'participants' && event.event_type === 'retreat' && <RetreatParticipantsSection eventId={event.id} onCountChange={handleParticipantsCount} />}
+      {activeSection === 'participants' && event.event_type === 'retreat' && <RetreatParticipantsSection eventId={event.id} eventName={event.title} onCountChange={handleParticipantsCount} />}
       {activeSection === 'documents'    && <DocumentsSection eventId={event.id} eventName={event.title} onCountChange={handleDocumentsCount} />}
     </>
   )

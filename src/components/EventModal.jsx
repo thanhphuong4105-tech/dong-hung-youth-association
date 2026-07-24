@@ -3310,7 +3310,7 @@ function ParticipantParentEntry({ parent, index, onChange, onRemove, showRemove 
 
 // ─── Retreat Participants Section ─────────────────────────────────────────────
 function RetreatParticipantsSection({ eventId, eventName, onCountChange }) {
-  const EMPTY_FORM = { firstName: '', lastName: '', birthday: '', allergy: '', classId: '', notes: '', paid: false }
+  const EMPTY_FORM = { firstName: '', lastName: '', birthday: '', allergy: '', classId: '', notes: '', paid: false, clothesSize: '' }
   const EMPTY_PARENT = { name: '', phone: '', email: '' }
 
   const [participants, setParticipants] = useState([])
@@ -3362,6 +3362,7 @@ function RetreatParticipantsSection({ eventId, eventName, onCountChange }) {
       classId: p.classId || '',
       notes: p.notes || '',
       paid: p.paid ?? false,
+      clothesSize: p.clothesSize || '',
     })
     setParents(p.parents?.length ? p.parents.map(g => ({ name: g.name || '', phone: g.phone || '', email: g.email || '' })) : [{ ...EMPTY_PARENT }])
     setSuggestions([])
@@ -3407,6 +3408,7 @@ function RetreatParticipantsSection({ eventId, eventName, onCountChange }) {
       parents: cleanParents,
       classId: form.classId || null,
       paid: form.paid,
+      clothesSize: form.clothesSize.trim() || null,
     }
     if (editingId) {
       await supabase.from('retreat_participants').update(payload).eq('id', editingId)
@@ -3605,6 +3607,7 @@ function RetreatParticipantsSection({ eventId, eventName, onCountChange }) {
                     {p.allergy && p.allergy.toLowerCase() !== 'none' && (
                       <p className="text-xs font-semibold" style={{ color: '#E06464' }}>⚠ {p.allergy}</p>
                     )}
+                    {p.clothesSize && <p className="text-xs" style={{ color: C.faint }}>👕 {p.clothesSize}</p>}
                   </div>
                   {guardians.length > 0 && (
                     <div className="mt-1 space-y-0.5">
@@ -3687,6 +3690,11 @@ function RetreatParticipantsSection({ eventId, eventName, onCountChange }) {
                   <input name="allergy" value={form.allergy} onChange={hc} placeholder="e.g. Peanuts, None" style={pInput} />
                 </PField>
               </div>
+
+              {/* Clothes Size */}
+              <PField label="Clothes Size">
+                <input name="clothesSize" value={form.clothesSize} onChange={hc} placeholder="e.g. S, M, L, XL, 4T" style={pInput} />
+              </PField>
 
               {/* Paid */}
               <button type="button" onClick={() => setForm(f => ({ ...f, paid: !f.paid }))}

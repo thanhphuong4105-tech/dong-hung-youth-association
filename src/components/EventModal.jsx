@@ -3532,7 +3532,18 @@ function RetreatParticipantsSection({ eventId, eventName, onCountChange }) {
     <div class="class-block">
       <div class="class-header">Participants – ${participants.length} total</div>
       <table>
-        <thead><tr><th>No.</th><th>Name</th><th>Age</th><th>Birthday</th><th>Parent / Guardian</th><th>Phone</th><th>Allergy</th><th>Size</th><th>Paid</th><th>Notes</th></tr></thead>
+        <thead><tr>
+          <th style="width:30px">No.</th>
+          <th style="width:130px">Name</th>
+          <th style="width:30px">Age</th>
+          <th style="width:80px">Birthday</th>
+          <th style="width:140px">Parent / Guardian</th>
+          <th style="width:100px">Phone</th>
+          <th style="width:80px">Allergy</th>
+          <th style="width:40px">Size</th>
+          <th style="width:45px">Paid</th>
+          <th>Notes</th>
+        </tr></thead>
         <tbody>${rows || '<tr><td colspan="10" style="text-align:center;padding:20px;color:#888">No participants yet.</td></tr>'}</tbody>
       </table>
     </div>

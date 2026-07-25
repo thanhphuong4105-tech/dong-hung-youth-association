@@ -521,21 +521,23 @@ function LowStockCard({ inventory, borrows = [], participantMap = {}, onViewAll 
 const PAGE_SIZE = 6
 
 export default function Inventory() {
-  const [inventory,      setInventory]      = useState([])
-  const [borrows,        setBorrows]        = useState([])
-  const [sales,          setSales]          = useState([])
-  const [participantMap, setParticipantMap] = useState({})
-  const [loading,        setLoading]        = useState(true)
+  const [inventory,         setInventory]         = useState([])
+  const [borrows,           setBorrows]           = useState([])
+  const [sales,             setSales]             = useState([])
+  const [participantMap,    setParticipantMap]    = useState({})
+  const [participantSales,  setParticipantSales]  = useState([])
+  const [loading,           setLoading]           = useState(true)
 
   useEffect(() => { fetchAll() }, [])
 
   async function fetchAll() {
     setLoading(true)
-    const [invRes, borRes, salRes, parRes] = await Promise.all([
+    const [invRes, borRes, salRes, parRes, evtRes] = await Promise.all([
       supabase.from('inventory_items').select('*').order('itemName'),
       supabase.from('borrow_records').select('*').order('created_at', { ascending: false }),
       supabase.from('sale_records').select('*').order('created_at', { ascending: false }),
-      supabase.from('retreat_participants').select('uniform, clothesSize').not('uniform', 'is', null),
+      supabase.from('retreat_participants').select('id, name, uniform, clothesSize, event_id').not('uniform', 'is', null),
+      supabase.from('events').select('id, title'),
     ])
     if (!invRes.error) setInventory(invRes.data)
     if (!borRes.error) setBorrows(borRes.data)
@@ -549,6 +551,13 @@ export default function Inventory() {
         }
       })
       setParticipantMap(map)
+      const eventTitles = {}
+      if (!evtRes.error) evtRes.data.forEach(e => { eventTitles[e.id] = e.title })
+      setParticipantSales(
+        parRes.data
+          .filter(p => p.uniform && p.clothesSize)
+          .map(p => ({ ...p, eventTitle: eventTitles[p.event_id] || '' }))
+      )
     }
     setLoading(false)
   }
@@ -907,48 +916,29 @@ export default function Inventory() {
               <table className="w-full text-sm" style={{ borderCollapse: 'collapse' }}>
                 <thead>
                   <tr style={{ backgroundColor: '#FFF0EA', borderBottom: `1.5px solid ${C.beige}` }}>
-                    {['Item Name','Size','Buyer','Event / Occasion','Qty','Price','Sale Date','Notes','Actions'].map(h => (
+                    {['Item Name','Size','Participant','Event','Actions'].map(h => (
                       <th key={h} className="px-4 py-3 text-left text-xs font-extrabold uppercase tracking-wide whitespace-nowrap"
                         style={{ color: C.muted }}>{h}</th>
                     ))}
                   </tr>
                 </thead>
                 <tbody>
-                  {displayedSales.length === 0 ? (
-                    <tr><td colSpan={9} className="py-10 text-center text-sm" style={{ color: C.faint }}>No sold history yet.</td></tr>
-                  ) : displayedSales.map((s, i) => (
-                    <tr key={s.id}
-                      style={{ borderBottom: i < displayedSales.length - 1 ? `1px solid #F5EDE4` : 'none' }}
+                  {participantSales.length === 0 ? (
+                    <tr><td colSpan={5} className="py-10 text-center text-sm" style={{ color: C.faint }}>No participant assignments yet.</td></tr>
+                  ) : participantSales.map((p, i) => (
+                    <tr key={p.id}
+                      style={{ borderBottom: i < participantSales.length - 1 ? `1px solid #F5EDE4` : 'none' }}
                       className="hover:bg-orange-50 transition-colors">
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-2">
-                          <ClothingIcon itemName={s.itemName} color={iconColorFromName(s.itemName)} size={28} />
-                          <span className="font-semibold text-xs whitespace-nowrap" style={{ color: C.burgundy }}>{s.itemName}</span>
+                          <ClothingIcon itemName={p.uniform} color={iconColorFromName(p.uniform)} size={28} />
+                          <span className="font-semibold text-xs whitespace-nowrap" style={{ color: C.burgundy }}>{p.uniform}</span>
                         </div>
                       </td>
-                      <td className="px-4 py-3 text-xs" style={{ color: C.muted }}>{s.size || '—'}</td>
-                      <td className="px-4 py-3 text-xs font-semibold whitespace-nowrap" style={{ color: C.burgundy }}>{s.buyerName}</td>
-                      <td className="px-4 py-3 text-xs whitespace-nowrap" style={{ color: C.muted }}>{s.eventName || '—'}</td>
-                      <td className="px-4 py-3 text-xs text-center font-semibold" style={{ color: C.burgundy }}>{s.quantity}</td>
-                      <td className="px-4 py-3 text-xs whitespace-nowrap font-semibold" style={{ color: s.price ? '#2D7A4F' : C.faint }}>
-                        {s.price ? `$${Number(s.price).toFixed(2)}` : '—'}
-                      </td>
-                      <td className="px-4 py-3 text-xs whitespace-nowrap" style={{ color: C.muted }}>{fmt(s.saleDate)}</td>
-                      <td className="px-4 py-3 text-xs" style={{ color: C.muted }}>{s.notes || '—'}</td>
-                      <td className="px-4 py-3">
-                        <div className="flex items-center gap-1">
-                          <button onClick={() => setEditingSale(s)} title="Edit"
-                            className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-orange-100 transition-colors"
-                            style={{ color: C.muted }}>
-                            <PencilIcon className="w-3.5 h-3.5" />
-                          </button>
-                          <button onClick={() => setDeleteSale(s)} title="Delete"
-                            className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-red-50 transition-colors"
-                            style={{ color: C.coral }}>
-                            <TrashIcon className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
-                      </td>
+                      <td className="px-4 py-3 text-xs" style={{ color: C.muted }}>{p.clothesSize || '—'}</td>
+                      <td className="px-4 py-3 text-xs font-semibold whitespace-nowrap" style={{ color: C.burgundy }}>{p.name}</td>
+                      <td className="px-4 py-3 text-xs whitespace-nowrap" style={{ color: C.muted }}>{p.eventTitle || '—'}</td>
+                      <td className="px-4 py-3 text-xs" style={{ color: C.faint }}>—</td>
                     </tr>
                   ))}
                 </tbody>

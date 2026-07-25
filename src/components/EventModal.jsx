@@ -1682,7 +1682,7 @@ function EditTodoTaskModal({ task, eventId, onClose, onSaved }) {
         </div>
 
         {/* Scrollable form body */}
-        <form onSubmit={handleSave} className="flex-1 overflow-y-auto px-7 py-6 space-y-6">
+        <form onSubmit={handleSave} className="flex-1 overflow-y-auto px-7 py-6 pb-24 space-y-6">
           {err && (
             <div className="px-4 py-2.5 rounded-xl text-sm"
               style={{ backgroundColor: '#FFF7F3', border: '1px solid #EFCAC8', color: '#E06464' }}>
@@ -2194,7 +2194,7 @@ function AssignRoleModal({ eventId, members, editingRole, onClose, onSaved }) {
         </div>
 
         {/* Scrollable form body */}
-        <form onSubmit={handleSave} className="flex-1 overflow-y-auto px-7 py-6 space-y-6">
+        <form onSubmit={handleSave} className="flex-1 overflow-y-auto px-7 py-6 pb-24 space-y-6">
           {err && (
             <div className="px-4 py-2.5 rounded-xl text-sm"
               style={{ backgroundColor: '#FFF7F3', border: '1px solid #EFCAC8', color: '#E06464' }}>
@@ -3712,8 +3712,8 @@ function RetreatParticipantsSection({ eventId, eventName, onCountChange }) {
       {showForm && (
         <div className="fixed inset-0 z-50 flex justify-end">
           <div className="absolute inset-0 bg-black/40" onClick={() => setShowForm(false)} />
-          <div className="relative flex flex-col w-full max-w-md h-full overflow-y-auto shadow-2xl"
-            style={{ backgroundColor: '#FFFCF8', borderLeft: `1.5px solid ${C.peach}` }}>
+          <div className="relative flex flex-col w-full max-w-md overflow-y-auto shadow-2xl"
+            style={{ backgroundColor: '#FFFCF8', borderLeft: `1.5px solid ${C.peach}`, height: '100%', paddingBottom: 'env(safe-area-inset-bottom)' }}>
             {/* Header */}
             <div className="flex items-center justify-between px-6 py-5 border-b shrink-0" style={{ borderColor: C.peach }}>
               <h3 className="text-lg font-extrabold" style={{ color: C.text }}>

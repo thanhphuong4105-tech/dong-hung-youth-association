@@ -112,8 +112,8 @@ function Drawer({ open, onClose, title, children }) {
   return (
     <div className="fixed inset-0 z-50 flex justify-end">
       <div className="absolute inset-0 bg-black/40" onClick={onClose} />
-      <div className="relative flex flex-col w-full max-w-md h-full overflow-y-auto shadow-2xl"
-        style={{ backgroundColor: C.card, borderLeft: `1.5px solid ${C.beige}` }}>
+      <div className="relative flex flex-col w-full max-w-md overflow-y-auto shadow-2xl"
+        style={{ backgroundColor: C.card, borderLeft: `1.5px solid ${C.beige}`, height: '100%', paddingBottom: 'env(safe-area-inset-bottom)' }}>
         <div className="flex items-center justify-between px-6 py-5 border-b shrink-0" style={{ borderColor: C.beige }}>
           <h3 className="text-lg font-extrabold" style={{ color: C.burgundy, fontFamily: "'Nunito', sans-serif" }}>{title}</h3>
           <button onClick={onClose} className="p-1.5 rounded-full hover:bg-orange-50"><XMarkIcon className="w-5 h-5" style={{ color: C.muted }} /></button>

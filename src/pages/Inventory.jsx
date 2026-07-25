@@ -307,7 +307,7 @@ function InventoryForm({ initial, onSave, onClose }) {
 }
 
 // ─── Borrow Form ──────────────────────────────────────────────────────────────
-function BorrowForm({ initial, onSave, onClose }) {
+function BorrowForm({ initial, inventory = [], onSave, onClose }) {
   const [form, setForm] = useState(initial ? {
     itemName: initial.itemName || '',
     size: initial.size || '',
@@ -325,6 +325,8 @@ function BorrowForm({ initial, onSave, onClose }) {
     expectedReturnDate: '', returnedDate: '', notes: '',
   })
   const [err, setErr] = useState('')
+  const uniqueItemNames = [...new Set(inventory.map(i => i.itemName))]
+  const sizesForItem = inventory.filter(i => i.itemName === form.itemName).map(i => i.size)
   function hc(e) { setForm(f => ({ ...f, [e.target.name]: e.target.value })) }
   function handleSave(e) {
     e.preventDefault()
@@ -341,13 +343,16 @@ function BorrowForm({ initial, onSave, onClose }) {
       <div className="grid grid-cols-2 gap-4">
         <div>
           <label className="block text-xs font-semibold uppercase tracking-wide mb-1.5" style={{ color: C.muted }}>Item Name *</label>
-          <input name="itemName" value={form.itemName} onChange={hc} placeholder="Red Áo Dài Set" required style={inputStyle} />
+          <select name="itemName" value={form.itemName} onChange={e => setForm(f => ({ ...f, itemName: e.target.value, size: '' }))} required style={inputStyle}>
+            <option value="">— Select item —</option>
+            {uniqueItemNames.map(name => <option key={name} value={name}>{name}</option>)}
+          </select>
         </div>
         <div>
           <label className="block text-xs font-semibold uppercase tracking-wide mb-1.5" style={{ color: C.muted }}>Size</label>
-          <select name="size" value={form.size} onChange={hc} style={inputStyle}>
+          <select name="size" value={form.size} onChange={hc} style={inputStyle} disabled={!form.itemName}>
             <option value="">—</option>
-            {SIZES.map(s => <option key={s}>{s}</option>)}
+            {sizesForItem.map(s => <option key={s} value={s}>{s}</option>)}
           </select>
         </div>
       </div>
@@ -979,7 +984,7 @@ export default function Inventory() {
       </Drawer>
 
       <Drawer open={addBorrowOpen} onClose={() => setAddBorrowOpen(false)} title="Add Borrow Record">
-        <BorrowForm onSave={handleBorrow} onClose={() => setAddBorrowOpen(false)} />
+        <BorrowForm inventory={inventory} onSave={handleBorrow} onClose={() => setAddBorrowOpen(false)} />
       </Drawer>
 
       {deleteItem && <DeleteModal name={deleteItem.itemName} onConfirm={handleDelete} onClose={() => setDeleteItem(null)} />}
@@ -987,6 +992,7 @@ export default function Inventory() {
       <Drawer open={!!editingBorrow} onClose={() => setEditingBorrow(null)} title="Edit Borrow Record">
         {editingBorrow && (
           <BorrowForm
+            inventory={inventory}
             initial={editingBorrow}
             onSave={handleEditBorrow}
             onClose={() => setEditingBorrow(null)}

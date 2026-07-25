@@ -1,9 +1,10 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import {
   PlusIcon, MagnifyingGlassIcon, PencilIcon, TrashIcon,
   XMarkIcon, ExclamationTriangleIcon, ArrowPathIcon,
   ChevronRightIcon, ChevronLeftIcon, ArchiveBoxIcon, BanknotesIcon,
 } from '@heroicons/react/24/outline'
+import { supabase } from '../lib/supabase'
 
 // ─── Design tokens ────────────────────────────────────────────────────────────
 const C = {
@@ -38,50 +39,9 @@ const COLOR_DOT = {
   Black:   '#4A4A4A',
 }
 
-// ─── Mock data ────────────────────────────────────────────────────────────────
-const INIT_INVENTORY = [
-  { id: 'ao-dai-001', itemName: 'Red Áo Dài Set',     color: 'Red',     size: 'S',   totalQuantity: 6, availableQuantity: 4, borrowedQuantity: 2, condition: 'Good',        location: 'Storage Closet',  notes: '' },
-  { id: 'ao-dai-002', itemName: 'Pink Áo Dài Set',    color: 'Pink',    size: 'M',   totalQuantity: 8, availableQuantity: 8, borrowedQuantity: 0, condition: 'Excellent',    location: 'Temple Storage',  notes: '' },
-  { id: 'ao-dai-003', itemName: 'Yellow Áo Dài Set',  color: 'Yellow',  size: 'L',   totalQuantity: 5, availableQuantity: 3, borrowedQuantity: 2, condition: 'Good',        location: 'Storage Closet',  notes: '' },
-  { id: 'ao-dai-004', itemName: 'White Áo Dài Set',   color: 'White',   size: 'XS',  totalQuantity: 4, availableQuantity: 4, borrowedQuantity: 0, condition: 'Needs Review', location: 'Dance Room',      notes: '' },
-  { id: 'ao-dai-005', itemName: 'Blue Áo Dài Set',    color: 'Blue',    size: 'XL',  totalQuantity: 7, availableQuantity: 6, borrowedQuantity: 1, condition: 'Excellent',    location: 'Temple Storage',  notes: '' },
-  { id: 'ao-dai-006', itemName: 'Lavender Áo Dài Set',color: 'Lavender',size: 'XXL', totalQuantity: 6, availableQuantity: 5, borrowedQuantity: 1, condition: 'Good',        location: 'Storage Closet',  notes: '' },
-]
-
-const INIT_BORROWS = [
-  { id: 'borrow-001', inventoryItemId: 'ao-dai-001', itemName: 'Red Áo Dài Set',    size: 'S',  borrowerName: 'Jade Luong',   eventName: 'Lễ Phật Đản',    quantity: 2, borrowDate: '2026-05-01', expectedReturnDate: '2026-06-01', returnedDate: '',           status: 'Borrowed' },
-  { id: 'borrow-002', inventoryItemId: 'ao-dai-003', itemName: 'Yellow Áo Dài Set', size: 'L',  borrowerName: 'Linh Tran',    eventName: 'Vu Lan Báo Hiếu', quantity: 1, borrowDate: '2026-08-01', expectedReturnDate: '2026-08-31', returnedDate: '',           status: 'Borrowed' },
-  { id: 'borrow-003', inventoryItemId: 'ao-dai-002', itemName: 'Pink Áo Dài Set',   size: 'M',  borrowerName: 'Amy Nguyen',   eventName: 'Tết Trung Thu',   quantity: 2, borrowDate: '2025-09-20', expectedReturnDate: '2025-10-05', returnedDate: '2025-10-04', status: 'Returned' },
-  { id: 'borrow-004', inventoryItemId: 'ao-dai-005', itemName: 'Blue Áo Dài Set',   size: 'XL', borrowerName: 'Hannah Pham',  eventName: 'Lễ Hội Chùa',    quantity: 1, borrowDate: '2026-04-10', expectedReturnDate: '2026-04-20', returnedDate: '2026-04-22', status: 'Overdue'  },
-]
-
-const INIT_SALES = [
-  { id: 'sale-001', itemName: 'Red Áo Dài Set',  size: 'S', buyerName: 'Thuy Nguyen', eventName: 'Tết 2026',       quantity: 1, saleDate: '2026-01-15', price: '45', notes: '' },
-  { id: 'sale-002', itemName: 'Pink Áo Dài Set', size: 'M', buyerName: 'Linh Pham',   eventName: 'Vu Lan 2025',    quantity: 2, saleDate: '2025-08-20', price: '40', notes: 'Discount applied' },
-]
-
 const SIZES    = ['XS','S','M','L','XL','XXL','XXXL']
-const COLORS   = ['Red','Pink','Yellow','White','Blue','Lavender','Green','Purple','Gold','Black']
 const CONDITIONS = ['Excellent','Good','Needs Cleaning','Needs Repair','Needs Review']
 const LOCATIONS  = ['Storage Closet','Temple Storage','Dance Room','Office','Other']
-
-// ─── localStorage persistence ─────────────────────────────────────────────────
-function useLocalStorage(key, init) {
-  const [value, setRaw] = useState(() => {
-    try {
-      const stored = localStorage.getItem(key)
-      return stored ? JSON.parse(stored) : init
-    } catch { return init }
-  })
-  function setValue(next) {
-    setRaw(prev => {
-      const resolved = typeof next === 'function' ? next(prev) : next
-      try { localStorage.setItem(key, JSON.stringify(resolved)) } catch {}
-      return resolved
-    })
-  }
-  return [value, setValue]
-}
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 function fmt(dateStr) {
@@ -301,7 +261,7 @@ function InventoryForm({ initial, onSave, onClose }) {
 }
 
 // ─── Borrow Form ──────────────────────────────────────────────────────────────
-function BorrowForm({ initial, inventory = [], onSave, onClose }) {
+function BorrowForm({ initial, inventory = [], borrows = [], onSave, onClose }) {
   const [form, setForm] = useState(initial ? {
     itemName: initial.itemName || '',
     size: initial.size || '',
@@ -347,15 +307,7 @@ function BorrowForm({ initial, inventory = [], onSave, onClose }) {
           <select name="size" value={form.size} onChange={hc} style={inputStyle} disabled={!form.itemName}>
             <option value="">—</option>
             {sizesForItem.map(i => {
-              const avail = (() => {
-                try {
-                  const activeBorrow = (JSON.parse(localStorage.getItem('dhya_borrows') || '[]'))
-                    .filter(b => b.itemName === i.itemName && b.size === i.size && b.status !== 'Returned')
-                    .reduce((s, b) => s + b.quantity, 0)
-                  const participantUsed = (JSON.parse(localStorage.getItem('dhya_participant_uniforms') || '{}'))[`${i.itemName}|${i.size}`] || 0
-                  return Math.max(0, i.totalQuantity - activeBorrow - participantUsed)
-                } catch { return i.totalQuantity }
-              })()
+              const avail = calcAvailable(i, borrows)
               return (
                 <option key={i.size} value={i.size} disabled={avail <= 0} style={{ color: avail <= 0 ? '#bbb' : undefined }}>
                   {i.size}{avail <= 0 ? ' (unavailable)' : ''}
@@ -574,9 +526,25 @@ function LowStockCard({ inventory, borrows = [], onViewAll }) {
 const PAGE_SIZE = 6
 
 export default function Inventory() {
-  const [inventory, setInventory] = useLocalStorage('dhya_inventory', INIT_INVENTORY)
-  const [borrows,   setBorrows]   = useLocalStorage('dhya_borrows',   INIT_BORROWS)
-  const [sales,     setSales]     = useLocalStorage('dhya_sales',     INIT_SALES)
+  const [inventory, setInventory] = useState([])
+  const [borrows,   setBorrows]   = useState([])
+  const [sales,     setSales]     = useState([])
+  const [loading,   setLoading]   = useState(true)
+
+  useEffect(() => { fetchAll() }, [])
+
+  async function fetchAll() {
+    setLoading(true)
+    const [invRes, borRes, salRes] = await Promise.all([
+      supabase.from('inventory_items').select('*').order('itemName'),
+      supabase.from('borrow_records').select('*').order('created_at', { ascending: false }),
+      supabase.from('sale_records').select('*').order('created_at', { ascending: false }),
+    ])
+    if (!invRes.error) setInventory(invRes.data)
+    if (!borRes.error) setBorrows(borRes.data)
+    if (!salRes.error) setSales(salRes.data)
+    setLoading(false)
+  }
 
   // Drawers / modals
   const [addOpen,       setAddOpen]       = useState(false)
@@ -620,21 +588,27 @@ export default function Inventory() {
   const paginated  = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
 
   // ── Handlers ──
-  function handleAdd(form) {
-    const id = 'ao-dai-' + Date.now()
-    setInventory(prev => [...prev, { ...form, id, totalQuantity: Number(form.totalQuantity) }])
-    setAddOpen(false)
-    setPage(1)
+  async function handleAdd(form) {
+    const { error } = await supabase.from('inventory_items').insert({
+      itemName: form.itemName, color: form.color || '', size: form.size,
+      totalQuantity: Number(form.totalQuantity), condition: form.condition,
+      location: form.location || '', notes: form.notes || '',
+    })
+    if (!error) { setAddOpen(false); setPage(1); fetchAll() }
   }
 
-  function handleEdit(form) {
-    setInventory(prev => prev.map(i => i.id === editItem.id ? { ...i, ...form, totalQuantity: Number(form.totalQuantity) } : i))
-    setEditItem(null)
+  async function handleEdit(form) {
+    const { error } = await supabase.from('inventory_items').update({
+      itemName: form.itemName, color: form.color || '', size: form.size,
+      totalQuantity: Number(form.totalQuantity), condition: form.condition,
+      location: form.location || '', notes: form.notes || '',
+    }).eq('id', editItem.id)
+    if (!error) { setEditItem(null); fetchAll() }
   }
 
-  function handleDelete() {
-    setInventory(prev => prev.filter(i => i.id !== deleteItem.id))
-    setDeleteItem(null)
+  async function handleDelete() {
+    await supabase.from('inventory_items').delete().eq('id', deleteItem.id)
+    setDeleteItem(null); fetchAll()
   }
 
   function calcStatus(form) {
@@ -643,67 +617,70 @@ export default function Inventory() {
     return 'Borrowed'
   }
 
-  function handleBorrow(form) {
-    const qty = Number(form.quantity)
-    const invItem = inventory.find(i => i.itemName === form.itemName && i.size === form.size)
-    const newRecord = {
-      id: 'borrow-' + Date.now(),
-      inventoryItemId: invItem?.id || null,
-      itemName: form.itemName,
-      size: form.size,
-      borrowerName: form.borrowerName,
-      eventName: form.eventName,
-      quantity: qty,
-      borrowDate: form.borrowDate,
-      expectedReturnDate: form.expectedReturnDate,
-      returnedDate: form.returnedDate || '',
-      status: calcStatus(form),
-      notes: form.notes,
-    }
-    setBorrows(prev => [newRecord, ...prev])
-    setAddBorrowOpen(false)
-    setBorrowItem(null)
+  async function handleBorrow(form) {
+    const { error } = await supabase.from('borrow_records').insert({
+      itemName: form.itemName, size: form.size, borrowerName: form.borrowerName,
+      eventName: form.eventName || '', quantity: Number(form.quantity),
+      borrowDate: form.borrowDate || null, expectedReturnDate: form.expectedReturnDate || null,
+      returnedDate: form.returnedDate || null, status: calcStatus(form), notes: form.notes || '',
+    })
+    if (!error) { setAddBorrowOpen(false); setBorrowItem(null); fetchAll() }
   }
 
-  function handleEditBorrow(form) {
-    const old = editingBorrow
-    setBorrows(prev => prev.map(b => b.id === old.id
-      ? { ...b, itemName: form.itemName, size: form.size, borrowerName: form.borrowerName, eventName: form.eventName, quantity: Number(form.quantity), borrowDate: form.borrowDate, expectedReturnDate: form.expectedReturnDate, returnedDate: form.returnedDate || '', status: calcStatus(form), notes: form.notes }
-      : b))
-    setEditingBorrow(null)
+  async function handleEditBorrow(form) {
+    const { error } = await supabase.from('borrow_records').update({
+      itemName: form.itemName, size: form.size, borrowerName: form.borrowerName,
+      eventName: form.eventName || '', quantity: Number(form.quantity),
+      borrowDate: form.borrowDate || null, expectedReturnDate: form.expectedReturnDate || null,
+      returnedDate: form.returnedDate || null, status: calcStatus(form), notes: form.notes || '',
+    }).eq('id', editingBorrow.id)
+    if (!error) { setEditingBorrow(null); fetchAll() }
   }
 
-  function handleDeleteBorrow() {
-    setBorrows(prev => prev.filter(b => b.id !== deleteBorrow.id))
-    setDeleteBorrow(null)
+  async function handleDeleteBorrow() {
+    await supabase.from('borrow_records').delete().eq('id', deleteBorrow.id)
+    setDeleteBorrow(null); fetchAll()
   }
 
-  function handleReturn(borrowId) {
-    setBorrows(prev => prev.map(b => b.id === borrowId
-      ? { ...b, status: 'Returned', returnedDate: new Date().toISOString().slice(0, 10) }
-      : b))
+  async function handleReturn(borrowId) {
+    const today = new Date().toISOString().slice(0, 10)
+    await supabase.from('borrow_records').update({ status: 'Returned', returnedDate: today }).eq('id', borrowId)
+    fetchAll()
   }
 
-  function handleSale(form) {
-    const id = 'sale-' + Date.now()
-    setSales(prev => [{ ...form, id }, ...prev])
-    setAddSaleOpen(false)
+  async function handleSale(form) {
+    const { error } = await supabase.from('sale_records').insert({
+      itemName: form.itemName, size: form.size || '', buyerName: form.buyerName,
+      eventName: form.eventName || '', quantity: Number(form.quantity),
+      saleDate: form.saleDate || null, price: form.price || '', notes: form.notes || '',
+    })
+    if (!error) { setAddSaleOpen(false); fetchAll() }
   }
 
-  function handleEditSale(form) {
-    setSales(prev => prev.map(s => s.id === editingSale.id ? { ...s, ...form } : s))
-    setEditingSale(null)
+  async function handleEditSale(form) {
+    const { error } = await supabase.from('sale_records').update({
+      itemName: form.itemName, size: form.size || '', buyerName: form.buyerName,
+      eventName: form.eventName || '', quantity: Number(form.quantity),
+      saleDate: form.saleDate || null, price: form.price || '', notes: form.notes || '',
+    }).eq('id', editingSale.id)
+    if (!error) { setEditingSale(null); fetchAll() }
   }
 
-  function handleDeleteSale() {
-    setSales(prev => prev.filter(s => s.id !== deleteSale.id))
-    setDeleteSale(null)
+  async function handleDeleteSale() {
+    await supabase.from('sale_records').delete().eq('id', deleteSale.id)
+    setDeleteSale(null); fetchAll()
   }
 
   const displayedBorrows = showAllBorrows ? borrows : borrows.slice(0, 4)
   const displayedSales   = showAllSales   ? sales   : sales.slice(0, 4)
 
   const selectStyle = { ...inputStyle, width: 'auto', minWidth: '120px', paddingRight: '2rem', cursor: 'pointer' }
+
+  if (loading) return (
+    <div className="flex justify-center py-20">
+      <div className="w-10 h-10 rounded-full border-4 animate-spin" style={{ borderColor: '#EDD0AC', borderTopColor: '#F1745E' }} />
+    </div>
+  )
 
   return (
     <div>
@@ -1002,7 +979,7 @@ export default function Inventory() {
       </Drawer>
 
       <Drawer open={addBorrowOpen} onClose={() => setAddBorrowOpen(false)} title="Add Borrow Record">
-        <BorrowForm inventory={inventory} onSave={handleBorrow} onClose={() => setAddBorrowOpen(false)} />
+        <BorrowForm inventory={inventory} borrows={borrows} onSave={handleBorrow} onClose={() => setAddBorrowOpen(false)} />
       </Drawer>
 
       {deleteItem && <DeleteModal name={deleteItem.itemName} onConfirm={handleDelete} onClose={() => setDeleteItem(null)} />}
@@ -1011,6 +988,7 @@ export default function Inventory() {
         {editingBorrow && (
           <BorrowForm
             inventory={inventory}
+            borrows={borrows}
             initial={editingBorrow}
             onSave={handleEditBorrow}
             onClose={() => setEditingBorrow(null)}

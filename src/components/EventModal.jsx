@@ -3313,9 +3313,22 @@ function RetreatParticipantsSection({ eventId, eventName, onCountChange }) {
   const EMPTY_FORM = { firstName: '', lastName: '', birthday: '', allergy: '', classId: '', notes: '', paid: false, uniform: '', clothesSize: '' }
   const EMPTY_PARENT = { name: '', phone: '', email: '' }
 
-  const inventoryItems = (() => {
-    try { return JSON.parse(localStorage.getItem('dhya_inventory') || '[]') } catch { return [] }
-  })()
+  const [inventoryItems, setInventoryItems] = useState([])
+  const [borrowCounts, setBorrowCounts] = useState({})
+  useEffect(() => {
+    supabase.from('inventory_items').select('*').order('itemName')
+      .then(({ data }) => { if (data) setInventoryItems(data) })
+    supabase.from('borrow_records').select('itemName, size, quantity, status')
+      .then(({ data }) => {
+        if (!data) return
+        const counts = {}
+        data.filter(b => b.status !== 'Returned').forEach(b => {
+          const key = `${b.itemName}|${b.size}`
+          counts[key] = (counts[key] || 0) + b.quantity
+        })
+        setBorrowCounts(counts)
+      })
+  }, [])
 
   const [participants, setParticipants] = useState([])
   const [loading, setLoading] = useState(true)
@@ -3774,15 +3787,9 @@ function RetreatParticipantsSection({ eventId, eventName, onCountChange }) {
                   <select name="clothesSize" value={form.clothesSize} onChange={hc} style={pInput} disabled={!form.uniform}>
                     <option value="">— Select —</option>
                     {inventoryItems.filter(i => i.itemName === form.uniform).map(i => {
-                      const avail = (() => {
-                        try {
-                          const activeBorrow = (JSON.parse(localStorage.getItem('dhya_borrows') || '[]'))
-                            .filter(b => b.itemName === i.itemName && b.size === i.size && b.status !== 'Returned')
-                            .reduce((s, b) => s + b.quantity, 0)
-                          const participantUsed = (JSON.parse(localStorage.getItem('dhya_participant_uniforms') || '{}'))[`${i.itemName}|${i.size}`] || 0
-                          return Math.max(0, i.totalQuantity - activeBorrow - participantUsed)
-                        } catch { return i.totalQuantity }
-                      })()
+                      const key = `${i.itemName}|${i.size}`
+                      const participantUsed = (() => { try { return (JSON.parse(localStorage.getItem('dhya_participant_uniforms') || '{}'))[key] || 0 } catch { return 0 } })()
+                      const avail = Math.max(0, i.totalQuantity - (borrowCounts[key] || 0) - participantUsed)
                       return (
                         <option key={i.id} value={i.size} disabled={avail <= 0} style={{ color: avail <= 0 ? '#bbb' : undefined }}>
                           {i.size}{avail <= 0 ? ' (unavailable)' : ''}

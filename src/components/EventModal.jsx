@@ -3347,6 +3347,7 @@ function RetreatParticipantsSection({ eventId, eventName, onCountChange }) {
       if (!b.birthday) return -1
       return new Date(b.birthday) - new Date(a.birthday)
     })
+    rebuildUniformMap(rows)
     setParticipants(rows)
     onCountChange(rows.length)
     setLoading(false)
@@ -3405,14 +3406,27 @@ function RetreatParticipantsSection({ eventId, eventName, onCountChange }) {
   function addParent() { setParents(p => [...p, { ...EMPTY_PARENT }]) }
   function removeParent(i) { setParents(p => p.filter((_, idx) => idx !== i)) }
 
-  function adjustInventory(itemName, size, delta) {
+  function adjustParticipantUniforms(itemName, size, delta) {
     if (!itemName || !size) return
     try {
-      const inv = JSON.parse(localStorage.getItem('dhya_inventory') || '[]')
-      const idx = inv.findIndex(i => i.itemName === itemName && i.size === size)
-      if (idx === -1) return
-      inv[idx] = { ...inv[idx], availableQuantity: Math.max(0, (inv[idx].availableQuantity || 0) + delta) }
-      localStorage.setItem('dhya_inventory', JSON.stringify(inv))
+      const map = JSON.parse(localStorage.getItem('dhya_participant_uniforms') || '{}')
+      const key = `${itemName}|${size}`
+      map[key] = Math.max(0, (map[key] || 0) + delta)
+      localStorage.setItem('dhya_participant_uniforms', JSON.stringify(map))
+    } catch {}
+  }
+
+  function rebuildUniformMap(rows) {
+    try {
+      const map = JSON.parse(localStorage.getItem('dhya_participant_uniforms') || '{}')
+      // Remove this event's contribution then re-add from current rows
+      rows.forEach(p => {
+        if (p.uniform && p.clothesSize) {
+          const key = `${p.uniform}|${p.clothesSize}`
+          map[key] = (map[key] || 0) + 1
+        }
+      })
+      localStorage.setItem('dhya_participant_uniforms', JSON.stringify(map))
     } catch {}
   }
 
@@ -3440,12 +3454,12 @@ function RetreatParticipantsSection({ eventId, eventName, onCountChange }) {
       const newUniform = form.uniform || null
       const newSize = form.clothesSize || null
       if (oldUniform !== newUniform || oldSize !== newSize) {
-        adjustInventory(oldUniform, oldSize, +1)
-        adjustInventory(newUniform, newSize, -1)
+        adjustParticipantUniforms(oldUniform, oldSize, +1)
+        adjustParticipantUniforms(newUniform, newSize, -1)
       }
       await supabase.from('retreat_participants').update(payload).eq('id', editingId)
     } else {
-      adjustInventory(form.uniform || null, form.clothesSize || null, -1)
+      adjustParticipantUniforms(form.uniform || null, form.clothesSize || null, -1)
       const maxOrder = participants.length > 0 ? Math.max(...participants.map(p => p.sort_order || 0)) + 1 : 0
       await supabase.from('retreat_participants').insert({ event_id: eventId, sort_order: maxOrder, ...payload })
     }
@@ -3456,7 +3470,7 @@ function RetreatParticipantsSection({ eventId, eventName, onCountChange }) {
 
   async function handleDelete(id) {
     const target = participants.find(p => p.id === id)
-    if (target?.uniform && target?.clothesSize) adjustInventory(target.uniform, target.clothesSize, +1)
+    if (target?.uniform && target?.clothesSize) adjustParticipantUniforms(target.uniform, target.clothesSize, +1)
     await supabase.from('retreat_participants').delete().eq('id', id)
     setDeleteTarget(null)
     fetchParticipants()
@@ -3759,11 +3773,22 @@ function RetreatParticipantsSection({ eventId, eventName, onCountChange }) {
                 <PField label="Size">
                   <select name="clothesSize" value={form.clothesSize} onChange={hc} style={pInput} disabled={!form.uniform}>
                     <option value="">— Select —</option>
-                    {inventoryItems.filter(i => i.itemName === form.uniform).map(i => (
-                      <option key={i.id} value={i.size} disabled={i.availableQuantity <= 0} style={{ color: i.availableQuantity <= 0 ? '#bbb' : undefined }}>
-                        {i.size}{i.availableQuantity <= 0 ? ' (unavailable)' : ''}
-                      </option>
-                    ))}
+                    {inventoryItems.filter(i => i.itemName === form.uniform).map(i => {
+                      const avail = (() => {
+                        try {
+                          const activeBorrow = (JSON.parse(localStorage.getItem('dhya_borrows') || '[]'))
+                            .filter(b => b.itemName === i.itemName && b.size === i.size && b.status !== 'Returned')
+                            .reduce((s, b) => s + b.quantity, 0)
+                          const participantUsed = (JSON.parse(localStorage.getItem('dhya_participant_uniforms') || '{}'))[`${i.itemName}|${i.size}`] || 0
+                          return Math.max(0, i.totalQuantity - activeBorrow - participantUsed)
+                        } catch { return i.totalQuantity }
+                      })()
+                      return (
+                        <option key={i.id} value={i.size} disabled={avail <= 0} style={{ color: avail <= 0 ? '#bbb' : undefined }}>
+                          {i.size}{avail <= 0 ? ' (unavailable)' : ''}
+                        </option>
+                      )
+                    })}
                   </select>
                 </PField>
               </div>

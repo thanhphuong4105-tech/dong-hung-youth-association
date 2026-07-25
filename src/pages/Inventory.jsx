@@ -256,8 +256,8 @@ function Drawer({ open, onClose, title, children }) {
 
 // ─── Add/Edit Áo Dài Form ─────────────────────────────────────────────────────
 function InventoryForm({ initial, onSave, onClose }) {
-  const blank = { itemName: '', color: 'Red', size: 'M', totalQuantity: 1, availableQuantity: 1, borrowedQuantity: 0, condition: 'Good', location: 'Storage Closet', notes: '' }
-  const [form, setForm] = useState(initial || blank)
+  const blank = { itemName: '', color: 'Red', size: 'M', totalQuantity: 1, condition: 'Good', location: 'Storage Closet', notes: '' }
+  const [form, setForm] = useState(initial ? { itemName: initial.itemName, color: initial.color, size: initial.size, totalQuantity: initial.totalQuantity, condition: initial.condition, location: initial.location, notes: initial.notes } : blank)
   const [err, setErr] = useState('')
   function hc(e) { setForm(f => ({ ...f, [e.target.name]: e.target.value })) }
   function handleSave(e) {
@@ -277,15 +277,9 @@ function InventoryForm({ initial, onSave, onClose }) {
           <label className="block text-xs font-semibold uppercase tracking-wide mb-1.5" style={{ color: C.muted }}>Size</label>
           <input name="size" value={form.size} onChange={hc} placeholder="e.g. S, M, L, XL…" style={inputStyle} />
         </div>
-      </div>
-      <div className="grid grid-cols-2 gap-4">
         <div>
           <label className="block text-xs font-semibold uppercase tracking-wide mb-1.5" style={{ color: C.muted }}>Total Quantity</label>
           <input type="number" name="totalQuantity" min="0" value={form.totalQuantity} onChange={hc} style={inputStyle} />
-        </div>
-        <div>
-          <label className="block text-xs font-semibold uppercase tracking-wide mb-1.5" style={{ color: C.muted }}>Available Quantity</label>
-          <input type="number" name="availableQuantity" min="0" value={form.availableQuantity} onChange={hc} style={inputStyle} />
         </div>
       </div>
       <div>
@@ -352,11 +346,22 @@ function BorrowForm({ initial, inventory = [], onSave, onClose }) {
           <label className="block text-xs font-semibold uppercase tracking-wide mb-1.5" style={{ color: C.muted }}>Size</label>
           <select name="size" value={form.size} onChange={hc} style={inputStyle} disabled={!form.itemName}>
             <option value="">—</option>
-            {sizesForItem.map(i => (
-              <option key={i.size} value={i.size} disabled={i.availableQuantity <= 0} style={{ color: i.availableQuantity <= 0 ? '#bbb' : undefined }}>
-                {i.size}{i.availableQuantity <= 0 ? ' (unavailable)' : ''}
-              </option>
-            ))}
+            {sizesForItem.map(i => {
+              const avail = (() => {
+                try {
+                  const activeBorrow = (JSON.parse(localStorage.getItem('dhya_borrows') || '[]'))
+                    .filter(b => b.itemName === i.itemName && b.size === i.size && b.status !== 'Returned')
+                    .reduce((s, b) => s + b.quantity, 0)
+                  const participantUsed = (JSON.parse(localStorage.getItem('dhya_participant_uniforms') || '{}'))[`${i.itemName}|${i.size}`] || 0
+                  return Math.max(0, i.totalQuantity - activeBorrow - participantUsed)
+                } catch { return i.totalQuantity }
+              })()
+              return (
+                <option key={i.size} value={i.size} disabled={avail <= 0} style={{ color: avail <= 0 ? '#bbb' : undefined }}>
+                  {i.size}{avail <= 0 ? ' (unavailable)' : ''}
+                </option>
+              )
+            })}
           </select>
         </div>
       </div>
@@ -512,7 +517,7 @@ function DeleteModal({ name, onConfirm, onClose }) {
 function LowStockCard({ inventory, onViewAll }) {
   const LOW_THRESHOLD = 0.5
   const lowItems = inventory.filter(i =>
-    i.totalQuantity > 0 && i.availableQuantity / i.totalQuantity <= LOW_THRESHOLD
+    i.totalQuantity > 0 && calcAvailable(i) / i.totalQuantity <= LOW_THRESHOLD
   )
 
   return (
@@ -532,8 +537,8 @@ function LowStockCard({ inventory, onViewAll }) {
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-xs font-bold truncate" style={{ color: C.burgundy }}>{item.itemName} ({item.size})</p>
-                <p className="text-xs mt-0.5" style={{ color: item.availableQuantity <= 2 ? C.coral : C.muted }}>
-                  <span className="font-semibold">{item.availableQuantity} available</span>
+                <p className="text-xs mt-0.5" style={{ color: calcAvailable(item) <= 2 ? C.coral : C.muted }}>
+                  <span className="font-semibold">{calcAvailable(item)} available</span>
                 </p>
                 <p className="text-[10px]" style={{ color: C.faint }}>Total: {item.totalQuantity}</p>
               </div>
@@ -588,9 +593,9 @@ export default function Inventory() {
       const matchSize   = !sizeF  || i.size  === sizeF
       const matchColor  = !colorF || i.color === colorF
       const matchStatus = !statusF || (
-        statusF === 'available' ? i.availableQuantity > 0 :
-        statusF === 'borrowed'  ? i.borrowedQuantity  > 0 :
-        statusF === 'low'       ? (i.totalQuantity > 0 && i.availableQuantity / i.totalQuantity <= 0.5) :
+        statusF === 'available' ? calcAvailable(i) > 0 :
+        statusF === 'borrowed'  ? borrows.some(b => b.itemName === i.itemName && b.size === i.size && b.status !== 'Returned') :
+        statusF === 'low'       ? (i.totalQuantity > 0 && calcAvailable(i) / i.totalQuantity <= 0.5) :
         statusF === 'review'    ? (i.condition === 'Needs Review' || i.condition === 'Needs Repair') : true
       )
       return matchSearch && matchSize && matchColor && matchStatus
@@ -603,15 +608,13 @@ export default function Inventory() {
   // ── Handlers ──
   function handleAdd(form) {
     const id = 'ao-dai-' + Date.now()
-    const qty = Number(form.totalQuantity)
-    const avail = Number(form.availableQuantity)
-    setInventory(prev => [...prev, { ...form, id, totalQuantity: qty, availableQuantity: avail, borrowedQuantity: qty - avail }])
+    setInventory(prev => [...prev, { ...form, id, totalQuantity: Number(form.totalQuantity) }])
     setAddOpen(false)
     setPage(1)
   }
 
   function handleEdit(form) {
-    setInventory(prev => prev.map(i => i.id === editItem.id ? { ...i, ...form, totalQuantity: Number(form.totalQuantity), availableQuantity: Number(form.availableQuantity), borrowedQuantity: Number(form.totalQuantity) - Number(form.availableQuantity) } : i))
+    setInventory(prev => prev.map(i => i.id === editItem.id ? { ...i, ...form, totalQuantity: Number(form.totalQuantity) } : i))
     setEditItem(null)
   }
 
@@ -620,12 +623,17 @@ export default function Inventory() {
     setDeleteItem(null)
   }
 
-  function adjustInv(itemName, size, delta) {
-    setInventory(prev => prev.map(i =>
-      i.itemName === itemName && i.size === size
-        ? { ...i, availableQuantity: Math.max(0, i.availableQuantity + delta), borrowedQuantity: Math.max(0, i.borrowedQuantity - delta) }
-        : i
-    ))
+  function calcAvailable(item) {
+    const borrowUsed = borrows
+      .filter(b => b.itemName === item.itemName && b.size === item.size && b.status !== 'Returned')
+      .reduce((sum, b) => sum + b.quantity, 0)
+    const participantUsed = (() => {
+      try {
+        const map = JSON.parse(localStorage.getItem('dhya_participant_uniforms') || '{}')
+        return map[`${item.itemName}|${item.size}`] || 0
+      } catch { return 0 }
+    })()
+    return Math.max(0, item.totalQuantity - borrowUsed - participantUsed)
   }
 
   function calcStatus(form) {
@@ -651,7 +659,6 @@ export default function Inventory() {
       status: calcStatus(form),
       notes: form.notes,
     }
-    if (!form.returnedDate) adjustInv(form.itemName, form.size, -qty)
     setBorrows(prev => [newRecord, ...prev])
     setAddBorrowOpen(false)
     setBorrowItem(null)
@@ -659,41 +666,21 @@ export default function Inventory() {
 
   function handleEditBorrow(form) {
     const old = editingBorrow
-    const oldQty = Number(old.quantity)
-    const newQty = Number(form.quantity)
-    const oldActive = old.status !== 'Returned'
-    const newActive = !form.returnedDate
-
-    // Restore old deduction, apply new one
-    if (oldActive) adjustInv(old.itemName, old.size, +oldQty)
-    if (newActive) adjustInv(form.itemName, form.size, -newQty)
-
     setBorrows(prev => prev.map(b => b.id === old.id
-      ? { ...b, itemName: form.itemName, size: form.size, borrowerName: form.borrowerName, eventName: form.eventName, quantity: newQty, borrowDate: form.borrowDate, expectedReturnDate: form.expectedReturnDate, returnedDate: form.returnedDate || '', status: calcStatus(form), notes: form.notes }
+      ? { ...b, itemName: form.itemName, size: form.size, borrowerName: form.borrowerName, eventName: form.eventName, quantity: Number(form.quantity), borrowDate: form.borrowDate, expectedReturnDate: form.expectedReturnDate, returnedDate: form.returnedDate || '', status: calcStatus(form), notes: form.notes }
       : b))
     setEditingBorrow(null)
   }
 
   function handleDeleteBorrow() {
-    const record = deleteBorrow
-    setBorrows(prev => prev.filter(b => b.id !== record.id))
-    if (record.status === 'Borrowed') {
-      setInventory(prev => prev.map(i => i.id === record.inventoryItemId
-        ? { ...i, availableQuantity: i.availableQuantity + record.quantity, borrowedQuantity: Math.max(0, i.borrowedQuantity - record.quantity) }
-        : i))
-    }
+    setBorrows(prev => prev.filter(b => b.id !== deleteBorrow.id))
     setDeleteBorrow(null)
   }
 
   function handleReturn(borrowId) {
-    const record = borrows.find(b => b.id === borrowId)
-    if (!record) return
     setBorrows(prev => prev.map(b => b.id === borrowId
       ? { ...b, status: 'Returned', returnedDate: new Date().toISOString().slice(0, 10) }
       : b))
-    setInventory(prev => prev.map(i => i.id === record.inventoryItemId
-      ? { ...i, availableQuantity: i.availableQuantity + record.quantity, borrowedQuantity: Math.max(0, i.borrowedQuantity - record.quantity) }
-      : i))
   }
 
   function handleSale(form) {
@@ -792,8 +779,8 @@ export default function Inventory() {
                       </td>
                       <td className="px-4 py-3 text-xs font-semibold" style={{ color: C.burgundy }}>{item.size}</td>
                       <td className="px-4 py-3 text-xs font-semibold text-center" style={{ color: C.burgundy }}>{item.totalQuantity}</td>
-                      <td className="px-4 py-3 text-xs font-bold text-center" style={{ color: item.availableQuantity > 0 ? '#2D7A4F' : C.faint }}>{item.availableQuantity}</td>
-                      <td className="px-4 py-3 text-xs font-bold text-center" style={{ color: item.borrowedQuantity > 0 ? C.coral : C.faint }}>{item.borrowedQuantity}</td>
+                      <td className="px-4 py-3 text-xs font-bold text-center" style={{ color: calcAvailable(item) > 0 ? '#2D7A4F' : C.faint }}>{calcAvailable(item)}</td>
+                      <td className="px-4 py-3 text-xs font-bold text-center" style={{ color: borrows.some(b => b.itemName === item.itemName && b.size === item.size && b.status !== 'Returned') ? C.coral : C.faint }}>{borrows.filter(b => b.itemName === item.itemName && b.size === item.size && b.status !== 'Returned').reduce((s, b) => s + b.quantity, 0)}</td>
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-1">
                           <button onClick={() => setEditItem(item)} title="Edit"

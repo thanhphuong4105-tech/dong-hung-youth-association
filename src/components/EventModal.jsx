@@ -3760,7 +3760,9 @@ function RetreatParticipantsSection({ eventId, eventName, onCountChange }) {
                   <select name="clothesSize" value={form.clothesSize} onChange={hc} style={pInput} disabled={!form.uniform}>
                     <option value="">— Select —</option>
                     {inventoryItems.filter(i => i.itemName === form.uniform).map(i => (
-                      <option key={i.id} value={i.size}>{i.size}</option>
+                      <option key={i.id} value={i.size} disabled={i.availableQuantity <= 0} style={{ color: i.availableQuantity <= 0 ? '#bbb' : undefined }}>
+                        {i.size}{i.availableQuantity <= 0 ? ' (unavailable)' : ''}
+                      </option>
                     ))}
                   </select>
                 </PField>

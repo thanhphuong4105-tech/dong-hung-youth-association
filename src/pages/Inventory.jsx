@@ -326,7 +326,7 @@ function BorrowForm({ initial, inventory = [], onSave, onClose }) {
   })
   const [err, setErr] = useState('')
   const uniqueItemNames = [...new Set(inventory.map(i => i.itemName))]
-  const sizesForItem = inventory.filter(i => i.itemName === form.itemName).map(i => i.size)
+  const sizesForItem = inventory.filter(i => i.itemName === form.itemName)
   function hc(e) { setForm(f => ({ ...f, [e.target.name]: e.target.value })) }
   function handleSave(e) {
     e.preventDefault()
@@ -352,7 +352,11 @@ function BorrowForm({ initial, inventory = [], onSave, onClose }) {
           <label className="block text-xs font-semibold uppercase tracking-wide mb-1.5" style={{ color: C.muted }}>Size</label>
           <select name="size" value={form.size} onChange={hc} style={inputStyle} disabled={!form.itemName}>
             <option value="">—</option>
-            {sizesForItem.map(s => <option key={s} value={s}>{s}</option>)}
+            {sizesForItem.map(i => (
+              <option key={i.size} value={i.size} disabled={i.availableQuantity <= 0} style={{ color: i.availableQuantity <= 0 ? '#bbb' : undefined }}>
+                {i.size}{i.availableQuantity <= 0 ? ' (unavailable)' : ''}
+              </option>
+            ))}
           </select>
         </div>
       </div>

@@ -261,7 +261,7 @@ function InventoryForm({ initial, onSave, onClose }) {
 }
 
 // ─── Borrow Form ──────────────────────────────────────────────────────────────
-function BorrowForm({ initial, inventory = [], borrows = [], onSave, onClose }) {
+function BorrowForm({ initial, inventory = [], borrows = [], participantMap = {}, onSave, onClose }) {
   const [form, setForm] = useState(initial ? {
     itemName: initial.itemName || '',
     size: initial.size || '',
@@ -307,7 +307,7 @@ function BorrowForm({ initial, inventory = [], borrows = [], onSave, onClose }) 
           <select name="size" value={form.size} onChange={hc} style={inputStyle} disabled={!form.itemName}>
             <option value="">—</option>
             {sizesForItem.map(i => {
-              const avail = calcAvailable(i, borrows)
+              const avail = calcAvailable(i, borrows, participantMap)
               return (
                 <option key={i.size} value={i.size} disabled={avail <= 0} style={{ color: avail <= 0 ? '#bbb' : undefined }}>
                   {i.size}{avail <= 0 ? ' (unavailable)' : ''}
@@ -466,24 +466,19 @@ function DeleteModal({ name, onConfirm, onClose }) {
 }
 
 // ─── Computed available qty (module-level so all components can use it) ──────
-function calcAvailable(item, borrows = []) {
+function calcAvailable(item, borrows = [], participantMap = {}) {
   const borrowUsed = borrows
     .filter(b => b.itemName === item.itemName && b.size === item.size && b.status !== 'Returned')
     .reduce((sum, b) => sum + b.quantity, 0)
-  const participantUsed = (() => {
-    try {
-      const map = JSON.parse(localStorage.getItem('dhya_participant_uniforms') || '{}')
-      return map[`${item.itemName}|${item.size}`] || 0
-    } catch { return 0 }
-  })()
+  const participantUsed = participantMap[`${item.itemName}|${item.size}`] || 0
   return Math.max(0, item.totalQuantity - borrowUsed - participantUsed)
 }
 
 // ─── Low Stock Card ───────────────────────────────────────────────────────────
-function LowStockCard({ inventory, borrows = [], onViewAll }) {
+function LowStockCard({ inventory, borrows = [], participantMap = {}, onViewAll }) {
   const LOW_THRESHOLD = 0.5
   const lowItems = inventory.filter(i =>
-    i.totalQuantity > 0 && calcAvailable(i, borrows) / i.totalQuantity <= LOW_THRESHOLD
+    i.totalQuantity > 0 && calcAvailable(i, borrows, participantMap) / i.totalQuantity <= LOW_THRESHOLD
   )
 
   return (
@@ -503,8 +498,8 @@ function LowStockCard({ inventory, borrows = [], onViewAll }) {
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-xs font-bold truncate" style={{ color: C.burgundy }}>{item.itemName} ({item.size})</p>
-                <p className="text-xs mt-0.5" style={{ color: calcAvailable(item, borrows) <= 2 ? C.coral : C.muted }}>
-                  <span className="font-semibold">{calcAvailable(item, borrows)} available</span>
+                <p className="text-xs mt-0.5" style={{ color: calcAvailable(item, borrows, participantMap) <= 2 ? C.coral : C.muted }}>
+                  <span className="font-semibold">{calcAvailable(item, borrows, participantMap)} available</span>
                 </p>
                 <p className="text-[10px]" style={{ color: C.faint }}>Total: {item.totalQuantity}</p>
               </div>
@@ -526,23 +521,35 @@ function LowStockCard({ inventory, borrows = [], onViewAll }) {
 const PAGE_SIZE = 6
 
 export default function Inventory() {
-  const [inventory, setInventory] = useState([])
-  const [borrows,   setBorrows]   = useState([])
-  const [sales,     setSales]     = useState([])
-  const [loading,   setLoading]   = useState(true)
+  const [inventory,      setInventory]      = useState([])
+  const [borrows,        setBorrows]        = useState([])
+  const [sales,          setSales]          = useState([])
+  const [participantMap, setParticipantMap] = useState({})
+  const [loading,        setLoading]        = useState(true)
 
   useEffect(() => { fetchAll() }, [])
 
   async function fetchAll() {
     setLoading(true)
-    const [invRes, borRes, salRes] = await Promise.all([
+    const [invRes, borRes, salRes, parRes] = await Promise.all([
       supabase.from('inventory_items').select('*').order('itemName'),
       supabase.from('borrow_records').select('*').order('created_at', { ascending: false }),
       supabase.from('sale_records').select('*').order('created_at', { ascending: false }),
+      supabase.from('retreat_participants').select('uniform, clothesSize').not('uniform', 'is', null),
     ])
     if (!invRes.error) setInventory(invRes.data)
     if (!borRes.error) setBorrows(borRes.data)
     if (!salRes.error) setSales(salRes.data)
+    if (!parRes.error) {
+      const map = {}
+      parRes.data.forEach(p => {
+        if (p.uniform && p.clothesSize) {
+          const key = `${p.uniform}|${p.clothesSize}`
+          map[key] = (map[key] || 0) + 1
+        }
+      })
+      setParticipantMap(map)
+    }
     setLoading(false)
   }
 
@@ -575,9 +582,9 @@ export default function Inventory() {
       const matchSize   = !sizeF  || i.size  === sizeF
       const matchColor  = !colorF || i.color === colorF
       const matchStatus = !statusF || (
-        statusF === 'available' ? calcAvailable(i, borrows) > 0 :
+        statusF === 'available' ? calcAvailable(i, borrows, participantMap) > 0 :
         statusF === 'borrowed'  ? borrows.some(b => b.itemName === i.itemName && b.size === i.size && b.status !== 'Returned') :
-        statusF === 'low'       ? (i.totalQuantity > 0 && calcAvailable(i, borrows) / i.totalQuantity <= 0.5) :
+        statusF === 'low'       ? (i.totalQuantity > 0 && calcAvailable(i, borrows, participantMap) / i.totalQuantity <= 0.5) :
         statusF === 'review'    ? (i.condition === 'Needs Review' || i.condition === 'Needs Repair') : true
       )
       return matchSearch && matchSize && matchColor && matchStatus
@@ -757,7 +764,7 @@ export default function Inventory() {
                       </td>
                       <td className="px-4 py-3 text-xs font-semibold" style={{ color: C.burgundy }}>{item.size}</td>
                       <td className="px-4 py-3 text-xs font-semibold text-center" style={{ color: C.burgundy }}>{item.totalQuantity}</td>
-                      <td className="px-4 py-3 text-xs font-bold text-center" style={{ color: calcAvailable(item, borrows) > 0 ? '#2D7A4F' : C.faint }}>{calcAvailable(item, borrows)}</td>
+                      <td className="px-4 py-3 text-xs font-bold text-center" style={{ color: calcAvailable(item, borrows, participantMap) > 0 ? '#2D7A4F' : C.faint }}>{calcAvailable(item, borrows, participantMap)}</td>
                       <td className="px-4 py-3 text-xs font-bold text-center" style={{ color: borrows.some(b => b.itemName === item.itemName && b.size === item.size && b.status !== 'Returned') ? C.coral : C.faint }}>{borrows.filter(b => b.itemName === item.itemName && b.size === item.size && b.status !== 'Returned').reduce((s, b) => s + b.quantity, 0)}</td>
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-1">
@@ -965,7 +972,7 @@ export default function Inventory() {
 
         {/* ── Right column ── */}
         <div className="w-72 shrink-0 hidden lg:block">
-          <LowStockCard inventory={inventory} borrows={borrows} onViewAll={() => setStatusF('low')} />
+          <LowStockCard inventory={inventory} borrows={borrows} participantMap={participantMap} onViewAll={() => setStatusF('low')} />
         </div>
       </div>
 
@@ -979,7 +986,7 @@ export default function Inventory() {
       </Drawer>
 
       <Drawer open={addBorrowOpen} onClose={() => setAddBorrowOpen(false)} title="Add Borrow Record">
-        <BorrowForm inventory={inventory} borrows={borrows} onSave={handleBorrow} onClose={() => setAddBorrowOpen(false)} />
+        <BorrowForm inventory={inventory} borrows={borrows} participantMap={participantMap} onSave={handleBorrow} onClose={() => setAddBorrowOpen(false)} />
       </Drawer>
 
       {deleteItem && <DeleteModal name={deleteItem.itemName} onConfirm={handleDelete} onClose={() => setDeleteItem(null)} />}
@@ -989,6 +996,7 @@ export default function Inventory() {
           <BorrowForm
             inventory={inventory}
             borrows={borrows}
+            participantMap={participantMap}
             initial={editingBorrow}
             onSave={handleEditBorrow}
             onClose={() => setEditingBorrow(null)}

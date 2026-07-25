@@ -697,11 +697,6 @@ export default function Inventory() {
           <h2 className="text-4xl font-extrabold mb-1" style={{ color: C.burgundy, fontFamily: "'Nunito', sans-serif" }}>Inventory</h2>
           <p className="text-sm" style={{ color: C.muted }}>Track áo dài sizes, colors, quantities, and borrowed items.</p>
         </div>
-        <button onClick={() => setAddOpen(true)}
-          className="flex items-center gap-2 px-5 py-2.5 text-white text-sm font-semibold rounded-2xl shadow-md hover:opacity-90 transition-opacity shrink-0"
-          style={{ background: 'linear-gradient(135deg, #F1745E, #E06464)' }}>
-          <PlusIcon className="w-4 h-4" /> Add Item
-        </button>
       </div>
 
       {/* Two-column layout */}

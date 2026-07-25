@@ -3502,7 +3502,7 @@ function RetreatParticipantsSection({ eventId, eventName, onCountChange }) {
         <td style="vertical-align:middle">${parentNames}</td>
         <td style="vertical-align:middle">${phones}</td>
         <td style="vertical-align:middle">${allergyText}</td>
-        <td style="white-space:nowrap;vertical-align:middle;text-align:center">${[p.uniform, p.clothesSize].filter(Boolean).join(' / ') || '—'}</td>
+        <td style="white-space:nowrap;vertical-align:middle;text-align:center">${p.clothesSize ? 'Size ' + p.clothesSize : '—'}</td>
         <td style="vertical-align:middle;text-align:center">${paidText}</td>
         <td style="color:#555;font-size:11px;vertical-align:middle">${p.notes || ''}</td>
       </tr>`
@@ -3660,10 +3660,8 @@ function RetreatParticipantsSection({ eventId, eventName, onCountChange }) {
                     {p.allergy && p.allergy.toLowerCase() !== 'none' && (
                       <p className="text-xs font-semibold" style={{ color: '#E06464' }}>⚠ {p.allergy}</p>
                     )}
-                    {(p.uniform || p.clothesSize) && (
-                      <p className="text-xs" style={{ color: C.faint }}>
-                        👕 {[p.uniform, p.clothesSize].filter(Boolean).join(' · ')}
-                      </p>
+                    {p.clothesSize && (
+                      <p className="text-xs" style={{ color: C.faint }}>👕 Size {p.clothesSize}</p>
                     )}
                   </div>
                   {guardians.length > 0 && (

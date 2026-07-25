@@ -700,7 +700,7 @@ export default function Inventory() {
         <button onClick={() => setAddOpen(true)}
           className="flex items-center gap-2 px-5 py-2.5 text-white text-sm font-semibold rounded-2xl shadow-md hover:opacity-90 transition-opacity shrink-0"
           style={{ background: 'linear-gradient(135deg, #F1745E, #E06464)' }}>
-          <PlusIcon className="w-4 h-4" /> Add Áo Dài
+          <PlusIcon className="w-4 h-4" /> Add Item
         </button>
       </div>
 
@@ -977,7 +977,7 @@ export default function Inventory() {
       </div>
 
       {/* ── Drawers / Modals ── */}
-      <Drawer open={addOpen} onClose={() => setAddOpen(false)} title="Add Áo Dài">
+      <Drawer open={addOpen} onClose={() => setAddOpen(false)} title="Add Item">
         <InventoryForm onSave={handleAdd} onClose={() => setAddOpen(false)} />
       </Drawer>
 

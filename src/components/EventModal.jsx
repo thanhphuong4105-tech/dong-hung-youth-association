@@ -3710,7 +3710,7 @@ function RetreatParticipantsSection({ eventId, eventName, onCountChange }) {
 
       {/* Left-side drawer for Add / Edit */}
       {showForm && (
-        <div className="fixed inset-0 z-50 flex justify-end">
+        <div className="fixed inset-0 z-[75] flex justify-end">
           <div className="absolute inset-0 bg-black/40" onClick={() => setShowForm(false)} />
           <div className="relative flex flex-col w-full max-w-md overflow-y-auto shadow-2xl"
             style={{ backgroundColor: '#FFFCF8', borderLeft: `1.5px solid ${C.peach}`, height: '100%', paddingBottom: 'env(safe-area-inset-bottom)' }}>

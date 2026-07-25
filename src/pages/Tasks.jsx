@@ -216,7 +216,7 @@ function ItemMenu({ onEdit, onDelete }) {
 function Drawer({ open, onClose, title, children }) {
   if (!open) return null
   return (
-    <div className="fixed inset-0 z-50 flex justify-end">
+    <div className="fixed inset-0 z-[65] flex justify-end">
       <div className="absolute inset-0 bg-black/30" onClick={onClose} />
       <div className="relative flex flex-col w-full max-w-md overflow-y-auto shadow-2xl"
         style={{ backgroundColor: C.card, borderLeft: `1.5px solid ${C.beige}`, height: '100%', paddingBottom: 'env(safe-area-inset-bottom)' }}>

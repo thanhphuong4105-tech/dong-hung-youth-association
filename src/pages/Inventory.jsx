@@ -616,11 +616,26 @@ export default function Inventory() {
     setDeleteItem(null)
   }
 
+  function adjustInv(itemName, size, delta) {
+    setInventory(prev => prev.map(i =>
+      i.itemName === itemName && i.size === size
+        ? { ...i, availableQuantity: Math.max(0, i.availableQuantity + delta), borrowedQuantity: Math.max(0, i.borrowedQuantity - delta) }
+        : i
+    ))
+  }
+
+  function calcStatus(form) {
+    if (form.returnedDate) return 'Returned'
+    if (form.expectedReturnDate && new Date(form.expectedReturnDate) < new Date()) return 'Overdue'
+    return 'Borrowed'
+  }
+
   function handleBorrow(form) {
     const qty = Number(form.quantity)
+    const invItem = inventory.find(i => i.itemName === form.itemName && i.size === form.size)
     const newRecord = {
       id: 'borrow-' + Date.now(),
-      inventoryItemId: null,
+      inventoryItemId: invItem?.id || null,
       itemName: form.itemName,
       size: form.size,
       borrowerName: form.borrowerName,
@@ -629,17 +644,28 @@ export default function Inventory() {
       borrowDate: form.borrowDate,
       expectedReturnDate: form.expectedReturnDate,
       returnedDate: form.returnedDate || '',
-      status: form.returnedDate ? 'Returned' : (form.expectedReturnDate && new Date(form.expectedReturnDate) < new Date() ? 'Overdue' : 'Borrowed'),
+      status: calcStatus(form),
       notes: form.notes,
     }
+    if (!form.returnedDate) adjustInv(form.itemName, form.size, -qty)
     setBorrows(prev => [newRecord, ...prev])
     setAddBorrowOpen(false)
     setBorrowItem(null)
   }
 
   function handleEditBorrow(form) {
-    setBorrows(prev => prev.map(b => b.id === editingBorrow.id
-      ? { ...b, itemName: form.itemName, size: form.size, borrowerName: form.borrowerName, eventName: form.eventName, quantity: Number(form.quantity), borrowDate: form.borrowDate, expectedReturnDate: form.expectedReturnDate, returnedDate: form.returnedDate || '', status: form.returnedDate ? 'Returned' : (form.expectedReturnDate && new Date(form.expectedReturnDate) < new Date() ? 'Overdue' : 'Borrowed'), notes: form.notes }
+    const old = editingBorrow
+    const oldQty = Number(old.quantity)
+    const newQty = Number(form.quantity)
+    const oldActive = old.status !== 'Returned'
+    const newActive = !form.returnedDate
+
+    // Restore old deduction, apply new one
+    if (oldActive) adjustInv(old.itemName, old.size, +oldQty)
+    if (newActive) adjustInv(form.itemName, form.size, -newQty)
+
+    setBorrows(prev => prev.map(b => b.id === old.id
+      ? { ...b, itemName: form.itemName, size: form.size, borrowerName: form.borrowerName, eventName: form.eventName, quantity: newQty, borrowDate: form.borrowDate, expectedReturnDate: form.expectedReturnDate, returnedDate: form.returnedDate || '', status: calcStatus(form), notes: form.notes }
       : b))
     setEditingBorrow(null)
   }

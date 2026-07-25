@@ -3405,6 +3405,17 @@ function RetreatParticipantsSection({ eventId, eventName, onCountChange }) {
   function addParent() { setParents(p => [...p, { ...EMPTY_PARENT }]) }
   function removeParent(i) { setParents(p => p.filter((_, idx) => idx !== i)) }
 
+  function adjustInventory(itemName, size, delta) {
+    if (!itemName || !size) return
+    try {
+      const inv = JSON.parse(localStorage.getItem('dhya_inventory') || '[]')
+      const idx = inv.findIndex(i => i.itemName === itemName && i.size === size)
+      if (idx === -1) return
+      inv[idx] = { ...inv[idx], availableQuantity: Math.max(0, (inv[idx].availableQuantity || 0) + delta) }
+      localStorage.setItem('dhya_inventory', JSON.stringify(inv))
+    } catch {}
+  }
+
   async function handleSave() {
     if (!form.firstName.trim()) return
     setSaving(true)
@@ -3421,9 +3432,20 @@ function RetreatParticipantsSection({ eventId, eventName, onCountChange }) {
       uniform: form.uniform || null,
       clothesSize: form.clothesSize || null,
     }
+
     if (editingId) {
+      const old = participants.find(p => p.id === editingId)
+      const oldUniform = old?.uniform || null
+      const oldSize = old?.clothesSize || null
+      const newUniform = form.uniform || null
+      const newSize = form.clothesSize || null
+      if (oldUniform !== newUniform || oldSize !== newSize) {
+        adjustInventory(oldUniform, oldSize, +1)
+        adjustInventory(newUniform, newSize, -1)
+      }
       await supabase.from('retreat_participants').update(payload).eq('id', editingId)
     } else {
+      adjustInventory(form.uniform || null, form.clothesSize || null, -1)
       const maxOrder = participants.length > 0 ? Math.max(...participants.map(p => p.sort_order || 0)) + 1 : 0
       await supabase.from('retreat_participants').insert({ event_id: eventId, sort_order: maxOrder, ...payload })
     }
@@ -3433,6 +3455,8 @@ function RetreatParticipantsSection({ eventId, eventName, onCountChange }) {
   }
 
   async function handleDelete(id) {
+    const target = participants.find(p => p.id === id)
+    if (target?.uniform && target?.clothesSize) adjustInventory(target.uniform, target.clothesSize, +1)
     await supabase.from('retreat_participants').delete().eq('id', id)
     setDeleteTarget(null)
     fetchParticipants()

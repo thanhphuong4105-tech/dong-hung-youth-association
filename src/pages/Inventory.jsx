@@ -513,11 +513,25 @@ function DeleteModal({ name, onConfirm, onClose }) {
   )
 }
 
+// ─── Computed available qty (module-level so all components can use it) ──────
+function calcAvailable(item, borrows = []) {
+  const borrowUsed = borrows
+    .filter(b => b.itemName === item.itemName && b.size === item.size && b.status !== 'Returned')
+    .reduce((sum, b) => sum + b.quantity, 0)
+  const participantUsed = (() => {
+    try {
+      const map = JSON.parse(localStorage.getItem('dhya_participant_uniforms') || '{}')
+      return map[`${item.itemName}|${item.size}`] || 0
+    } catch { return 0 }
+  })()
+  return Math.max(0, item.totalQuantity - borrowUsed - participantUsed)
+}
+
 // ─── Low Stock Card ───────────────────────────────────────────────────────────
-function LowStockCard({ inventory, onViewAll }) {
+function LowStockCard({ inventory, borrows = [], onViewAll }) {
   const LOW_THRESHOLD = 0.5
   const lowItems = inventory.filter(i =>
-    i.totalQuantity > 0 && calcAvailable(i) / i.totalQuantity <= LOW_THRESHOLD
+    i.totalQuantity > 0 && calcAvailable(i, borrows) / i.totalQuantity <= LOW_THRESHOLD
   )
 
   return (
@@ -537,8 +551,8 @@ function LowStockCard({ inventory, onViewAll }) {
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-xs font-bold truncate" style={{ color: C.burgundy }}>{item.itemName} ({item.size})</p>
-                <p className="text-xs mt-0.5" style={{ color: calcAvailable(item) <= 2 ? C.coral : C.muted }}>
-                  <span className="font-semibold">{calcAvailable(item)} available</span>
+                <p className="text-xs mt-0.5" style={{ color: calcAvailable(item, borrows) <= 2 ? C.coral : C.muted }}>
+                  <span className="font-semibold">{calcAvailable(item, borrows)} available</span>
                 </p>
                 <p className="text-[10px]" style={{ color: C.faint }}>Total: {item.totalQuantity}</p>
               </div>
@@ -593,9 +607,9 @@ export default function Inventory() {
       const matchSize   = !sizeF  || i.size  === sizeF
       const matchColor  = !colorF || i.color === colorF
       const matchStatus = !statusF || (
-        statusF === 'available' ? calcAvailable(i) > 0 :
+        statusF === 'available' ? calcAvailable(i, borrows) > 0 :
         statusF === 'borrowed'  ? borrows.some(b => b.itemName === i.itemName && b.size === i.size && b.status !== 'Returned') :
-        statusF === 'low'       ? (i.totalQuantity > 0 && calcAvailable(i) / i.totalQuantity <= 0.5) :
+        statusF === 'low'       ? (i.totalQuantity > 0 && calcAvailable(i, borrows) / i.totalQuantity <= 0.5) :
         statusF === 'review'    ? (i.condition === 'Needs Review' || i.condition === 'Needs Repair') : true
       )
       return matchSearch && matchSize && matchColor && matchStatus
@@ -621,19 +635,6 @@ export default function Inventory() {
   function handleDelete() {
     setInventory(prev => prev.filter(i => i.id !== deleteItem.id))
     setDeleteItem(null)
-  }
-
-  function calcAvailable(item) {
-    const borrowUsed = borrows
-      .filter(b => b.itemName === item.itemName && b.size === item.size && b.status !== 'Returned')
-      .reduce((sum, b) => sum + b.quantity, 0)
-    const participantUsed = (() => {
-      try {
-        const map = JSON.parse(localStorage.getItem('dhya_participant_uniforms') || '{}')
-        return map[`${item.itemName}|${item.size}`] || 0
-      } catch { return 0 }
-    })()
-    return Math.max(0, item.totalQuantity - borrowUsed - participantUsed)
   }
 
   function calcStatus(form) {
@@ -779,7 +780,7 @@ export default function Inventory() {
                       </td>
                       <td className="px-4 py-3 text-xs font-semibold" style={{ color: C.burgundy }}>{item.size}</td>
                       <td className="px-4 py-3 text-xs font-semibold text-center" style={{ color: C.burgundy }}>{item.totalQuantity}</td>
-                      <td className="px-4 py-3 text-xs font-bold text-center" style={{ color: calcAvailable(item) > 0 ? '#2D7A4F' : C.faint }}>{calcAvailable(item)}</td>
+                      <td className="px-4 py-3 text-xs font-bold text-center" style={{ color: calcAvailable(item, borrows) > 0 ? '#2D7A4F' : C.faint }}>{calcAvailable(item, borrows)}</td>
                       <td className="px-4 py-3 text-xs font-bold text-center" style={{ color: borrows.some(b => b.itemName === item.itemName && b.size === item.size && b.status !== 'Returned') ? C.coral : C.faint }}>{borrows.filter(b => b.itemName === item.itemName && b.size === item.size && b.status !== 'Returned').reduce((s, b) => s + b.quantity, 0)}</td>
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-1">
@@ -987,7 +988,7 @@ export default function Inventory() {
 
         {/* ── Right column ── */}
         <div className="w-72 shrink-0 hidden lg:block">
-          <LowStockCard inventory={inventory} onViewAll={() => setStatusF('low')} />
+          <LowStockCard inventory={inventory} borrows={borrows} onViewAll={() => setStatusF('low')} />
         </div>
       </div>
 

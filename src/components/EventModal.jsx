@@ -3431,8 +3431,7 @@ function RetreatParticipantsSection({ eventId, eventName, onCountChange }) {
 
   function rebuildUniformMap(rows) {
     try {
-      const map = JSON.parse(localStorage.getItem('dhya_participant_uniforms') || '{}')
-      // Remove this event's contribution then re-add from current rows
+      const map = {}
       rows.forEach(p => {
         if (p.uniform && p.clothesSize) {
           const key = `${p.uniform}|${p.clothesSize}`

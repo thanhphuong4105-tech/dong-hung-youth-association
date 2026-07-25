@@ -760,7 +760,7 @@ export default function Inventory() {
                       </td>
                       <td className="px-4 py-3 text-xs font-semibold text-center" style={{ color: C.burgundy }}>{item.size}</td>
                       <td className="px-4 py-3 text-xs font-semibold text-center" style={{ color: C.burgundy }}>{item.totalQuantity}</td>
-                      <td className="px-4 py-3 text-xs font-bold text-center" style={{ color: calcAvailable(item, borrows, participantMap) > 0 ? '#2D7A4F' : C.faint }}>{calcAvailable(item, borrows, participantMap)}</td>
+                      <td className="px-4 py-3 text-base font-bold text-center" style={{ color: calcAvailable(item, borrows, participantMap) > 0 ? '#2D7A4F' : C.faint }}>{calcAvailable(item, borrows, participantMap)}</td>
                       <td className="px-4 py-3 text-xs font-bold text-center" style={{ color: borrows.some(b => b.itemName === item.itemName && b.size === item.size && b.status !== 'Returned') ? C.coral : C.faint }}>{borrows.filter(b => b.itemName === item.itemName && b.size === item.size && b.status !== 'Returned').reduce((s, b) => s + b.quantity, 0)}</td>
                       <td className="px-4 py-3 text-xs font-bold text-center" style={{ color: (participantMap[`${item.itemName}|${item.size}`] || 0) > 0 ? C.burgundy : C.faint }}>{participantMap[`${item.itemName}|${item.size}`] || 0}</td>
                       <td className="px-4 py-3">

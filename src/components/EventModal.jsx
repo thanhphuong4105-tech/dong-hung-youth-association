@@ -3310,8 +3310,12 @@ function ParticipantParentEntry({ parent, index, onChange, onRemove, showRemove 
 
 // ─── Retreat Participants Section ─────────────────────────────────────────────
 function RetreatParticipantsSection({ eventId, eventName, onCountChange }) {
-  const EMPTY_FORM = { firstName: '', lastName: '', birthday: '', allergy: '', classId: '', notes: '', paid: false, clothesSize: '' }
+  const EMPTY_FORM = { firstName: '', lastName: '', birthday: '', allergy: '', classId: '', notes: '', paid: false, uniform: '', clothesSize: '' }
   const EMPTY_PARENT = { name: '', phone: '', email: '' }
+
+  const inventoryItems = (() => {
+    try { return JSON.parse(localStorage.getItem('dhya_inventory') || '[]') } catch { return [] }
+  })()
 
   const [participants, setParticipants] = useState([])
   const [loading, setLoading] = useState(true)
@@ -3367,6 +3371,7 @@ function RetreatParticipantsSection({ eventId, eventName, onCountChange }) {
       classId: p.classId || '',
       notes: p.notes || '',
       paid: p.paid ?? false,
+      uniform: p.uniform || '',
       clothesSize: p.clothesSize || '',
     })
     setParents(p.parents?.length ? p.parents.map(g => ({ name: g.name || '', phone: g.phone || '', email: g.email || '' })) : [{ ...EMPTY_PARENT }])
@@ -3413,7 +3418,8 @@ function RetreatParticipantsSection({ eventId, eventName, onCountChange }) {
       parents: cleanParents,
       classId: form.classId || null,
       paid: form.paid,
-      clothesSize: form.clothesSize.trim() || null,
+      uniform: form.uniform || null,
+      clothesSize: form.clothesSize || null,
     }
     if (editingId) {
       await supabase.from('retreat_participants').update(payload).eq('id', editingId)
@@ -3472,7 +3478,7 @@ function RetreatParticipantsSection({ eventId, eventName, onCountChange }) {
         <td style="vertical-align:middle">${parentNames}</td>
         <td style="vertical-align:middle">${phones}</td>
         <td style="vertical-align:middle">${allergyText}</td>
-        <td style="white-space:nowrap;vertical-align:middle;text-align:center">${p.clothesSize || '—'}</td>
+        <td style="white-space:nowrap;vertical-align:middle;text-align:center">${[p.uniform, p.clothesSize].filter(Boolean).join(' / ') || '—'}</td>
         <td style="vertical-align:middle;text-align:center">${paidText}</td>
         <td style="color:#555;font-size:11px;vertical-align:middle">${p.notes || ''}</td>
       </tr>`
@@ -3630,7 +3636,11 @@ function RetreatParticipantsSection({ eventId, eventName, onCountChange }) {
                     {p.allergy && p.allergy.toLowerCase() !== 'none' && (
                       <p className="text-xs font-semibold" style={{ color: '#E06464' }}>⚠ {p.allergy}</p>
                     )}
-                    {p.clothesSize && <p className="text-xs" style={{ color: C.faint }}>👕 {p.clothesSize}</p>}
+                    {(p.uniform || p.clothesSize) && (
+                      <p className="text-xs" style={{ color: C.faint }}>
+                        👕 {[p.uniform, p.clothesSize].filter(Boolean).join(' · ')}
+                      </p>
+                    )}
                   </div>
                   {guardians.length > 0 && (
                     <div className="mt-1 space-y-0.5">
@@ -3714,10 +3724,25 @@ function RetreatParticipantsSection({ eventId, eventName, onCountChange }) {
                 </PField>
               </div>
 
-              {/* Clothes Size */}
-              <PField label="Clothes Size">
-                <input name="clothesSize" value={form.clothesSize} onChange={hc} placeholder="e.g. S, M, L, XL, 4T" style={pInput} />
-              </PField>
+              {/* Uniform + Size */}
+              <div className="grid grid-cols-2 gap-4">
+                <PField label="Uniform">
+                  <select name="uniform" value={form.uniform} onChange={e => setForm(f => ({ ...f, uniform: e.target.value, clothesSize: '' }))} style={pInput}>
+                    <option value="">— None —</option>
+                    {[...new Set(inventoryItems.map(i => i.itemName))].map(name => (
+                      <option key={name} value={name}>{name}</option>
+                    ))}
+                  </select>
+                </PField>
+                <PField label="Size">
+                  <select name="clothesSize" value={form.clothesSize} onChange={hc} style={pInput} disabled={!form.uniform}>
+                    <option value="">— Select —</option>
+                    {inventoryItems.filter(i => i.itemName === form.uniform).map(i => (
+                      <option key={i.id} value={i.size}>{i.size}</option>
+                    ))}
+                  </select>
+                </PField>
+              </div>
 
               {/* Paid */}
               <button type="button" onClick={() => setForm(f => ({ ...f, paid: !f.paid }))}

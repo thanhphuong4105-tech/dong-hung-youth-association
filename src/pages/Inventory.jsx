@@ -736,8 +736,9 @@ export default function Inventory() {
               <table className="w-full text-sm" style={{ borderCollapse: 'collapse' }}>
                 <thead>
                   <tr style={{ backgroundColor: '#FFF0EA', borderBottom: `1.5px solid ${C.beige}` }}>
-                    {['Item Name','Size','Total Qty','Available','Borrowed','Actions'].map(h => (
-                      <th key={h} className="px-4 py-3 text-left text-xs font-extrabold uppercase tracking-wide whitespace-nowrap"
+                    <th className="px-4 py-3 text-left text-xs font-extrabold uppercase tracking-wide whitespace-nowrap" style={{ color: C.muted }}>Item Name</th>
+                    {['Size','Total Qty','Available','Borrowed','Sold','Actions'].map(h => (
+                      <th key={h} className="px-4 py-3 text-center text-xs font-extrabold uppercase tracking-wide whitespace-nowrap"
                         style={{ color: C.muted }}>{h}</th>
                     ))}
                   </tr>
@@ -757,10 +758,11 @@ export default function Inventory() {
                           <span className="font-semibold text-xs whitespace-nowrap" style={{ color: C.burgundy }}>{item.itemName}</span>
                         </div>
                       </td>
-                      <td className="px-4 py-3 text-xs font-semibold" style={{ color: C.burgundy }}>{item.size}</td>
+                      <td className="px-4 py-3 text-xs font-semibold text-center" style={{ color: C.burgundy }}>{item.size}</td>
                       <td className="px-4 py-3 text-xs font-semibold text-center" style={{ color: C.burgundy }}>{item.totalQuantity}</td>
                       <td className="px-4 py-3 text-xs font-bold text-center" style={{ color: calcAvailable(item, borrows, participantMap) > 0 ? '#2D7A4F' : C.faint }}>{calcAvailable(item, borrows, participantMap)}</td>
                       <td className="px-4 py-3 text-xs font-bold text-center" style={{ color: borrows.some(b => b.itemName === item.itemName && b.size === item.size && b.status !== 'Returned') ? C.coral : C.faint }}>{borrows.filter(b => b.itemName === item.itemName && b.size === item.size && b.status !== 'Returned').reduce((s, b) => s + b.quantity, 0)}</td>
+                      <td className="px-4 py-3 text-xs font-bold text-center" style={{ color: (participantMap[`${item.itemName}|${item.size}`] || 0) > 0 ? C.burgundy : C.faint }}>{participantMap[`${item.itemName}|${item.size}`] || 0}</td>
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-1">
                           <button onClick={() => setEditItem(item)} title="Edit"

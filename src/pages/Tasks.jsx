@@ -226,7 +226,7 @@ function Drawer({ open, onClose, title, children }) {
             <XMarkIcon className="w-5 h-5" />
           </button>
         </div>
-        <div className="flex-1 px-6 py-5">{children}</div>
+        <div className="flex-1 px-6 py-5 pb-24">{children}</div>
       </div>
     </div>
   )

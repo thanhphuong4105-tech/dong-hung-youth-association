@@ -118,7 +118,7 @@ function Drawer({ open, onClose, title, children }) {
           <h3 className="text-lg font-extrabold" style={{ color: C.burgundy, fontFamily: "'Nunito', sans-serif" }}>{title}</h3>
           <button onClick={onClose} className="p-1.5 rounded-full hover:bg-orange-50"><XMarkIcon className="w-5 h-5" style={{ color: C.muted }} /></button>
         </div>
-        <div className="flex-1 px-6 py-5">{children}</div>
+        <div className="flex-1 px-6 py-5 pb-24">{children}</div>
       </div>
     </div>
   )
@@ -1520,7 +1520,7 @@ function StudentsTab({ students, cls, onAddStudent, onUpdateStudent, onDeleteStu
       {editingStudent && editForm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ backgroundColor: 'rgba(50,30,10,0.4)' }}
           onClick={e => { if (e.target === e.currentTarget) setEditingStudent(null) }}>
-          <div className="w-full max-w-md rounded-3xl p-6 overflow-y-auto max-h-[90vh]" style={{ backgroundColor: '#fff', border: `1.5px solid ${C.beige}` }}>
+          <div className="w-full max-w-md rounded-3xl p-6 pb-24 overflow-y-auto max-h-[90vh]" style={{ backgroundColor: '#fff', border: `1.5px solid ${C.beige}` }}>
             <h4 className="font-extrabold text-lg mb-4" style={{ color: C.burgundy }}>Edit Student</h4>
             <form onSubmit={saveEdit} className="space-y-3">
               <div className="grid grid-cols-2 gap-3">

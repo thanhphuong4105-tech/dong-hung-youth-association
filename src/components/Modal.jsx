@@ -13,7 +13,7 @@ export default function Modal({ title, onClose, children }) {
       {/* Backdrop */}
       <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" onClick={onClose} />
       {/* Panel */}
-      <div className="relative w-full max-w-lg rounded-3xl p-6 shadow-2xl z-10 max-h-[90vh] overflow-y-auto"
+      <div className="relative w-full max-w-lg rounded-3xl p-6 pb-24 shadow-2xl z-10 max-h-[90vh] overflow-y-auto"
         style={{ backgroundColor: '#FFF7F3', border: '1.5px solid #EDD0AC' }}>
         <div className="flex items-center justify-between mb-5">
           <h3 className="text-2xl" style={{ color: '#4F252A' }}>{title}</h3>

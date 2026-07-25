@@ -137,7 +137,7 @@ function ModalShell({ title, onClose, children }) {
             <XMarkIcon className="w-5 h-5" />
           </button>
         </div>
-        <div className="px-6 py-5 space-y-4 max-h-[75vh] overflow-y-auto">{children}</div>
+        <div className="px-6 py-5 pb-24 space-y-4 max-h-[75vh] overflow-y-auto">{children}</div>
       </div>
     </div>
   )

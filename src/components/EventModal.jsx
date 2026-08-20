@@ -2433,10 +2433,11 @@ function RolePickerModal({ eventId, existingNames, onClose, onSaved }) {
 const THINH_SU_ROLES = ['Kẻng', 'Trầm', 'Đèn hoa sen', 'Đèn', 'Khiêng kiệu', 'Lộng', 'Cờ', 'Hoa']
 
 function ThinhSuSection({ eventId, onCountChange }) {
-  const [assignments, setAssignments] = useState({}) // { roleName: [memberKey, ...] }
-  const [members, setMembers]         = useState({ appUsers: [], generalMembers: [], danceTeam: [] })
-  const [loading, setLoading]         = useState(true)
+  const [rows, setRows]           = useState([]) // [{ role_name, assigned_volunteers }]
+  const [members, setMembers]     = useState({ appUsers: [], generalMembers: [], danceTeam: [] })
+  const [loading, setLoading]     = useState(true)
   const [editingRole, setEditingRole] = useState(null)
+  const [showPicker, setShowPicker]   = useState(false)
 
   const fetchAll = useCallback(async () => {
     setLoading(true)
@@ -2446,22 +2447,26 @@ function ThinhSuSection({ eventId, onCountChange }) {
       supabase.from('general_members').select('id, full_name').order('full_name'),
       supabase.from('dance_team_participants').select('id, name').order('name'),
     ])
-    const map = {}
-    for (const row of (assignRes.data || [])) {
-      map[row.role_name] = row.assigned_volunteers || []
-    }
-    setAssignments(map)
+    const fetched = assignRes.data || []
+    // Sort by THINH_SU_ROLES order
+    fetched.sort((a, b) => THINH_SU_ROLES.indexOf(a.role_name) - THINH_SU_ROLES.indexOf(b.role_name))
+    setRows(fetched)
     setMembers({
       appUsers:       appUsersRes.data || [],
       generalMembers: generalRes.data  || [],
       danceTeam:      danceRes.data    || [],
     })
-    const totalAssigned = Object.values(map).reduce((sum, arr) => sum + arr.length, 0)
+    const totalAssigned = fetched.reduce((sum, r) => sum + (r.assigned_volunteers?.length ?? 0), 0)
     onCountChange(totalAssigned)
     setLoading(false)
   }, [eventId, onCountChange])
 
   useEffect(() => { fetchAll() }, [fetchAll])
+
+  async function removeRole(roleName) {
+    await supabase.from('thinh_su_assignments').delete().eq('event_id', eventId).eq('role_name', roleName)
+    fetchAll()
+  }
 
   function resolveNames(keys) {
     const allOpts = [
@@ -2472,6 +2477,8 @@ function ThinhSuSection({ eventId, onCountChange }) {
     return (keys || []).map(k => allOpts.find(o => o.key === k)?.label).filter(Boolean)
   }
 
+  const addedNames = new Set(rows.map(r => r.role_name))
+
   return (
     <>
       <div>
@@ -2479,6 +2486,12 @@ function ThinhSuSection({ eventId, onCountChange }) {
           <h3 className="text-base font-bold" style={{ color: C.text, fontFamily: "'Nunito', sans-serif", fontSize: '1.1rem' }}>
             Thinh Su
           </h3>
+          <button onClick={() => setShowPicker(true)}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-white text-xs font-semibold rounded-xl shadow-md hover:opacity-90 transition-opacity"
+            style={{ background: 'linear-gradient(135deg, #F1745E, #E06464)' }}>
+            <PlusIcon className="w-3.5 h-3.5" />
+            Add Roles
+          </button>
         </div>
 
         {loading ? (
@@ -2486,18 +2499,27 @@ function ThinhSuSection({ eventId, onCountChange }) {
             <div className="w-8 h-8 rounded-full border-2 animate-spin"
               style={{ borderColor: C.peach, borderTopColor: C.orange }} />
           </div>
+        ) : rows.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-8 text-center">
+            <div className="w-16 h-16 rounded-full flex items-center justify-center mb-3"
+              style={{ backgroundColor: C.orangeLight }}>
+              <BellIcon size={30} />
+            </div>
+            <p className="text-sm font-semibold mb-1" style={{ color: C.text }}>No roles added yet</p>
+            <p className="text-xs" style={{ color: C.faint }}>Click "Add Roles" to select Thinh Su positions.</p>
+          </div>
         ) : (
           <div className="flex flex-col gap-2">
-            {THINH_SU_ROLES.map((role, idx) => {
-              const names = resolveNames(assignments[role])
+            {rows.map((row, idx) => {
+              const names = resolveNames(row.assigned_volunteers)
               return (
-                <div key={role}
+                <div key={row.role_name}
                   className="flex items-center gap-3 px-4 py-3 rounded-2xl cursor-pointer hover:opacity-90 transition-opacity"
                   style={{ backgroundColor: '#ffffff', border: `1.5px solid ${C.peach}`, boxShadow: '0 1px 6px rgba(0,0,0,0.04)' }}
-                  onClick={() => setEditingRole(role)}>
+                  onClick={() => setEditingRole(row.role_name)}>
 
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold" style={{ color: C.text }}>{idx + 1}. {role}</p>
+                    <p className="text-sm font-semibold" style={{ color: C.text }}>{idx + 1}. {row.role_name}</p>
                     {names.length > 0 && (
                       <p className="text-sm mt-0.5 leading-relaxed" style={{ color: C.muted }}>{names.join(', ')}</p>
                     )}
@@ -2510,9 +2532,11 @@ function ThinhSuSection({ eventId, onCountChange }) {
                     </span>
                   )}
 
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: C.faint, flexShrink: 0 }}>
-                    <path d="M9 18l6-6-6-6"/>
-                  </svg>
+                  <button onClick={e => { e.stopPropagation(); removeRole(row.role_name) }}
+                    className="p-1 rounded-full hover:bg-red-50 transition-colors shrink-0"
+                    style={{ color: '#E06464' }}>
+                    <XMarkIcon className="w-4 h-4" />
+                  </button>
                 </div>
               )
             })}
@@ -2520,17 +2544,100 @@ function ThinhSuSection({ eventId, onCountChange }) {
         )}
       </div>
 
+      {showPicker && (
+        <ThinhSuPickerModal
+          eventId={eventId}
+          addedNames={addedNames}
+          onClose={() => setShowPicker(false)}
+          onSaved={fetchAll}
+        />
+      )}
+
       {editingRole && (
         <ThinhSuAssignModal
           eventId={eventId}
           roleName={editingRole}
           members={members}
-          currentVolunteers={assignments[editingRole] || []}
+          currentVolunteers={rows.find(r => r.role_name === editingRole)?.assigned_volunteers || []}
           onClose={() => setEditingRole(null)}
           onSaved={fetchAll}
         />
       )}
     </>
+  )
+}
+
+function ThinhSuPickerModal({ eventId, addedNames, onClose, onSaved }) {
+  const [selected, setSelected] = useState(new Set())
+  const [saving, setSaving]     = useState(false)
+
+  function toggle(role) {
+    setSelected(s => { const n = new Set(s); n.has(role) ? n.delete(role) : n.add(role); return n })
+  }
+
+  async function handleAdd() {
+    if (selected.size === 0) return
+    setSaving(true)
+    const toInsert = [...selected].map(role => ({ event_id: eventId, role_name: role, assigned_volunteers: [] }))
+    await supabase.from('thinh_su_assignments').upsert(toInsert, { onConflict: 'event_id,role_name' })
+    setSaving(false)
+    onSaved(); onClose()
+  }
+
+  return (
+    <div className="fixed inset-0 z-[80] flex items-center justify-center p-4"
+      style={{ backgroundColor: 'rgba(50,30,10,0.45)', backdropFilter: 'blur(2px)' }}
+      onClick={e => { if (e.target === e.currentTarget) onClose() }}>
+      <div className="w-full max-w-sm rounded-3xl overflow-hidden flex flex-col"
+        style={{ backgroundColor: '#fff', boxShadow: '0 16px 48px rgba(0,0,0,0.2)', border: `1.5px solid ${C.peach}`, maxHeight: '80vh' }}>
+
+        <div className="flex items-center justify-between px-5 py-4 shrink-0" style={{ borderBottom: `1px solid ${C.peach}` }}>
+          <div>
+            <h3 className="text-base font-bold" style={{ color: C.text, fontFamily: "'Nunito', sans-serif" }}>Add Roles</h3>
+            <p className="text-xs mt-0.5" style={{ color: C.faint }}>Select roles for this event</p>
+          </div>
+          <button onClick={onClose} className="p-1 rounded-full hover:bg-orange-50" style={{ color: C.muted }}>
+            <XMarkIcon className="w-5 h-5" />
+          </button>
+        </div>
+
+        <div className="flex-1 overflow-y-auto px-5 py-3">
+          <div className="space-y-1">
+            {THINH_SU_ROLES.map((role, idx) => {
+              const isAdded  = addedNames.has(role)
+              const checked  = selected.has(role)
+              return (
+                <button key={role} onClick={() => !isAdded && toggle(role)} disabled={isAdded}
+                  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-2xl transition-colors text-left"
+                  style={{
+                    backgroundColor: isAdded ? '#F5F5F5' : checked ? C.orangeLight : 'transparent',
+                    border: `1.5px solid ${isAdded ? '#E5E5E5' : checked ? C.orange : 'transparent'}`,
+                    opacity: isAdded ? 0.6 : 1,
+                    cursor: isAdded ? 'default' : 'pointer',
+                  }}>
+                  <div className="w-5 h-5 rounded-md border-2 shrink-0 flex items-center justify-center"
+                    style={{ borderColor: isAdded ? '#CCC' : checked ? C.orange : C.peach, backgroundColor: isAdded ? '#E0E0E0' : checked ? C.orange : '#fff' }}>
+                    {(isAdded || checked) && <svg width="10" height="8" viewBox="0 0 10 8" fill="none"><path d="M1 4l3 3 5-6" stroke={isAdded ? '#999' : '#fff'} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+                  </div>
+                  <p className="font-semibold text-sm" style={{ color: isAdded ? '#999' : C.text }}>{idx + 1}. {role}</p>
+                  {isAdded && <span className="text-xs ml-auto shrink-0" style={{ color: '#AAA' }}>Already added</span>}
+                </button>
+              )
+            })}
+          </div>
+        </div>
+
+        <div className="px-5 py-4 shrink-0 flex gap-3" style={{ borderTop: `1px solid ${C.peach}` }}>
+          <button onClick={onClose} className="flex-1 py-2.5 text-sm font-semibold rounded-2xl border"
+            style={{ borderColor: C.peach, color: C.muted, backgroundColor: C.cream }}>Cancel</button>
+          <button onClick={handleAdd} disabled={selected.size === 0 || saving}
+            className="flex-1 py-2.5 text-sm font-semibold rounded-2xl text-white hover:opacity-90 disabled:opacity-40"
+            style={{ background: 'linear-gradient(135deg, #F1745E, #E06464)' }}>
+            {saving ? 'Adding…' : `Add${selected.size > 0 ? ` (${selected.size})` : ''}`}
+          </button>
+        </div>
+      </div>
+    </div>
   )
 }
 

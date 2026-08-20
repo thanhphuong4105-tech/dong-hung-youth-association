@@ -4068,35 +4068,29 @@ export default function EventModal({ event, onClose, onEdit }) {
             <SummaryItem icon={<UserGroupIcon className="w-5 h-5" />} label="Volunteers" value={assignedVolunteerCount !== null ? `${assignedVolunteerCount}` : '—'} />
           </div>
 
-          {/* ── Tab grid (all screen sizes) ── */}
-          <div className="px-4 md:px-6 pt-3 pb-0"
-            style={{ display: 'grid', gridTemplateColumns: 'repeat(5, minmax(0, 1fr))', gap: '6px' }}>
+          {/* ── Tab grid ── */}
+          <div className="px-4 md:px-6 pt-3 pb-0 grid grid-cols-3 md:grid-cols-5 gap-2">
             {visibleNavCards.map(card => {
               const active = activeSection === card.id
               const count = getSubtitle(card)
               return (
                 <button key={card.id} onClick={() => setActiveSection(card.id)}
                   style={{
-                    minWidth: 0, minHeight: '72px', padding: '8px 4px',
+                    minWidth: 0, minHeight: '80px', padding: '10px 6px',
                     border: `1px solid ${active ? C.orange : C.peach}`,
-                    borderRadius: '12px',
+                    borderRadius: '14px',
                     backgroundColor: active ? '#FFF0ED' : '#ffffff',
                     display: 'flex', flexDirection: 'column', alignItems: 'center',
-                    justifyContent: 'center', gap: '3px',
+                    justifyContent: 'center', gap: '4px',
                     color: active ? C.orange : C.muted,
                     textAlign: 'center',
                   }}>
-                  <card.Icon size={18} />
-                  <span className="whitespace-nowrap overflow-hidden text-[9px] md:text-[11px] md:whitespace-normal md:overflow-visible"
-                    style={{ fontWeight: 600, lineHeight: 1.2, maxWidth: '100%', padding: '0 2px' }}>
+                  <card.Icon size={22} />
+                  <span style={{ fontWeight: 700, fontSize: '11px', lineHeight: 1.2 }}>
                     {card.label}
                   </span>
-                  {/* Mobile: number only. Desktop: full subtitle */}
-                  <span className="md:hidden" style={{ fontSize: '10px', fontWeight: 400, color: active ? C.orange : C.faint, lineHeight: 1.1 }}>
+                  <span style={{ fontSize: '11px', fontWeight: 400, color: active ? C.orange : C.faint, lineHeight: 1.1 }}>
                     {getCount(card) ?? '—'}
-                  </span>
-                  <span className="hidden md:inline" style={{ fontSize: '10px', fontWeight: 400, color: active ? C.orange : C.faint, lineHeight: 1.1 }}>
-                    {count}
                   </span>
                 </button>
               )

@@ -2196,7 +2196,7 @@ function AssignRoleModal({ eventId, members, editingRole, onClose, onSaved }) {
         </div>
 
         {/* Scrollable form body */}
-        <form onSubmit={handleSave} className="flex-1 overflow-y-auto px-7 py-6 pb-24 space-y-6">
+        <form onSubmit={handleSave} className="flex-1 overflow-y-auto px-7 py-6 space-y-6" style={{ paddingBottom: 'calc(5rem + env(safe-area-inset-bottom))' }}>
           {err && (
             <div className="px-4 py-2.5 rounded-xl text-sm"
               style={{ backgroundColor: '#FFF7F3', border: '1px solid #EFCAC8', color: '#E06464' }}>
@@ -2240,23 +2240,21 @@ function AssignRoleModal({ eventId, members, editingRole, onClose, onSaved }) {
               onChange={val => setForm(f => ({ ...f, assigned_volunteers: val }))}
             />
           </div>
-        </form>
 
-        {/* Footer buttons — always visible */}
-        <div className="px-7 py-5 border-t shrink-0 flex gap-3" style={{ borderColor: C.peach, paddingBottom: 'calc(1.25rem + env(safe-area-inset-bottom))' }}>
-          <button type="button" onClick={onClose}
-            className="flex-1 py-3 text-sm font-semibold rounded-2xl border transition-colors hover:bg-orange-50"
-            style={{ borderColor: C.peach, color: C.muted, backgroundColor: '#fff' }}>
-            Cancel
-          </button>
-          <button
-            onClick={handleSave}
-            disabled={saving}
-            className="flex-1 py-3 text-sm font-semibold rounded-2xl text-white hover:opacity-90 disabled:opacity-50 transition-opacity"
-            style={{ background: 'linear-gradient(135deg, #F1745E, #E06464)', boxShadow: '0 4px 14px rgba(200,90,48,0.3)' }}>
-            {saving ? 'Saving…' : editingRole ? 'Save Changes' : 'Save Role'}
-          </button>
-        </div>
+          {/* Buttons inside scroll so they're always reachable */}
+          <div className="flex gap-3 pt-2">
+            <button type="button" onClick={onClose}
+              className="flex-1 py-3 text-sm font-semibold rounded-2xl border transition-colors hover:bg-orange-50"
+              style={{ borderColor: C.peach, color: C.muted, backgroundColor: '#fff' }}>
+              Cancel
+            </button>
+            <button type="submit" disabled={saving}
+              className="flex-1 py-3 text-sm font-semibold rounded-2xl text-white hover:opacity-90 disabled:opacity-50 transition-opacity"
+              style={{ background: 'linear-gradient(135deg, #F1745E, #E06464)', boxShadow: '0 4px 14px rgba(200,90,48,0.3)' }}>
+              {saving ? 'Saving…' : editingRole ? 'Save Changes' : 'Save Role'}
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   )

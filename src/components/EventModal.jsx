@@ -2167,7 +2167,7 @@ function AssignRoleModal({ eventId, members, editingRole, onClose, onSaved }) {
 
   return (
     /* Overlay */
-    <div className="fixed inset-0 z-[60] flex"
+    <div className="fixed inset-0 z-[65] flex"
       style={{ backgroundColor: 'rgba(40,24,8,0.45)' }}
       onClick={e => { if (e.target === e.currentTarget) onClose() }}>
 

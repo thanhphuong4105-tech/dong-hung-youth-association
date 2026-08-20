@@ -1660,9 +1660,10 @@ function EditTodoTaskModal({ task, eventId, onClose, onSaved }) {
       onClick={e => { if (e.target === e.currentTarget) onClose() }}>
 
       {/* Right-side drawer */}
-      <div className="ml-auto h-full flex flex-col"
+      <div className="ml-auto flex flex-col"
         style={{
           width: '420px', maxWidth: '100vw',
+          height: '100dvh',
           backgroundColor: C.cream,
           boxShadow: '-8px 0 40px rgba(0,0,0,0.18)',
           borderLeft: `1.5px solid ${C.peach}`,
@@ -1732,7 +1733,7 @@ function EditTodoTaskModal({ task, eventId, onClose, onSaved }) {
         </form>
 
         {/* Footer buttons — always visible */}
-        <div className="px-7 py-5 border-t shrink-0 flex gap-3" style={{ borderColor: C.peach }}>
+        <div className="px-7 py-5 border-t shrink-0 flex gap-3" style={{ borderColor: C.peach, paddingBottom: 'calc(1.25rem + env(safe-area-inset-bottom))' }}>
           <button type="button" onClick={onClose}
             className="flex-1 py-3 text-sm font-semibold rounded-2xl border transition-colors hover:bg-orange-50"
             style={{ borderColor: C.peach, color: C.muted, backgroundColor: '#fff' }}>
@@ -2172,9 +2173,10 @@ function AssignRoleModal({ eventId, members, editingRole, onClose, onSaved }) {
       onClick={e => { if (e.target === e.currentTarget) onClose() }}>
 
       {/* Right-side drawer */}
-      <div className="ml-auto h-full flex flex-col"
+      <div className="ml-auto flex flex-col"
         style={{
           width: '420px', maxWidth: '100vw',
+          height: '100dvh',
           backgroundColor: C.cream,
           boxShadow: '-8px 0 40px rgba(0,0,0,0.18)',
           borderLeft: `1.5px solid ${C.peach}`,
@@ -2241,7 +2243,7 @@ function AssignRoleModal({ eventId, members, editingRole, onClose, onSaved }) {
         </form>
 
         {/* Footer buttons — always visible */}
-        <div className="px-7 py-5 border-t shrink-0 flex gap-3" style={{ borderColor: C.peach }}>
+        <div className="px-7 py-5 border-t shrink-0 flex gap-3" style={{ borderColor: C.peach, paddingBottom: 'calc(1.25rem + env(safe-area-inset-bottom))' }}>
           <button type="button" onClick={onClose}
             className="flex-1 py-3 text-sm font-semibold rounded-2xl border transition-colors hover:bg-orange-50"
             style={{ borderColor: C.peach, color: C.muted, backgroundColor: '#fff' }}>

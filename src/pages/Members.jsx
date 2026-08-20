@@ -307,7 +307,7 @@ export default function Members() {
             <div className="flex items-center justify-between">
               <div className="text-center flex-1">
                 <p className="text-[10px] font-semibold" style={{ color: '#A08070' }}>Founder</p>
-                <p className="text-xs font-bold mt-0.5" style={{ color: '#4F252A' }}>Ven. Thích Chúc Đỗ</p>
+                <p className="text-xs font-bold mt-0.5" style={{ color: '#4F252A' }}>Ven. Thích Chúc Độ</p>
               </div>
               <div className="w-px h-8" style={{ backgroundColor: '#EDD0AC' }} />
               <div className="text-center flex-1 px-2">
@@ -382,7 +382,7 @@ export default function Members() {
           <UserIcon className="w-5 h-5 shrink-0" style={{ color: C.faint }} />
           <div>
             <div className="text-xs" style={{ color: C.faint }}>Founder</div>
-            <div className="text-sm font-bold" style={{ color: C.burgundy }}>Ven. Thích Chúc Đỗ</div>
+            <div className="text-sm font-bold" style={{ color: C.burgundy }}>Ven. Thích Chúc Độ</div>
           </div>
         </div>
         {/* Executive Advisors */}

@@ -574,62 +574,45 @@ function ParticipantsTab({ eventId, onCountChange }) {
       ) : rows.length === 0 ? (
         <DanceEmptyState icon={<TeamIcon size={28} />} label="No participants yet" sub='Click "Add Participant" to get started.' />
       ) : (
-        <div className="rounded-2xl" style={{ border: `1.5px solid ${C.peach}` }}>
-          <table className="w-full text-sm">
-            <thead>
-              <tr style={{ backgroundColor: '#FFF0EA', borderBottom: `1px solid ${C.peach}` }}>
-                {['No.', 'Name', 'Age', 'Height', 'Weight', 'Size', ''].map((h, i) => (
-                  <th key={i}
-                    className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wide whitespace-nowrap"
-                    style={{ color: C.muted, width: i === 0 ? '3rem' : i === 2 ? '3.5rem' : 'auto' }}>
-                    {h}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((row, i) => {
-                const age = (() => {
-                  if (row.birthday) {
-                    const today = new Date(), dob = new Date(row.birthday + 'T00:00:00')
-                    let a = today.getFullYear() - dob.getFullYear()
-                    const m = today.getMonth() - dob.getMonth()
-                    if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) a--
-                    return a >= 0 ? a : null
-                  }
-                  return row.age ?? null
-                })()
-                return (
-                  <tr key={row.id}
-                    style={{
-                      backgroundColor: '#ffffff',
-                      borderBottom: i < rows.length - 1 ? `1px solid ${C.peach}` : 'none',
-                    }}>
-                    <td className="px-4 py-3 text-xs font-medium" style={{ color: C.faint }}>{i + 1}</td>
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-2.5">
-                        <div className="w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0"
-                          style={{ background: 'linear-gradient(135deg, #F1745E, #E06464)' }}>
-                          {row.name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2)}
-                        </div>
-                        <div className="min-w-0">
-                          <p className="font-semibold truncate" style={{ color: C.text }}>{row.name}</p>
-                          {row.role && <p className="text-xs" style={{ color: C.faint }}>{row.role}</p>}
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-4 py-3 whitespace-nowrap text-sm" style={{ color: C.muted }}>{age != null ? age : '—'}</td>
-                    <td className="px-4 py-3 whitespace-nowrap" style={{ color: C.muted }}>{row.height || '—'}</td>
-                    <td className="px-4 py-3 whitespace-nowrap" style={{ color: C.muted }}>{row.weight || '—'}</td>
-                    <td className="px-4 py-3 whitespace-nowrap" style={{ color: C.muted }}>{row.clothing_size || '—'}</td>
-                    <td className="px-4 py-3">
-                      <DanceRowMenu onEdit={() => setModal(row)} onRemove={() => remove(row.id)} />
-                    </td>
-                  </tr>
-                )
-              })}
-            </tbody>
-          </table>
+        <div className="space-y-2">
+          {rows.map((row, i) => {
+            const age = (() => {
+              if (row.birthday) {
+                const today = new Date(), dob = new Date(row.birthday + 'T00:00:00')
+                let a = today.getFullYear() - dob.getFullYear()
+                const m = today.getMonth() - dob.getMonth()
+                if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) a--
+                return a >= 0 ? a : null
+              }
+              return row.age ?? null
+            })()
+            return (
+              <div key={row.id} className="rounded-2xl p-3" style={{ backgroundColor: '#fff', border: `1.5px solid ${C.peach}` }}>
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <span className="text-xs font-bold w-5 text-center shrink-0" style={{ color: C.faint }}>{i + 1}</span>
+                    <div className="w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0"
+                      style={{ background: 'linear-gradient(135deg, #F1745E, #E06464)' }}>
+                      {row.name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2)}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="font-semibold truncate text-sm" style={{ color: C.text }}>{row.name}</p>
+                      {row.role && <p className="text-xs truncate" style={{ color: C.faint }}>{row.role}</p>}
+                    </div>
+                  </div>
+                  <DanceRowMenu onEdit={() => setModal(row)} onRemove={() => remove(row.id)} />
+                </div>
+                <div className="mt-2 grid grid-cols-4 gap-2 text-xs">
+                  {[['Age', age != null ? age : '—'], ['Height', row.height || '—'], ['Weight', row.weight || '—'], ['Size', row.clothing_size || '—']].map(([label, val]) => (
+                    <div key={label}>
+                      <p className="font-bold uppercase tracking-wide" style={{ color: C.muted, fontSize: '10px' }}>{label}</p>
+                      <p style={{ color: C.text }}>{val}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )
+          })}
         </div>
       )}
 

@@ -1713,23 +1713,21 @@ function EditTodoTaskModal({ task, eventId, onClose, onSaved }) {
             </label>
             <input type="date" name="due_date" value={form.due_date} onChange={hc} style={fieldStyle} />
           </div>
-        </form>
 
-        {/* Footer buttons — always visible */}
-        <div className="px-7 py-5 border-t shrink-0 flex gap-3" style={{ borderColor: C.peach, paddingBottom: 'calc(1.25rem + env(safe-area-inset-bottom))' }}>
-          <button type="button" onClick={onClose}
-            className="flex-1 py-3 text-sm font-semibold rounded-2xl border transition-colors hover:bg-orange-50"
-            style={{ borderColor: C.peach, color: C.muted, backgroundColor: '#fff' }}>
-            Cancel
-          </button>
-          <button
-            onClick={handleSave}
-            disabled={saving}
-            className="flex-1 py-3 text-sm font-semibold rounded-2xl text-white hover:opacity-90 disabled:opacity-50 transition-opacity"
-            style={{ background: 'linear-gradient(135deg, #F1745E, #E06464)', boxShadow: '0 4px 14px rgba(200,90,48,0.3)' }}>
-            {saving ? 'Saving…' : 'Save Changes'}
-          </button>
-        </div>
+          {/* Buttons inside scroll so always reachable on mobile */}
+          <div className="flex gap-3 pt-2">
+            <button type="button" onClick={onClose}
+              className="flex-1 py-3 text-sm font-semibold rounded-2xl border transition-colors hover:bg-orange-50"
+              style={{ borderColor: C.peach, color: C.muted, backgroundColor: '#fff' }}>
+              Cancel
+            </button>
+            <button type="submit" disabled={saving}
+              className="flex-1 py-3 text-sm font-semibold rounded-2xl text-white hover:opacity-90 disabled:opacity-50 transition-opacity"
+              style={{ background: 'linear-gradient(135deg, #F1745E, #E06464)', boxShadow: '0 4px 14px rgba(200,90,48,0.3)' }}>
+              {saving ? 'Saving…' : 'Save Changes'}
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   )

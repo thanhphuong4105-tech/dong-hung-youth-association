@@ -4288,33 +4288,34 @@ export default function EventModal({ event, onClose, onEdit }) {
             <SummaryItem icon={<UserGroupIcon className="w-5 h-5" />} label="Volunteers" value={assignedVolunteerCount !== null ? `${assignedVolunteerCount}` : '—'} />
           </div>
 
-          {/* ── Tab grid ── */}
-          <div className="px-4 md:px-6 pt-3 pb-0 grid grid-cols-3 md:grid-cols-5 gap-2">
-            {visibleNavCards.map(card => {
-              const active = activeSection === card.id
-              const count = getSubtitle(card)
-              return (
-                <button key={card.id} onClick={() => setActiveSection(card.id)}
-                  style={{
-                    minWidth: 0, minHeight: '80px', padding: '10px 6px',
-                    border: `1px solid ${active ? C.orange : C.peach}`,
-                    borderRadius: '14px',
-                    backgroundColor: active ? '#FFF0ED' : '#ffffff',
-                    display: 'flex', flexDirection: 'column', alignItems: 'center',
-                    justifyContent: 'center', gap: '4px',
-                    color: active ? C.orange : C.muted,
-                    textAlign: 'center',
-                  }}>
-                  <card.Icon size={22} />
-                  <span style={{ fontWeight: 700, fontSize: '11px', lineHeight: 1.2 }}>
-                    {card.label}
-                  </span>
-                  <span style={{ fontSize: '11px', fontWeight: 400, color: active ? C.orange : C.faint, lineHeight: 1.1 }}>
-                    {getCount(card) ?? '—'}
-                  </span>
-                </button>
-              )
-            })}
+          {/* ── Tab row ── */}
+          <div className="pt-3 pb-0" style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none' }}>
+            <div className="flex gap-2 px-4 md:px-6" style={{ width: 'max-content', minWidth: '100%' }}>
+              {visibleNavCards.map(card => {
+                const active = activeSection === card.id
+                return (
+                  <button key={card.id} onClick={() => setActiveSection(card.id)}
+                    style={{
+                      flex: '1 0 auto', minWidth: '80px', minHeight: '80px', padding: '10px 6px',
+                      border: `1px solid ${active ? C.orange : C.peach}`,
+                      borderRadius: '14px',
+                      backgroundColor: active ? '#FFF0ED' : '#ffffff',
+                      display: 'flex', flexDirection: 'column', alignItems: 'center',
+                      justifyContent: 'center', gap: '4px',
+                      color: active ? C.orange : C.muted,
+                      textAlign: 'center',
+                    }}>
+                    <card.Icon size={22} />
+                    <span style={{ fontWeight: 700, fontSize: '11px', lineHeight: 1.2 }}>
+                      {card.label}
+                    </span>
+                    <span style={{ fontSize: '11px', fontWeight: 400, color: active ? C.orange : C.faint, lineHeight: 1.1 }}>
+                      {getCount(card) ?? '—'}
+                    </span>
+                  </button>
+                )
+              })}
+            </div>
           </div>
 
 

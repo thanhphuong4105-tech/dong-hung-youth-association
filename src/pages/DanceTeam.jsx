@@ -411,6 +411,55 @@ function ParticipantsTab({ participants, loading, canManage, onEdit, onDelete, o
 
   return (
     <div className="space-y-4">
+      {/* Mobile card layout */}
+      <div className="sm:hidden space-y-3">
+        {paged.map((row, i) => {
+          const rowParents = Array.isArray(row.parents) ? row.parents : []
+          const no = (page - 1) * PAGE_SIZE + i + 1
+          return (
+            <div key={row.id} className="rounded-2xl p-4" style={{ backgroundColor: '#fff', border: '1.5px solid #EDD0AC' }}>
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-3 min-w-0">
+                  <span className="text-xs font-bold w-5 text-center shrink-0" style={{ color: C.faint }}>{no}</span>
+                  <Avatar name={row.name} />
+                  <div className="min-w-0">
+                    <p className="font-semibold truncate" style={{ color: C.text }}>{row.name}</p>
+                    {row.notes && <p className="text-xs truncate" style={{ color: C.faint }}>{row.notes}</p>}
+                  </div>
+                </div>
+                {canManage && <RowMenu onEdit={() => onEdit(row)} onDelete={() => onDelete(row.id)} />}
+              </div>
+              <div className="mt-3 grid grid-cols-3 gap-2 text-xs">
+                {[
+                  ['Age', calcAge(row.birthday) ?? row.age ?? '—'],
+                  ['Height', row.height || '—'],
+                  ['Weight', row.weight || '—'],
+                  ['Size', row.clothing_size || '—'],
+                ].map(([label, val]) => (
+                  <div key={label}>
+                    <p className="font-bold uppercase tracking-wide" style={{ color: C.muted, fontSize: '10px' }}>{label}</p>
+                    <p style={{ color: C.text }}>{val}</p>
+                  </div>
+                ))}
+              </div>
+              {rowParents.length > 0 && (
+                <div className="mt-2 pt-2 border-t" style={{ borderColor: '#F5E8DC' }}>
+                  <p className="font-bold uppercase tracking-wide mb-1" style={{ color: C.muted, fontSize: '10px' }}>Parents / Guardians</p>
+                  {rowParents.map((p, pi) => (
+                    <div key={pi} className="text-xs">
+                      <span className="font-medium" style={{ color: C.text }}>{p.name || '—'}</span>
+                      {p.phone && <span className="ml-1.5" style={{ color: C.faint }}>{p.phone}</span>}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )
+        })}
+      </div>
+
+      {/* Desktop table layout */}
+      <div className="hidden sm:block">
       <TableShell headers={['', 'No.', 'Name', 'Age', 'Height', 'Weight', 'Clothing Size', 'Parents / Guardians', '']}>
         {paged.map((row, i) => {
           const rowParents = Array.isArray(row.parents) ? row.parents : []
@@ -472,6 +521,7 @@ function ParticipantsTab({ participants, loading, canManage, onEdit, onDelete, o
           )
         })}
       </TableShell>
+      </div>
 
       {totalPages > 1 && (
         <div className="flex items-center justify-between pt-1">

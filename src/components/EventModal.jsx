@@ -2496,13 +2496,8 @@ function ThinhSuSection({ eventId, onCountChange }) {
                   style={{ backgroundColor: '#ffffff', border: `1.5px solid ${C.peach}`, boxShadow: '0 1px 6px rgba(0,0,0,0.04)' }}
                   onClick={() => setEditingRole(role)}>
 
-                  <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
-                    style={{ backgroundColor: C.orangeLight, color: C.orange, fontWeight: 700, fontSize: '15px' }}>
-                    {idx + 1}
-                  </div>
-
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold" style={{ color: C.text }}>{role}</p>
+                    <p className="text-sm font-semibold" style={{ color: C.text }}>{idx + 1}. {role}</p>
                     {names.length > 0 && (
                       <p className="text-sm mt-0.5 leading-relaxed" style={{ color: C.muted }}>{names.join(', ')}</p>
                     )}

@@ -1734,7 +1734,7 @@ function EditTodoTaskModal({ task, eventId, onClose, onSaved }) {
             <button type="submit" disabled={saving}
               className="flex-1 py-3 text-sm font-semibold rounded-2xl text-white hover:opacity-90 disabled:opacity-50 transition-opacity"
               style={{ background: 'linear-gradient(135deg, #F1745E, #E06464)', boxShadow: '0 4px 14px rgba(200,90,48,0.3)' }}>
-              {saving ? 'Saving…' : 'Save Changes'}
+              {saving ? 'Saving…' : 'Save'}
             </button>
           </div>
         </form>
@@ -2242,7 +2242,7 @@ function AssignRoleModal({ eventId, members, editingRole, onClose, onSaved }) {
             <button type="submit" disabled={saving}
               className="flex-1 py-3 text-sm font-semibold rounded-2xl text-white hover:opacity-90 disabled:opacity-50 transition-opacity"
               style={{ background: 'linear-gradient(135deg, #F1745E, #E06464)', boxShadow: '0 4px 14px rgba(200,90,48,0.3)' }}>
-              {saving ? 'Saving…' : editingRole ? 'Save Changes' : 'Save Role'}
+              {saving ? 'Saving…' : editingRole ? 'Save' : 'Save Role'}
             </button>
           </div>
         </form>
@@ -4041,7 +4041,7 @@ function RetreatParticipantsSection({ eventId, eventName, onCountChange }) {
               <button onClick={handleSave} disabled={saving || !form.firstName.trim()}
                 className="flex-1 py-2.5 text-sm font-semibold rounded-2xl text-white hover:opacity-90 disabled:opacity-50"
                 style={{ background: 'linear-gradient(135deg, #F1745E, #E06464)' }}>
-                {saving ? 'Saving…' : editingId ? 'Save Changes' : 'Add Participant'}
+                {saving ? 'Saving…' : editingId ? 'Save' : 'Add Participant'}
               </button>
             </div>
           </div>

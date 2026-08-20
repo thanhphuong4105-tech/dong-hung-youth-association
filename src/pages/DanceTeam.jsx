@@ -352,7 +352,7 @@ function ParticipantModal({ editing, onClose, onSaved }) {
         </div>
 
         <div><FieldLabel>Notes</FieldLabel><textarea name="notes" value={form.notes} onChange={hc} rows={2} style={{ ...inputStyle, resize: 'vertical' }} /></div>
-        <FormButtons onClose={onClose} saving={saving} label={editing ? 'Save Changes' : 'Add Participant'} />
+        <FormButtons onClose={onClose} saving={saving} label={editing ? 'Save' : 'Add Participant'} />
       </form>
     </ModalShell>
   )
@@ -596,7 +596,7 @@ function ParentModal({ editing, onClose, onSaved }) {
         <div><FieldLabel>Children <span style={{ color: C.faint, fontWeight: 400 }}>(comma separated)</span></FieldLabel>
           <input name="children_names" value={form.children_names} onChange={hc} placeholder="Linh Nguyen, Bao Nguyen" style={inputStyle} /></div>
         <div><FieldLabel>Notes</FieldLabel><textarea name="notes" value={form.notes} onChange={hc} rows={2} style={{ ...inputStyle, resize: 'vertical' }} /></div>
-        <FormButtons onClose={onClose} saving={saving} label={editing ? 'Save Changes' : 'Add Parent'} />
+        <FormButtons onClose={onClose} saving={saving} label={editing ? 'Save' : 'Add Parent'} />
       </form>
     </ModalShell>
   )
@@ -675,7 +675,7 @@ function SongModal({ editing, onClose, onSaved }) {
         <div><FieldLabel>Event Used For</FieldLabel><input name="event_name" value={form.event_name} onChange={hc} placeholder="Lễ Vu Lan 2024" style={inputStyle} /></div>
         <div><FieldLabel>Year</FieldLabel><input name="year" type="number" min="2000" max="2100" value={form.year} onChange={hc} placeholder="2025" style={inputStyle} /></div>
         <div><FieldLabel>Notes</FieldLabel><textarea name="notes" value={form.notes} onChange={hc} rows={2} style={{ ...inputStyle, resize: 'vertical' }} /></div>
-        <FormButtons onClose={onClose} saving={saving} label={editing ? 'Save Changes' : 'Add Song'} />
+        <FormButtons onClose={onClose} saving={saving} label={editing ? 'Save' : 'Add Song'} />
       </form>
     </ModalShell>
   )

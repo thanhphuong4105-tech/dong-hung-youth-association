@@ -310,7 +310,7 @@ export default function Profile() {
                 <button type="submit" disabled={savingProfile || loadingProfile}
                   className="px-8 py-2.5 text-white text-sm font-semibold rounded-2xl shadow-md hover:opacity-90 transition-opacity disabled:opacity-60"
                   style={{ background: 'linear-gradient(135deg, #F1745E, #E06464)' }}>
-                  {savingProfile ? 'Saving…' : 'Save Changes'}
+                  {savingProfile ? 'Saving…' : 'Save'}
                 </button>
               </div>
             </form>

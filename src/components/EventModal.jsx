@@ -2488,7 +2488,7 @@ function ThinhSuSection({ eventId, onCountChange }) {
           </div>
         ) : (
           <div className="flex flex-col gap-2">
-            {THINH_SU_ROLES.map(role => {
+            {THINH_SU_ROLES.map((role, idx) => {
               const names = resolveNames(assignments[role])
               return (
                 <div key={role}
@@ -2497,8 +2497,8 @@ function ThinhSuSection({ eventId, onCountChange }) {
                   onClick={() => setEditingRole(role)}>
 
                   <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
-                    style={{ backgroundColor: C.orangeLight, color: C.orange }}>
-                    <BellIcon size={18} />
+                    style={{ backgroundColor: C.orangeLight, color: C.orange, fontWeight: 700, fontSize: '15px' }}>
+                    {idx + 1}
                   </div>
 
                   <div className="flex-1 min-w-0">

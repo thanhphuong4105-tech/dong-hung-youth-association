@@ -1,4 +1,4 @@
-﻿import { useState, useMemo, useEffect, useCallback, useRef } from 'react'
+import { useState, useMemo, useEffect, useCallback, useRef } from 'react'
 import { PlusIcon, PencilIcon, TrashIcon, MagnifyingGlassIcon, XMarkIcon, UserIcon, UsersIcon } from '@heroicons/react/24/outline'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
@@ -36,7 +36,7 @@ const inputStyle = {
 }
 
 function fmt(dateStr) {
-  if (!dateStr) return 'â€”'
+  if (!dateStr) return '—'
   try { return new Date(dateStr + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) }
   catch { return dateStr }
 }
@@ -168,7 +168,7 @@ export default function Members() {
     return list
   }, [allMembers, search, roleFilter, statusFilter, orderedIds])
 
-  // â”€â”€ Add general member
+  // ── Add general member
   function openAdd() {
     setForm(emptyGeneralForm)
     setFormErr('')
@@ -276,7 +276,7 @@ export default function Members() {
 
   return (
     <div>
-      {/* â”€â”€ Mobile layout â”€â”€ */}
+      {/* ── Mobile layout ── */}
       <div className="block md:hidden" style={{ backgroundColor: '#FFF7F3', minHeight: '100vh', paddingBottom: 'calc(80px + env(safe-area-inset-bottom))' }}>
         <div className="px-4 pt-5 pb-2 flex items-center justify-between gap-3">
           <div className="min-w-0">
@@ -307,7 +307,7 @@ export default function Members() {
             <div className="flex items-center justify-between">
               <div className="text-center flex-1">
                 <p className="text-[10px] font-semibold" style={{ color: '#A08070' }}>Founder</p>
-                <p className="text-xs font-bold mt-0.5" style={{ color: '#4F252A' }}>Ven. ThÃ­ch ChÃºc Äá»™</p>
+                <p className="text-xs font-bold mt-0.5" style={{ color: '#4F252A' }}>Ven. Thích Chúc Độ</p>
               </div>
               <div className="w-px h-8" style={{ backgroundColor: '#EDD0AC' }} />
               <div className="text-center flex-1 px-2">
@@ -357,7 +357,7 @@ export default function Members() {
         </div>
       </div>
 
-      {/* â”€â”€ Desktop layout â”€â”€ */}
+      {/* ── Desktop layout ── */}
       <div className="hidden md:block">
       {/* Header */}
       <div className="flex items-start justify-between mb-8 gap-4">
@@ -382,7 +382,7 @@ export default function Members() {
           <UserIcon className="w-5 h-5 shrink-0" style={{ color: C.faint }} />
           <div>
             <div className="text-xs" style={{ color: C.faint }}>Founder</div>
-            <div className="text-sm font-bold" style={{ color: C.burgundy }}>Ven. ThÃ­ch ChÃºc Äá»™</div>
+            <div className="text-sm font-bold" style={{ color: C.burgundy }}>Ven. Thích Chúc Độ</div>
           </div>
         </div>
         {/* Executive Advisors */}
@@ -390,7 +390,7 @@ export default function Members() {
           <UsersIcon className="w-5 h-5 shrink-0" style={{ color: C.faint }} />
           <div>
             <div className="text-xs" style={{ color: C.faint }}>Executive Advisor(s)</div>
-            <div className="text-sm font-bold" style={{ color: C.burgundy }}>Ven. ThÃ­ch ChÃºc Há»™i, Ven. ThÃ­ch ChÃºc Thanh, Ven. ThÃ­ch ChÃºc ThÃ´ng</div>
+            <div className="text-sm font-bold" style={{ color: C.burgundy }}>Ven. Thích Chúc Hội, Ven. Thích Chúc Thanh, Ven. Thích Chúc Thông</div>
           </div>
         </div>
         {/* Total Members */}
@@ -429,7 +429,7 @@ export default function Members() {
             <thead>
               <tr style={{ backgroundColor: '#FFF0EA', borderBottom: '1.5px solid #EDD0AC' }}>
                 <th className="pl-3 pr-1 py-3 w-6" />
-              {['No.', 'Name', 'PhÃ¡p danh', 'Birthday', 'Role', 'Contact Number', 'Email', 'Actions'].map(h => (
+              {['No.', 'Name', 'Pháp danh', 'Birthday', 'Role', 'Contact Number', 'Email', 'Actions'].map(h => (
                   <th key={h} className="px-4 py-3 text-left text-xs font-extrabold uppercase tracking-wide whitespace-nowrap" style={{ color: C.faint }}>{h}</th>
                 ))}
               </tr>
@@ -480,7 +480,7 @@ export default function Members() {
                         <span className="font-semibold" style={{ color: C.burgundy }}>{m.name}</span>
                       </div>
                     </td>
-                    <td className="px-4 py-3 text-xs" style={{ color: C.muted }}>{m.phap_danh || 'â€”'}</td>
+                    <td className="px-4 py-3 text-xs" style={{ color: C.muted }}>{m.phap_danh || '—'}</td>
                     <td className="px-4 py-3 text-xs whitespace-nowrap" style={{ color: C.muted }}>{fmt(m.birthday)}</td>
                     <td className="px-4 py-3">
                       <span className="text-xs font-semibold px-2.5 py-1 rounded-full whitespace-nowrap"
@@ -488,8 +488,8 @@ export default function Members() {
                         {m.role}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-xs whitespace-nowrap" style={{ color: C.muted }}>{m.contactNumber || 'â€”'}</td>
-                    <td className="px-4 py-3 text-xs" style={{ color: C.muted }}>{m.email || 'â€”'}</td>
+                    <td className="px-4 py-3 text-xs whitespace-nowrap" style={{ color: C.muted }}>{m.contactNumber || '—'}</td>
+                    <td className="px-4 py-3 text-xs" style={{ color: C.muted }}>{m.email || '—'}</td>
                     <td className="px-4 py-3">
                       {canManage && (
                         <div className="flex gap-1">
@@ -538,8 +538,8 @@ export default function Members() {
               <Field label="Full Name" required>
                 <input name="full_name" value={form.full_name} onChange={hc} placeholder="Nguyen Van A" style={inputStyle} />
               </Field>
-              <Field label="PhÃ¡p danh">
-                <input name="phap_danh" value={form.phap_danh} onChange={hc} placeholder="e.g. TÃ¢m An" style={inputStyle} />
+              <Field label="Pháp danh">
+                <input name="phap_danh" value={form.phap_danh} onChange={hc} placeholder="e.g. Tâm An" style={inputStyle} />
               </Field>
               <Field label="Role">
                 <select name="role" value={form.role} onChange={hc} style={inputStyle}>
@@ -561,7 +561,7 @@ export default function Members() {
               <button onClick={handleSave} disabled={saving}
                 className="flex-1 py-2.5 text-sm font-semibold rounded-2xl text-white hover:opacity-90 disabled:opacity-60"
                 style={{ background: 'linear-gradient(135deg, #F1745E, #E06464)' }}>
-                {saving ? 'Savingâ€¦' : drawer.mode === 'add' ? 'Save Member' : 'Save'}
+                {saving ? 'Saving…' : drawer.mode === 'add' ? 'Save Member' : 'Save'}
               </button>
             </div>
           </div>

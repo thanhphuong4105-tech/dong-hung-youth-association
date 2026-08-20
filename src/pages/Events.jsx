@@ -1,4 +1,4 @@
-﻿import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { PlusIcon, MagnifyingGlassIcon, FunnelIcon, PhotoIcon, XMarkIcon } from '@heroicons/react/24/outline'
 import { supabase } from '../lib/supabase'
 import { notify } from '../lib/notify'
@@ -7,7 +7,7 @@ import EventModal from '../components/EventModal'
 import { useProfile } from '../hooks/useProfile'
 import { useAuth } from '../contexts/AuthContext'
 
-// â”€â”€ Helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Helpers ───────────────────────────────────────────────────────────────────
 const WEEK_DAYS = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat']
 const MONTHS_LONG = ['January','February','March','April','May','June','July','August','September','October','November','December']
 
@@ -41,7 +41,7 @@ function fmtEventDate(dateStr) {
     if (timePart) {
       const [h, m] = timePart.split(':').map(Number)
       const ampm = h >= 12 ? 'PM' : 'AM'
-      result += ` Â· ${h % 12 || 12}:${String(m).padStart(2,'0')} ${ampm}`
+      result += ` · ${h % 12 || 12}:${String(m).padStart(2,'0')} ${ampm}`
     }
     return result
   } catch { return dateStr }
@@ -68,21 +68,21 @@ function isUpcoming(event) {
 const PAGE_SIZE_OPTIONS = [5, 10, 20, 50]
 
 const EVENT_TYPES = [
-  { id: 'temple_main',  label: 'Temple Main Event', description: 'Large ceremonies and festivals at the temple', icon: 'ðŸ›ï¸', hasDanceTeam: true },
-  { id: 'dhya_activity',label: 'DHYA Activity',     description: 'Youth association gatherings and activities',  icon: 'ðŸŽ‰', hasDanceTeam: false },
-  { id: 'retreat',      label: 'Retreat',            description: 'Overnight trips and spiritual retreats',       icon: 'ðŸ•ï¸', hasDanceTeam: false },
+  { id: 'temple_main',  label: 'Temple Main Event', description: 'Large ceremonies and festivals at the temple', icon: '🏛️', hasDanceTeam: true },
+  { id: 'dhya_activity',label: 'DHYA Activity',     description: 'Youth association gatherings and activities',  icon: '🎉', hasDanceTeam: false },
+  { id: 'retreat',      label: 'Retreat',            description: 'Overnight trips and spiritual retreats',       icon: '🏕️', hasDanceTeam: false },
 ]
 
 const emptyForm = { title: '', description: '', location: '', start_date: '', end_date: '', event_type: '' }
 
-// â”€â”€ Event thumbnail placeholder â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Event thumbnail placeholder ───────────────────────────────────────────────
 function EventThumb({ event, large }) {
   const COLORS = [
-    { bg: '#FDE8E0', icon: 'ðŸ®' },
-    { bg: '#FEF3DC', icon: 'ðŸŒ¸' },
-    { bg: '#E8F0FE', icon: 'ðŸŽ‰' },
-    { bg: '#F0FDE8', icon: 'ðŸ•ï¸' },
-    { bg: '#FDE8F0', icon: 'ðŸ›ï¸' },
+    { bg: '#FDE8E0', icon: '🏮' },
+    { bg: '#FEF3DC', icon: '🌸' },
+    { bg: '#E8F0FE', icon: '🎉' },
+    { bg: '#F0FDE8', icon: '🏕️' },
+    { bg: '#FDE8F0', icon: '🏛️' },
   ]
   const pick = COLORS[(event.title?.charCodeAt(0) || 0) % COLORS.length]
   const cls = large ? 'w-28 h-24 rounded-2xl shrink-0 flex items-center justify-center text-3xl overflow-hidden' : 'w-20 h-16 rounded-xl shrink-0 flex items-center justify-center text-2xl overflow-hidden'
@@ -96,7 +96,7 @@ function EventThumb({ event, large }) {
   )
 }
 
-// â”€â”€ Status badge â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Status badge ──────────────────────────────────────────────────────────────
 function StatusBadge({ upcoming }) {
   return (
     <span className="px-3 py-1 text-xs font-bold rounded-full shrink-0"
@@ -109,7 +109,7 @@ function StatusBadge({ upcoming }) {
   )
 }
 
-// â”€â”€ Three-dots menu â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Three-dots menu ───────────────────────────────────────────────────────────
 function EventRowMenu({ onEdit, onDelete }) {
   const [open, setOpen]           = useState(false)
   const [confirming, setConfirming] = useState(false)
@@ -165,7 +165,7 @@ function EventRowMenu({ onEdit, onDelete }) {
   )
 }
 
-// â”€â”€ Type picker modal â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Type picker modal ─────────────────────────────────────────────────────────
 function TypePickerModal({ onSelect, onClose }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4"
@@ -208,7 +208,7 @@ function TypePickerModal({ onSelect, onClose }) {
   )
 }
 
-// â”€â”€ Event Card â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Event Card ────────────────────────────────────────────────────────────────
 function EventCard({ ev, canManage, onClick, onEdit, onDelete }) {
   const [hovered, setHovered] = useState(false)
   const upcoming = isUpcoming(ev)
@@ -217,7 +217,7 @@ function EventCard({ ev, canManage, onClick, onEdit, onDelete }) {
   const startDateStr = fmtDate(ev.start_date)
   const endDateStr   = ev.end_date ? fmtDate(ev.end_date) : ''
   const sameDay      = startDateStr === endDateStr
-  const timeStr      = startTime ? (endTime ? `${startTime} â€“ ${endTime}` : startTime) : ''
+  const timeStr      = startTime ? (endTime ? `${startTime} – ${endTime}` : startTime) : ''
 
   return (
     <div
@@ -254,7 +254,7 @@ function EventCard({ ev, canManage, onClick, onEdit, onDelete }) {
               <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
             </svg>
             <span className="text-xs font-semibold" style={{ color: '#7A5550' }}>
-              {startDateStr}{!sameDay && endDateStr ? ` â€“ ${endDateStr}` : ''}
+              {startDateStr}{!sameDay && endDateStr ? ` – ${endDateStr}` : ''}
             </span>
           </div>
           {/* Time */}
@@ -281,7 +281,7 @@ function EventCard({ ev, canManage, onClick, onEdit, onDelete }) {
   )
 }
 
-// â”€â”€ Main Page â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Main Page ─────────────────────────────────────────────────────────────────
 export default function Events() {
   const { canManage, profile } = useProfile()
   const profileName = profile?.full_name || null
@@ -411,7 +411,7 @@ export default function Events() {
 
   return (
     <div>
-      {/* â”€â”€ Mobile layout â”€â”€ */}
+      {/* ── Mobile layout ── */}
       <div className="block md:hidden" style={{ backgroundColor: '#FFF7F3', minHeight: '100vh', paddingBottom: 'calc(80px + env(safe-area-inset-bottom))' }}>
         {/* Header */}
         <div className="px-4 pt-5 pb-3 flex items-center justify-between gap-3">
@@ -464,7 +464,7 @@ export default function Events() {
                   {ev.image_url
                     ? <img src={ev.image_url} alt="" className="w-full h-full object-cover" />
                     : <span className="text-3xl">
-                        {ev.event_type === 'retreat' ? 'ðŸ•ï¸' : ev.event_type === 'temple_main' ? 'ðŸ›ï¸' : 'ðŸŽ‰'}
+                        {ev.event_type === 'retreat' ? '🏕️' : ev.event_type === 'temple_main' ? '🏛️' : '🎉'}
                       </span>
                   }
                 </div>
@@ -481,19 +481,19 @@ export default function Events() {
                   </div>
                   {ev.start_date && (
                     <p className="text-xs mt-1 flex items-center gap-1" style={{ color: '#A08070' }}>
-                      <span>ðŸ“…</span>
-                      <span>{fmtEventDate(ev.start_date).split('Â·')[0].trim()}</span>
+                      <span>📅</span>
+                      <span>{fmtEventDate(ev.start_date).split('·')[0].trim()}</span>
                     </p>
                   )}
                   {(ev.start_date || ev.end_date) && (
                     <p className="text-xs mt-0.5 flex items-center gap-1" style={{ color: '#A08070' }}>
-                      <span>ðŸ•</span>
-                      <span>{fmtTime(ev.start_date)}{ev.end_date ? ` â€“ ${fmtEndTime(ev.end_date)}` : ''}</span>
+                      <span>🕐</span>
+                      <span>{fmtTime(ev.start_date)}{ev.end_date ? ` – ${fmtEndTime(ev.end_date)}` : ''}</span>
                     </p>
                   )}
                   {ev.location && (
                     <p className="text-xs mt-0.5 flex items-center gap-1 truncate" style={{ color: '#A08070' }}>
-                      <span>ðŸ“</span>
+                      <span>📍</span>
                       <span className="truncate">{ev.location}</span>
                     </p>
                   )}
@@ -507,9 +507,9 @@ export default function Events() {
         </div>
       </div>
 
-      {/* â”€â”€ Desktop layout â”€â”€ */}
+      {/* ── Desktop layout ── */}
       <div className="hidden md:block">
-      {/* â”€â”€ Header â”€â”€ */}
+      {/* ── Header ── */}
       <div className="flex items-start justify-between mb-6 gap-4">
         <div>
           <h2 className="text-4xl font-extrabold mb-1" style={{ color: '#4F252A' }}>Events</h2>
@@ -531,7 +531,7 @@ export default function Events() {
         </div>
       )}
 
-      {/* â”€â”€ Toolbar: tabs + search â”€â”€ */}
+      {/* ── Toolbar: tabs + search ── */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4">
         {/* Filter tabs */}
         <div className="flex items-center gap-1 rounded-xl p-1" style={{ backgroundColor: '#F5EDE4' }}>
@@ -565,7 +565,7 @@ export default function Events() {
         </div>
       </div>
 
-      {/* â”€â”€ Event grid â”€â”€ */}
+      {/* ── Event grid ── */}
       {loading ? (
         <div className="flex justify-center py-16">
           <div className="w-10 h-10 rounded-full border-4 animate-spin"
@@ -574,7 +574,7 @@ export default function Events() {
       ) : paginated.length === 0 ? (
         <div className="rounded-2xl p-12 flex flex-col items-center text-center"
           style={{ backgroundColor: '#ffffff', border: '1.5px solid #EDD0AC' }}>
-          <span className="text-5xl mb-4">ðŸ“…</span>
+          <span className="text-5xl mb-4">📅</span>
           <p className="text-lg font-bold mb-1" style={{ color: '#4F252A' }}>No events found</p>
           <p className="text-sm" style={{ color: '#A08070' }}>
             {search ? `No results for "${search}"` : tab === 'upcoming' ? 'No upcoming events.' : 'No past events.'}
@@ -595,7 +595,7 @@ export default function Events() {
         </div>
       )}
 
-      {/* â”€â”€ Pagination â”€â”€ */}
+      {/* ── Pagination ── */}
       {filtered.length > 0 && (
         <div className="flex items-center justify-between mt-5 gap-4 flex-wrap">
           {/* Page numbers */}
@@ -609,12 +609,12 @@ export default function Events() {
             {Array.from({ length: totalPages }, (_, i) => i + 1)
               .filter(p => p === 1 || p === totalPages || Math.abs(p - page) <= 1)
               .reduce((acc, p, i, arr) => {
-                if (i > 0 && p - arr[i-1] > 1) acc.push('â€¦')
+                if (i > 0 && p - arr[i-1] > 1) acc.push('…')
                 acc.push(p)
                 return acc
               }, [])
-              .map((p, i) => p === 'â€¦'
-                ? <span key={`ellipsis-${i}`} className="w-8 text-center text-xs" style={{ color: '#A08070' }}>â€¦</span>
+              .map((p, i) => p === '…'
+                ? <span key={`ellipsis-${i}`} className="w-8 text-center text-xs" style={{ color: '#A08070' }}>…</span>
                 : (
                   <button key={p} onClick={() => setPage(p)}
                     className="w-8 h-8 flex items-center justify-center rounded-lg text-xs font-bold border transition-all"
@@ -650,7 +650,7 @@ export default function Events() {
 
       </div>{/* end desktop block */}
 
-      {/* â”€â”€ Modals â”€â”€ */}
+      {/* ── Modals ── */}
       {selectedEvent && (
         <EventModal event={selectedEvent} onClose={() => setSelectedEvent(null)} onEdit={() => openEdit(selectedEvent)} />
       )}
@@ -690,7 +690,7 @@ export default function Events() {
               <Input name="location" value={form.location} onChange={handleChange} placeholder="Location" />
             </Field>
 
-            {/* â”€â”€ Event photo â”€â”€ */}
+            {/* ── Event photo ── */}
             <div>
               <label className="block text-xs font-semibold uppercase tracking-wide mb-1.5" style={{ color: '#7A5550' }}>
                 Event Photo
@@ -726,7 +726,7 @@ export default function Events() {
                 </label>
               )}
               {uploadingImage && (
-                <p className="text-xs mt-1.5 font-medium" style={{ color: '#F1745E' }}>Uploading photoâ€¦</p>
+                <p className="text-xs mt-1.5 font-medium" style={{ color: '#F1745E' }}>Uploading photo…</p>
               )}
             </div>
 

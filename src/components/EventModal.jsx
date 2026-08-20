@@ -2242,7 +2242,7 @@ function AssignRoleModal({ eventId, members, editingRole, onClose, onSaved }) {
             <button type="submit" disabled={saving}
               className="flex-1 py-3 text-sm font-semibold rounded-2xl text-white hover:opacity-90 disabled:opacity-50 transition-opacity"
               style={{ background: 'linear-gradient(135deg, #F1745E, #E06464)', boxShadow: '0 4px 14px rgba(200,90,48,0.3)' }}>
-              {saving ? 'Saving…' : editingRole ? 'Save' : 'Save Role'}
+              {saving ? 'Saving…' : 'Save'}
             </button>
           </div>
         </form>

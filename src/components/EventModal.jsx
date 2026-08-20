@@ -2433,23 +2433,31 @@ function RolePickerModal({ eventId, existingNames, onClose, onSaved }) {
 const THINH_SU_ROLES = ['Kẻng', 'Trầm', 'Đèn hoa sen', 'Đèn', 'Khiêng kiệu', 'Lộng', 'Cờ', 'Hoa']
 
 function ThinhSuSection({ eventId, onCountChange }) {
-  const [rows, setRows]           = useState([]) // [{ role_name, assigned_volunteers }]
-  const [members, setMembers]     = useState({ appUsers: [], generalMembers: [], danceTeam: [] })
-  const [loading, setLoading]     = useState(true)
+  const [rows, setRows]               = useState([])
+  const [members, setMembers]         = useState({ appUsers: [], generalMembers: [], danceTeam: [] })
+  const [loading, setLoading]         = useState(true)
   const [editingRole, setEditingRole] = useState(null)
   const [showPicker, setShowPicker]   = useState(false)
+  const [draggingIdx, setDraggingIdx] = useState(null)
+  const [overIdx, setOverIdx]         = useState(null)
+  const dragItem  = useRef(null)
+  const dragOver  = useRef(null)
+  const rowRefs   = useRef([])
+  const touchStartY = useRef(null)
 
   const fetchAll = useCallback(async () => {
     setLoading(true)
     const [assignRes, appUsersRes, generalRes, danceRes] = await Promise.all([
-      supabase.from('thinh_su_assignments').select('role_name, assigned_volunteers').eq('event_id', eventId),
+      supabase.from('thinh_su_assignments').select('role_name, assigned_volunteers, sort_order').eq('event_id', eventId),
       supabase.from('profiles').select('id, full_name, email').order('full_name'),
       supabase.from('general_members').select('id, full_name').order('full_name'),
       supabase.from('dance_team_participants').select('id, name').order('name'),
     ])
     const fetched = assignRes.data || []
-    // Sort by THINH_SU_ROLES order
-    fetched.sort((a, b) => THINH_SU_ROLES.indexOf(a.role_name) - THINH_SU_ROLES.indexOf(b.role_name))
+    fetched.sort((a, b) => {
+      if (a.sort_order != null && b.sort_order != null) return a.sort_order - b.sort_order
+      return THINH_SU_ROLES.indexOf(a.role_name) - THINH_SU_ROLES.indexOf(b.role_name)
+    })
     setRows(fetched)
     setMembers({
       appUsers:       appUsersRes.data || [],
@@ -2462,6 +2470,63 @@ function ThinhSuSection({ eventId, onCountChange }) {
   }, [eventId, onCountChange])
 
   useEffect(() => { fetchAll() }, [fetchAll])
+
+  async function persistOrder(reordered) {
+    await Promise.all(reordered.map((row, idx) =>
+      supabase.from('thinh_su_assignments')
+        .update({ sort_order: idx })
+        .eq('event_id', eventId)
+        .eq('role_name', row.role_name)
+    ))
+  }
+
+  // ── HTML5 drag (desktop) ──
+  function handleDragStart(i) { dragItem.current = i; setDraggingIdx(i) }
+  function handleDragEnter(i) { dragOver.current = i; setOverIdx(i) }
+  function handleDragEnd() {
+    const from = dragItem.current
+    const to   = dragOver.current
+    dragItem.current = null; dragOver.current = null
+    setDraggingIdx(null); setOverIdx(null)
+    if (from === null || to === null || from === to) return
+    const reordered = [...rows]
+    const [moved] = reordered.splice(from, 1)
+    reordered.splice(to, 0, moved)
+    setRows(reordered)
+    persistOrder(reordered)
+  }
+
+  // ── Touch drag (mobile) ──
+  function handleTouchStart(e, i) {
+    dragItem.current = i
+    setDraggingIdx(i)
+    touchStartY.current = e.touches[0].clientY
+  }
+  function handleTouchMove(e) {
+    e.preventDefault()
+    const y = e.touches[0].clientY
+    let closest = null, closestDist = Infinity
+    rowRefs.current.forEach((el, i) => {
+      if (!el) return
+      const rect = el.getBoundingClientRect()
+      const mid  = rect.top + rect.height / 2
+      const dist = Math.abs(y - mid)
+      if (dist < closestDist) { closestDist = dist; closest = i }
+    })
+    if (closest !== null) { dragOver.current = closest; setOverIdx(closest) }
+  }
+  function handleTouchEnd() {
+    const from = dragItem.current
+    const to   = dragOver.current
+    dragItem.current = null; dragOver.current = null
+    setDraggingIdx(null); setOverIdx(null)
+    if (from === null || to === null || from === to) return
+    const reordered = [...rows]
+    const [moved] = reordered.splice(from, 1)
+    reordered.splice(to, 0, moved)
+    setRows(reordered)
+    persistOrder(reordered)
+  }
 
   async function removeRole(roleName) {
     await supabase.from('thinh_su_assignments').delete().eq('event_id', eventId).eq('role_name', roleName)
@@ -2511,14 +2576,40 @@ function ThinhSuSection({ eventId, onCountChange }) {
         ) : (
           <div className="flex flex-col gap-2">
             {rows.map((row, idx) => {
-              const names = resolveNames(row.assigned_volunteers)
+              const names    = resolveNames(row.assigned_volunteers)
+              const isDragging = draggingIdx === idx
+              const isOver     = overIdx === idx && draggingIdx !== idx
               return (
-                <div key={row.role_name}
-                  className="flex items-center gap-3 px-4 py-3 rounded-2xl cursor-pointer hover:opacity-90 transition-opacity"
-                  style={{ backgroundColor: '#ffffff', border: `1.5px solid ${C.peach}`, boxShadow: '0 1px 6px rgba(0,0,0,0.04)' }}
-                  onClick={() => setEditingRole(row.role_name)}>
+                <div
+                  key={row.role_name}
+                  ref={el => rowRefs.current[idx] = el}
+                  draggable
+                  onDragStart={() => handleDragStart(idx)}
+                  onDragEnter={() => handleDragEnter(idx)}
+                  onDragEnd={handleDragEnd}
+                  onDragOver={e => e.preventDefault()}
+                  onTouchStart={e => handleTouchStart(e, idx)}
+                  onTouchMove={handleTouchMove}
+                  onTouchEnd={handleTouchEnd}
+                  className="flex items-center gap-3 px-4 py-3 rounded-2xl transition-all"
+                  style={{
+                    backgroundColor: '#ffffff',
+                    border: `1.5px solid ${isOver ? C.orange : C.peach}`,
+                    boxShadow: isOver ? `0 4px 16px rgba(200,90,48,0.18)` : '0 1px 6px rgba(0,0,0,0.04)',
+                    opacity: isDragging ? 0.4 : 1,
+                    cursor: 'grab',
+                  }}>
 
-                  <div className="flex-1 min-w-0">
+                  {/* Drag handle */}
+                  <div className="shrink-0 flex flex-col gap-0.5 px-0.5 cursor-grab" style={{ color: C.faint }}>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                      <rect x="4" y="5" width="16" height="2.5" rx="1.25"/>
+                      <rect x="4" y="11" width="16" height="2.5" rx="1.25"/>
+                      <rect x="4" y="17" width="16" height="2.5" rx="1.25"/>
+                    </svg>
+                  </div>
+
+                  <div className="flex-1 min-w-0" onClick={() => setEditingRole(row.role_name)} style={{ cursor: 'pointer' }}>
                     <p className="text-sm font-semibold" style={{ color: C.text }}>{idx + 1}. {row.role_name}</p>
                     {names.length > 0 && (
                       <p className="text-sm mt-0.5 leading-relaxed" style={{ color: C.muted }}>{names.join(', ')}</p>

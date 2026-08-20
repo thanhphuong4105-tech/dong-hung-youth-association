@@ -110,11 +110,21 @@ function PeopleIcon({ size = 20 }) {
   )
 }
 
+function BellIcon({ size = 20 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+      <path d="M13.73 21a2 2 0 01-3.46 0"/>
+    </svg>
+  )
+}
+
 // ─── Nav cards config ─────────────────────────────────────────────────────────
 const NAV_CARDS = [
   { id: 'agenda',       label: 'Agenda',          subtitle: '0 items',        Icon: AgendaIcon },
   { id: 'todo',         label: 'To-do List',      subtitle: '0 tasks',        Icon: TodoIcon },
-  { id: 'volunteer',    label: 'Volunteers',        subtitle: '0 assignees',    Icon: HandsIcon },
+  { id: 'volunteer',    label: 'Volunteers',       subtitle: '0 assignees',    Icon: HandsIcon },
+  { id: 'thinh_su',     label: 'Thinh Su',         subtitle: '0 assigned',     Icon: BellIcon },
   { id: 'dance',        label: 'Dance Team',       subtitle: '0 participants', Icon: TeamIcon },
   { id: 'participants', label: 'Participants',      subtitle: '0 participants', Icon: PeopleIcon },
   { id: 'documents',    label: 'Documents',         subtitle: '0 files',        Icon: DocumentIcon },
@@ -2419,6 +2429,205 @@ function RolePickerModal({ eventId, existingNames, onClose, onSaved }) {
 }
 
 // ─── Volunteer Roles section ──────────────────────────────────────────────────
+// ─── Thinh Su Section ────────────────────────────────────────────────────────
+const THINH_SU_ROLES = ['Kẻng', 'Trầm', 'Đèn hoa sen', 'Đèn', 'Khiêng kiệu', 'Lộng', 'Cờ', 'Hoa']
+
+function ThinhSuSection({ eventId, onCountChange }) {
+  const [assignments, setAssignments] = useState({}) // { roleName: [memberKey, ...] }
+  const [members, setMembers]         = useState({ appUsers: [], generalMembers: [], danceTeam: [] })
+  const [loading, setLoading]         = useState(true)
+  const [editingRole, setEditingRole] = useState(null)
+
+  const fetchAll = useCallback(async () => {
+    setLoading(true)
+    const [assignRes, appUsersRes, generalRes, danceRes] = await Promise.all([
+      supabase.from('thinh_su_assignments').select('role_name, assigned_volunteers').eq('event_id', eventId),
+      supabase.from('profiles').select('id, full_name, email').order('full_name'),
+      supabase.from('general_members').select('id, full_name').order('full_name'),
+      supabase.from('dance_team_participants').select('id, name').order('name'),
+    ])
+    const map = {}
+    for (const row of (assignRes.data || [])) {
+      map[row.role_name] = row.assigned_volunteers || []
+    }
+    setAssignments(map)
+    setMembers({
+      appUsers:       appUsersRes.data || [],
+      generalMembers: generalRes.data  || [],
+      danceTeam:      danceRes.data    || [],
+    })
+    const totalAssigned = Object.values(map).reduce((sum, arr) => sum + arr.length, 0)
+    onCountChange(totalAssigned)
+    setLoading(false)
+  }, [eventId, onCountChange])
+
+  useEffect(() => { fetchAll() }, [fetchAll])
+
+  function resolveNames(keys) {
+    const allOpts = [
+      ...(members.appUsers      || []).map(m => ({ key: `profile:${m.id}`, label: m.full_name || m.email })),
+      ...(members.generalMembers || []).map(m => ({ key: `general:${m.id}`, label: m.full_name })),
+      ...(members.danceTeam      || []).map(m => ({ key: `dance:${m.id}`,   label: m.name })),
+    ]
+    return (keys || []).map(k => allOpts.find(o => o.key === k)?.label).filter(Boolean)
+  }
+
+  return (
+    <>
+      <div>
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-base font-bold" style={{ color: C.text, fontFamily: "'Nunito', sans-serif", fontSize: '1.1rem' }}>
+            Thinh Su
+          </h3>
+        </div>
+
+        {loading ? (
+          <div className="flex justify-center py-10">
+            <div className="w-8 h-8 rounded-full border-2 animate-spin"
+              style={{ borderColor: C.peach, borderTopColor: C.orange }} />
+          </div>
+        ) : (
+          <div className="flex flex-col gap-2">
+            {THINH_SU_ROLES.map(role => {
+              const names = resolveNames(assignments[role])
+              return (
+                <div key={role}
+                  className="flex items-center gap-3 px-4 py-3 rounded-2xl cursor-pointer hover:opacity-90 transition-opacity"
+                  style={{ backgroundColor: '#ffffff', border: `1.5px solid ${C.peach}`, boxShadow: '0 1px 6px rgba(0,0,0,0.04)' }}
+                  onClick={() => setEditingRole(role)}>
+
+                  <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
+                    style={{ backgroundColor: C.orangeLight, color: C.orange }}>
+                    <BellIcon size={18} />
+                  </div>
+
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold" style={{ color: C.text }}>{role}</p>
+                    {names.length > 0 && (
+                      <p className="text-sm mt-0.5 leading-relaxed" style={{ color: C.muted }}>{names.join(', ')}</p>
+                    )}
+                  </div>
+
+                  {names.length === 0 && (
+                    <span className="text-xs font-medium px-2.5 py-1 rounded-full shrink-0"
+                      style={{ backgroundColor: '#FEF0EE', color: '#E06464', border: '1px solid #EDD0AC' }}>
+                      Unassigned
+                    </span>
+                  )}
+
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: C.faint, flexShrink: 0 }}>
+                    <path d="M9 18l6-6-6-6"/>
+                  </svg>
+                </div>
+              )
+            })}
+          </div>
+        )}
+      </div>
+
+      {editingRole && (
+        <ThinhSuAssignModal
+          eventId={eventId}
+          roleName={editingRole}
+          members={members}
+          currentVolunteers={assignments[editingRole] || []}
+          onClose={() => setEditingRole(null)}
+          onSaved={fetchAll}
+        />
+      )}
+    </>
+  )
+}
+
+function ThinhSuAssignModal({ eventId, roleName, members, currentVolunteers, onClose, onSaved }) {
+  const [selected, setSelected] = useState(currentVolunteers)
+  const [saving, setSaving]     = useState(false)
+  const [err, setErr]           = useState('')
+
+  async function handleSave(e) {
+    e.preventDefault()
+    setSaving(true)
+    setErr('')
+    const { error } = await supabase
+      .from('thinh_su_assignments')
+      .upsert({ event_id: eventId, role_name: roleName, assigned_volunteers: selected }, { onConflict: 'event_id,role_name' })
+    setSaving(false)
+    if (error) return setErr(error.message)
+    onSaved(); onClose()
+  }
+
+  const fieldStyle = {
+    width: '100%', padding: '0.7rem 1rem', borderRadius: '0.875rem',
+    border: `1.5px solid ${C.peach}`, backgroundColor: '#FFF7F3',
+    color: C.text, fontFamily: "'Nunito', sans-serif", fontSize: '0.9rem', outline: 'none',
+  }
+
+  return (
+    <div className="fixed inset-0 z-[75] flex"
+      style={{ backgroundColor: 'rgba(40,24,8,0.45)' }}
+      onClick={e => { if (e.target === e.currentTarget) onClose() }}>
+
+      <div className="ml-auto flex flex-col"
+        style={{
+          width: '420px', maxWidth: '100vw',
+          height: '100dvh',
+          backgroundColor: C.cream,
+          boxShadow: '-8px 0 40px rgba(0,0,0,0.18)',
+          borderLeft: `1.5px solid ${C.peach}`,
+          borderTopLeftRadius: '1.5rem',
+          borderBottomLeftRadius: '1.5rem',
+        }}>
+
+        <div className="flex items-center justify-between px-7 py-6 border-b shrink-0"
+          style={{ borderColor: C.peach }}>
+          <div>
+            <h3 className="text-2xl font-bold" style={{ color: C.text, fontFamily: "'Nunito', sans-serif" }}>
+              {roleName}
+            </h3>
+            <p className="text-xs mt-1" style={{ color: C.faint }}>Assign members to this role</p>
+          </div>
+          <button onClick={onClose} className="p-1.5 rounded-full hover:bg-orange-100 transition-colors" style={{ color: C.muted }}>
+            <XMarkIcon className="w-5 h-5" />
+          </button>
+        </div>
+
+        <form onSubmit={handleSave} className="flex-1 overflow-y-auto px-7 py-6 space-y-6" style={{ paddingBottom: 'calc(5rem + env(safe-area-inset-bottom))' }}>
+          {err && (
+            <div className="px-4 py-2.5 rounded-xl text-sm"
+              style={{ backgroundColor: '#FFF7F3', border: '1px solid #EFCAC8', color: '#E06464' }}>
+              {err}
+            </div>
+          )}
+
+          <div>
+            <label className="block text-xs font-bold uppercase tracking-widest mb-2" style={{ color: C.muted }}>
+              Assign to Member
+            </label>
+            <VolunteerMultiSelect
+              members={members}
+              selected={selected}
+              onChange={setSelected}
+            />
+          </div>
+
+          <div className="flex gap-3 pt-2">
+            <button type="button" onClick={onClose}
+              className="flex-1 py-3 text-sm font-semibold rounded-2xl border transition-colors hover:bg-orange-50"
+              style={{ borderColor: C.peach, color: C.muted, backgroundColor: '#fff' }}>
+              Cancel
+            </button>
+            <button type="submit" disabled={saving}
+              className="flex-1 py-3 text-sm font-semibold rounded-2xl text-white hover:opacity-90 disabled:opacity-50 transition-opacity"
+              style={{ background: 'linear-gradient(135deg, #F1745E, #E06464)', boxShadow: '0 4px 14px rgba(200,90,48,0.3)' }}>
+              {saving ? 'Saving…' : 'Save'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  )
+}
+
 function VolunteerSection({ eventId, onCountChange, onAssignedCountChange }) {
   const [roles, setRoles] = useState([])
   const [members, setMembers] = useState([])
@@ -3870,9 +4079,11 @@ export default function EventModal({ event, onClose, onEdit }) {
   const [participantsCount, setParticipantsCount] = useState(null)
   const [documentsCount, setDocumentsCount] = useState(null)
   const handleTodoCount = useCallback(n => setTodoCount(n), [])
+  const [thinhSuCount, setThinhSuCount] = useState(null)
   const handleVolunteerCount = useCallback(n => setVolunteerCount(n), [])
   const handleAssignedVolunteerCount = useCallback(n => setAssignedVolunteerCount(n), [])
   const handleDanceCount = useCallback(n => setDanceCount(n), [])
+  const handleThinhSuCount = useCallback(n => setThinhSuCount(n), [])
   const handleAgendaCount = useCallback(n => setAgendaCount(n), [])
   const handleParticipantsCount = useCallback(n => setParticipantsCount(n), [])
   const handleDocumentsCount = useCallback(n => setDocumentsCount(n), [])
@@ -3934,14 +4145,16 @@ export default function EventModal({ event, onClose, onEdit }) {
   }
 
   const visibleNavCards = NAV_CARDS.filter(card =>
-    (card.id !== 'dance' || event.event_type === 'temple_main') &&
-    (card.id !== 'participants' || event.event_type === 'retreat')
+    (card.id !== 'dance'        || event.event_type === 'temple_main') &&
+    (card.id !== 'thinh_su'     || event.event_type === 'temple_main') &&
+    (card.id !== 'participants'  || event.event_type === 'retreat')
   )
 
   function getCount(card) {
     if (card.id === 'todo')          return todoCount ?? null
     if (card.id === 'volunteer')     return assignedVolunteerCount ?? null
     if (card.id === 'dance')         return danceCount ?? null
+    if (card.id === 'thinh_su')      return thinhSuCount ?? null
     if (card.id === 'agenda')        return agendaCount ?? null
     if (card.id === 'participants')  return participantsCount ?? null
     if (card.id === 'documents')     return documentsCount ?? null
@@ -3952,6 +4165,7 @@ export default function EventModal({ event, onClose, onEdit }) {
     if (card.id === 'todo' && todoCount !== null)               return `${todoCount} task${todoCount !== 1 ? 's' : ''}`
     if (card.id === 'volunteer' && assignedVolunteerCount !== null) return `${assignedVolunteerCount} assignee${assignedVolunteerCount !== 1 ? 's' : ''}`
     if (card.id === 'dance' && danceCount !== null)             return `${danceCount} participant${danceCount !== 1 ? 's' : ''}`
+    if (card.id === 'thinh_su' && thinhSuCount !== null)        return `${thinhSuCount} assigned`
     if (card.id === 'agenda' && agendaCount !== null)           return `${agendaCount} item${agendaCount !== 1 ? 's' : ''}`
     if (card.id === 'participants' && participantsCount !== null) return `${participantsCount} participant${participantsCount !== 1 ? 's' : ''}`
     if (card.id === 'documents' && documentsCount !== null)     return `${documentsCount} file${documentsCount !== 1 ? 's' : ''}`
@@ -3962,6 +4176,7 @@ export default function EventModal({ event, onClose, onEdit }) {
     <>
       {activeSection === 'todo'         && <TodoSection eventId={event.id} onCountChange={handleTodoCount} />}
       {activeSection === 'volunteer'    && <VolunteerSection eventId={event.id} onCountChange={handleVolunteerCount} onAssignedCountChange={handleAssignedVolunteerCount} />}
+      {activeSection === 'thinh_su'     && event.event_type === 'temple_main' && <ThinhSuSection eventId={event.id} onCountChange={handleThinhSuCount} />}
       {activeSection === 'dance'        && event.event_type === 'temple_main' && <DanceTeamSection eventId={event.id} onCountChange={handleDanceCount} />}
       {activeSection === 'agenda'       && <AgendaSection eventId={event.id} eventName={event.title} event={event} onCountChange={handleAgendaCount} />}
       {activeSection === 'participants' && event.event_type === 'retreat' && <RetreatParticipantsSection eventId={event.id} eventName={event.title} onCountChange={handleParticipantsCount} />}

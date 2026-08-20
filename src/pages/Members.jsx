@@ -523,8 +523,8 @@ export default function Members() {
         <>
           <div className="fixed inset-0 z-40" style={{ backgroundColor: 'rgba(50,30,10,0.35)', backdropFilter: 'blur(2px)' }}
             onClick={closeDrawer} />
-          <div className="fixed right-0 top-0 h-full z-50 w-full max-w-md overflow-y-auto flex flex-col"
-            style={{ backgroundColor: '#fff', borderLeft: `1.5px solid ${C.beige}`, boxShadow: '-8px 0 40px rgba(0,0,0,0.12)' }}>
+          <div className="fixed right-0 top-0 z-[65] w-full max-w-md flex flex-col"
+            style={{ height: '100dvh', backgroundColor: '#fff', borderLeft: `1.5px solid ${C.beige}`, boxShadow: '-8px 0 40px rgba(0,0,0,0.12)' }}>
             <div className="flex items-center justify-between px-6 py-5 border-b shrink-0" style={{ borderColor: C.beige }}>
               <h3 className="text-lg font-extrabold" style={{ color: C.burgundy, fontFamily: "'Nunito', sans-serif" }}>
                 {drawer.mode === 'add' ? 'Add Member' : 'Edit Member'}
@@ -533,7 +533,7 @@ export default function Members() {
                 <XMarkIcon className="w-5 h-5" />
               </button>
             </div>
-            <div className="px-6 py-5 space-y-4 flex-1">
+            <div className="px-6 py-5 space-y-4 flex-1 overflow-y-auto" style={{ paddingBottom: 'calc(5rem + env(safe-area-inset-bottom))' }}>
               {formErr && <div className="px-4 py-2.5 rounded-xl text-sm" style={{ backgroundColor: '#FFF0EC', border: '1px solid #F4B8A8', color: '#C05040' }}>{formErr}</div>}
               <Field label="Full Name" required>
                 <input name="full_name" value={form.full_name} onChange={hc} placeholder="Nguyen Van A" style={inputStyle} />
@@ -555,14 +555,14 @@ export default function Members() {
               <Field label="Notes">
                 <textarea name="notes" value={form.notes} onChange={hc} rows={3} placeholder="Optional notes..." style={{ ...inputStyle, resize: 'vertical' }} />
               </Field>
-            </div>
-            <div className="flex gap-3 px-6 py-5 border-t shrink-0" style={{ borderColor: C.beige }}>
-              <button onClick={closeDrawer} className="flex-1 py-2.5 text-sm font-semibold rounded-2xl border hover:opacity-80" style={{ borderColor: C.beige, color: C.muted }}>Cancel</button>
-              <button onClick={handleSave} disabled={saving}
-                className="flex-1 py-2.5 text-sm font-semibold rounded-2xl text-white hover:opacity-90 disabled:opacity-60"
-                style={{ background: 'linear-gradient(135deg, #F1745E, #E06464)' }}>
-                {saving ? 'Saving…' : drawer.mode === 'add' ? 'Save Member' : 'Save'}
-              </button>
+              <div className="flex gap-3 pt-2">
+                <button onClick={closeDrawer} className="flex-1 py-2.5 text-sm font-semibold rounded-2xl border hover:opacity-80" style={{ borderColor: C.beige, color: C.muted }}>Cancel</button>
+                <button onClick={handleSave} disabled={saving}
+                  className="flex-1 py-2.5 text-sm font-semibold rounded-2xl text-white hover:opacity-90 disabled:opacity-60"
+                  style={{ background: 'linear-gradient(135deg, #F1745E, #E06464)' }}>
+                  {saving ? 'Saving…' : drawer.mode === 'add' ? 'Save Member' : 'Save'}
+                </button>
+              </div>
             </div>
           </div>
         </>

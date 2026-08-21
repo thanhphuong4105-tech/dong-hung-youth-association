@@ -3199,6 +3199,7 @@ function AgendaSection({ eventId, eventName, event, onCountChange }) {
   const [editingId, setEditingId] = useState(null)
   const [editForm, setEditForm] = useState(EMPTY)
   const [deleteId, setDeleteId] = useState(null)
+  const [showAnnouncement, setShowAnnouncement] = useState(false)
   const dragItem = useRef(null)
   const dragOver = useRef(null)
 
@@ -3383,6 +3384,12 @@ function AgendaSection({ eventId, eventName, event, onCountChange }) {
               <rect x="6" y="14" width="12" height="8"/>
             </svg>
             Print
+          </button>
+          <button
+            onClick={() => setShowAnnouncement(true)}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-xl border hover:opacity-80 transition-opacity"
+            style={{ borderColor: C.peach, color: C.muted, backgroundColor: '#ffffff' }}>
+            📢 Announcement
           </button>
           <button
             onClick={() => { setAdding(true); setNewErr('') }}
@@ -3586,6 +3593,10 @@ function AgendaSection({ eventId, eventName, event, onCountChange }) {
           </div>
         </div>
       )}
+
+      {showAnnouncement && (
+        <AnnouncementModal event={event} eventId={eventId} onClose={() => setShowAnnouncement(false)} />
+      )}
     </>
   )
 }
@@ -3615,6 +3626,183 @@ function AgendaItemMenu({ onEdit, onDelete }) {
             className="w-full text-left px-4 py-2.5 text-sm hover:bg-red-50 transition-colors" style={{ color: '#E06464' }}>Delete</button>
         </div>
       )}
+    </div>
+  )
+}
+
+// ─── Announcement Modal ───────────────────────────────────────────────────────
+function toBold(str) {
+  const map = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
+  const bold = '𝗔𝗕𝗖𝗗𝗘𝗙𝗚𝗛𝗜𝗝𝗞𝗟𝗠𝗡𝗢𝗣𝗤𝗥𝗦𝗧𝗨𝗩𝗪𝗫𝗬𝗭𝗮𝗯𝗰𝗱𝗲𝗳𝗴𝗵𝗶𝗷𝗸𝗹𝗺𝗻𝗼𝗽𝗾𝗿𝘀𝘁𝘂𝘃𝘄𝘅𝘆𝘇𝟬𝟭𝟮𝟯𝟰𝟱𝟲𝟳𝟴𝟵'
+  return Array.from(str).map(c => {
+    const i = map.indexOf(c)
+    if (i === -1) return c
+    // Each bold char is a surrogate pair (2 JS chars) at index i*2 in bold string
+    return bold.slice(i * 2, i * 2 + 2)
+  }).join('')
+}
+
+function AnnouncementModal({ event, eventId, onClose }) {
+  const [text, setText] = useState('')
+  const [loading, setLoading] = useState(true)
+  const [copied, setCopied] = useState(false)
+
+  useEffect(() => {
+    async function build() {
+      setLoading(true)
+      // Fetch all needed data in parallel
+      const [pairsRes, thinhRes, volRes, profilesRes, generalRes, danceRes] = await Promise.all([
+        supabase.from('dance_event_pairs').select('*').eq('event_id', eventId).order('sort_order'),
+        supabase.from('thinh_su_assignments').select('role_name, assigned_pairs, sort_order').eq('event_id', eventId).order('sort_order'),
+        supabase.from('volunteer_roles').select('role_name, assigned_volunteers').eq('event_id', eventId),
+        supabase.from('profiles').select('id, full_name, email'),
+        supabase.from('general_members').select('id, full_name'),
+        supabase.from('dance_team_participants').select('id, name'),
+      ])
+
+      // Build name lookup
+      const nameMap = {}
+      ;(profilesRes.data || []).forEach(m => { nameMap[`profile:${m.id}`] = m.full_name || m.email })
+      ;(generalRes.data  || []).forEach(m => { nameMap[`general:${m.id}`] = m.full_name })
+      ;(danceRes.data    || []).forEach(m => { nameMap[`dance:${m.id}`]   = m.name })
+
+      const resolveName = key => nameMap[key] || ''
+
+      // Format event date (e.g. "Aug 23")
+      let dateStr = ''
+      if (event?.date) {
+        const d = new Date(event.date + 'T00:00:00')
+        dateStr = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+      }
+
+      const lines = []
+      lines.push(`List công việc cho ${event?.title || ''} (${dateStr})`)
+      lines.push('')
+
+      // ─── Dance Team ───────────────────────────────────────────────────────
+      const dancePairs = pairsRes.data || []
+      const danceParticipantCount = dancePairs.reduce((s, p) => s + (p.member1 ? 1 : 0) + (p.member2 ? 1 : 0), 0)
+      if (dancePairs.length > 0) {
+        lines.push('')
+        lines.push(`${toBold('BAI MUA DANG HOA')} 🌸 (${danceParticipantCount} hoa)`)
+        lines.push('')
+        dancePairs.forEach((p, i) => {
+          const n1 = resolveName(p.member1)
+          const n2 = resolveName(p.member2)
+          const display = n1 && n2 ? `${n1} - ${n2}` : n1 || n2
+          if (display) lines.push(`${i + 1}. ${display}`)
+        })
+      }
+
+      // ─── Volunteer roles ──────────────────────────────────────────────────
+      const volRoles = volRes.data || []
+      if (volRoles.length > 0) {
+        volRoles.forEach(role => {
+          const assignees = (role.assigned_volunteers || []).map(k => resolveName(k)).filter(Boolean)
+          if (assignees.length === 0) return
+          lines.push('')
+          lines.push('')
+          lines.push(toBold(role.role_name?.toUpperCase() || ''))
+          lines.push('')
+          assignees.forEach((name, i) => lines.push(`${i + 1}. ${name}`))
+        })
+      }
+
+      // ─── Thinh Su ─────────────────────────────────────────────────────────
+      const thinhRows = thinhRes.data || []
+      if (thinhRows.length > 0) {
+        // Single-pair roles (≤1 pair with ≤1 person each) go under THINH SU header as bullets
+        // Multi-pair roles get their own bold header
+        const singleRoles = thinhRows.filter(r => {
+          const pairs = r.assigned_pairs || []
+          const total = pairs.reduce((s, p) => s + (p[0] ? 1 : 0) + (p[1] ? 1 : 0), 0)
+          return total <= 1
+        })
+        const multiRoles = thinhRows.filter(r => {
+          const pairs = r.assigned_pairs || []
+          const total = pairs.reduce((s, p) => s + (p[0] ? 1 : 0) + (p[1] ? 1 : 0), 0)
+          return total > 1
+        })
+
+        if (singleRoles.length > 0) {
+          lines.push('')
+          lines.push('')
+          lines.push(toBold('THINH SU'))
+          lines.push('')
+          singleRoles.forEach(r => {
+            const pairs = r.assigned_pairs || []
+            const names = pairs.flatMap(p => [p[0], p[1]]).filter(Boolean).map(k => resolveName(k)).filter(Boolean)
+            if (names.length > 0) lines.push(`• ${r.role_name} - ${names.join(', ')}`)
+          })
+        }
+
+        multiRoles.forEach(r => {
+          const pairs = r.assigned_pairs || []
+          lines.push('')
+          lines.push('')
+          lines.push(toBold(r.role_name?.toUpperCase() || ''))
+          lines.push('')
+          let pairNum = 1
+          pairs.forEach(p => {
+            const n1 = resolveName(p[0])
+            const n2 = resolveName(p[1])
+            const display = n1 && n2 ? `${n1} - ${n2}` : n1 || n2
+            if (display) { lines.push(`${pairNum}. ${display}`); pairNum++ }
+          })
+        })
+      }
+
+      setText(lines.join('\n'))
+      setLoading(false)
+    }
+    build()
+  }, [eventId, event])
+
+  function handleCopy() {
+    navigator.clipboard.writeText(text).then(() => {
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    })
+  }
+
+  return (
+    <div className="fixed inset-0 z-[80] flex items-center justify-center p-4"
+      style={{ backgroundColor: 'rgba(50,30,10,0.5)', backdropFilter: 'blur(4px)' }}>
+      <div className="relative w-full max-w-lg rounded-3xl flex flex-col overflow-hidden"
+        style={{ backgroundColor: '#FFFCF8', border: '1.5px solid #EDD0AC', boxShadow: '0 16px 48px rgba(0,0,0,0.18)', maxHeight: '85vh' }}>
+        <div className="flex items-center justify-between px-6 py-4 border-b" style={{ borderColor: C.peach }}>
+          <h3 className="text-base font-bold" style={{ color: C.text, fontFamily: "'Nunito', sans-serif" }}>📢 Announcement</h3>
+          <button onClick={onClose} className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-orange-50" style={{ color: C.faint }}>
+            <XMarkIcon className="w-4 h-4" />
+          </button>
+        </div>
+        <div className="flex-1 overflow-y-auto p-6">
+          {loading ? (
+            <div className="flex justify-center py-8">
+              <div className="w-7 h-7 rounded-full border-2 animate-spin" style={{ borderColor: C.peach, borderTopColor: C.orange }} />
+            </div>
+          ) : (
+            <textarea
+              value={text}
+              onChange={e => setText(e.target.value)}
+              className="w-full rounded-2xl p-4 text-sm leading-relaxed resize-none outline-none"
+              style={{ border: `1.5px solid ${C.peach}`, backgroundColor: '#fff', color: C.text, fontFamily: 'monospace', minHeight: '320px' }}
+            />
+          )}
+        </div>
+        <div className="px-6 py-4 border-t flex justify-end gap-3" style={{ borderColor: C.peach }}>
+          <button onClick={onClose}
+            className="px-4 py-2 text-sm font-semibold rounded-2xl border"
+            style={{ borderColor: C.peach, color: C.muted, backgroundColor: '#fff' }}>
+            Close
+          </button>
+          <button onClick={handleCopy}
+            className="px-5 py-2 text-sm font-semibold text-white rounded-2xl shadow-md hover:opacity-90 transition-opacity"
+            style={{ background: copied ? '#4CAF50' : 'linear-gradient(135deg, #F1745E, #E06464)' }}>
+            {copied ? '✓ Copied!' : 'Copy Text'}
+          </button>
+        </div>
+      </div>
     </div>
   )
 }

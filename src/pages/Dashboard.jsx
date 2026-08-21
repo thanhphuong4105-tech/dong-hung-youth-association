@@ -162,11 +162,9 @@ export default function Dashboard() {
     fetchActivity()
     // Fetch reminders from Supabase
     const today = new Date(); today.setHours(0,0,0,0)
-    const cutoff = new Date(today); cutoff.setDate(cutoff.getDate() + 14)
     const todayStr = today.toISOString().slice(0,10)
-    const cutoffStr = cutoff.toISOString().slice(0,10)
     Promise.all([
-      supabase.from('event_tasks').select('*').gte('due_date', todayStr).lte('due_date', cutoffStr).neq('status', 'done').order('due_date'),
+      supabase.from('event_tasks').select('*').neq('status', 'done').order('due_date'),
       supabase.from('profiles').select('id, full_name'),
       supabase.from('general_members').select('id, full_name'),
     ]).then(([taskRes, pRes, gRes]) => {
@@ -264,7 +262,7 @@ export default function Dashboard() {
               <p className="text-sm py-6 text-center" style={{ color: '#A08070' }}>No reminders right now.</p>
             ) : (
               <div>
-                {reminders.slice(0, 5).map((r, i) => {
+                {reminders.map((r, i) => {
                   const isToday = r.when === 'Today'
                   const isTomorrow = r.when === 'Tomorrow'
                   const badgeColor = isToday
@@ -276,7 +274,7 @@ export default function Dashboard() {
                   const dueFmt = dueDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
                   return (
                     <div key={r.id} className="flex items-start gap-3 px-4 py-3"
-                      style={{ borderBottom: i < Math.min(reminders.length, 5) - 1 ? '1px solid #F5EDE4' : 'none' }}>
+                      style={{ borderBottom: i < reminders.length - 1 ? '1px solid #F5EDE4' : 'none' }}>
                       <button
                         onClick={() => markDone(r.id)}
                         disabled={completingId === r.id}

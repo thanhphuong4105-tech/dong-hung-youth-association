@@ -107,6 +107,7 @@ export default function Dashboard() {
   const [activityPage, setActivityPage] = useState(1)
   const [reminders, setReminders] = useState([])
   const [memberMap, setMemberMap] = useState({})
+  const [completingId, setCompletingId] = useState(null)
   const ACTIVITY_PAGE_SIZE = 5
 
   const activityClearedAt = typeof window !== 'undefined' ? localStorage.getItem('dhya_activity_cleared_at') : null
@@ -195,6 +196,13 @@ export default function Dashboard() {
     { label: 'Budget Balance',  value: stats.balance !== null ? fmt(stats.balance)    : '—', sub: 'Current available balance',  Icon: CurrencyDollarIcon },
   ]
 
+  async function markDone(id) {
+    setCompletingId(id)
+    await supabase.from('event_tasks').update({ status: 'done' }).eq('id', id)
+    setReminders(r => r.filter(t => t.id !== id))
+    setCompletingId(null)
+  }
+
   function fmtTimeMobile(dateStr) {
     if (!dateStr) return ''
     try {
@@ -269,7 +277,15 @@ export default function Dashboard() {
                   return (
                     <div key={r.id} className="flex items-start gap-3 px-4 py-3"
                       style={{ borderBottom: i < Math.min(reminders.length, 5) - 1 ? '1px solid #F5EDE4' : 'none' }}>
-                      <div className="mt-0.5 w-5 h-5 rounded-full border-2 shrink-0" style={{ borderColor: '#D4B08A' }} />
+                      <button
+                        onClick={() => markDone(r.id)}
+                        disabled={completingId === r.id}
+                        className="mt-0.5 w-5 h-5 rounded-full border-2 shrink-0 flex items-center justify-center transition-colors hover:bg-orange-50"
+                        style={{ borderColor: completingId === r.id ? '#F1745E' : '#D4B08A' }}>
+                        {completingId === r.id && (
+                          <div className="w-2.5 h-2.5 rounded-full border border-orange-400 border-t-transparent animate-spin" />
+                        )}
+                      </button>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-semibold leading-tight" style={{ color: '#4F252A' }}>{r.title}</p>
                         <p className="text-xs mt-0.5" style={{ color: '#A08070' }}>Due {dueFmt}</p>

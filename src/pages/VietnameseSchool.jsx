@@ -1774,27 +1774,62 @@ function ClassDetail({ cls, semester, students, attendance, lessons, onBack, onU
   const goodStudents    = attendanceStats.filter(s => s.absences > 0 && s.absences < 3).map(s => s.name)
 
   return (
-    <div>
+    <div className="px-5 md:px-0" style={{ paddingBottom: 'calc(80px + env(safe-area-inset-bottom))' }}>
       {/* Back */}
       <button onClick={onBack} className="flex items-center gap-1.5 text-sm font-semibold mb-4 hover:opacity-70 transition-opacity" style={{ color: C.orange }}>
         <ChevronLeftIcon className="w-4 h-4" /> Back to {semester.name} Classes
       </button>
 
       {/* Header */}
-      <div className="mb-5">
-        <h2 className="text-4xl font-extrabold mb-1" style={{ color: C.burgundy, fontFamily: "'Nunito', sans-serif" }}>{cls.className}</h2>
-        <p className="text-sm" style={{ color: C.muted }}>Manage class details, students, attendance, lessons, and parents for {semester.name}.</p>
+      <div className="mb-4">
+        <h2 className="text-2xl md:text-4xl font-extrabold mb-1" style={{ color: C.burgundy, fontFamily: "'Nunito', sans-serif" }}>{cls.className}</h2>
+        <p className="text-xs md:text-sm" style={{ color: C.muted }}>Manage class details, students, attendance, lessons, and parents for {semester.name}.</p>
       </div>
 
       {/* Two-column layout: main content left, summary right */}
-      <div className="flex gap-5 items-start">
+      <div className="flex flex-col md:flex-row gap-5 items-start">
       {/* Left column */}
-      <div className="flex-1 min-w-0">
+      <div className="flex-1 min-w-0 w-full">
 
-      {/* Class info card */}
-      <Card className="px-6 py-4 mb-6">
-        <div className="flex items-center divide-x" style={{ divideColor: C.beige }}>
-          {/* Main Teacher */}
+      {/* Class info card — mobile: 2×2 grid, desktop: horizontal */}
+      <Card className="px-4 py-3 md:px-6 md:py-4 mb-4">
+        {/* Mobile layout */}
+        <div className="grid grid-cols-2 gap-3 md:hidden">
+          <div className="flex items-start gap-2">
+            <UserIcon className="w-4 h-4 shrink-0 mt-0.5" style={{ color: C.faint }} />
+            <div>
+              <p className="text-[10px] font-semibold uppercase tracking-wide" style={{ color: C.faint }}>Teacher</p>
+              <p className="text-xs font-bold" style={{ color: C.burgundy }}>{cls.teacher || '—'}</p>
+            </div>
+          </div>
+          <div className="flex items-start gap-2">
+            <UserGroupIcon className="w-4 h-4 shrink-0 mt-0.5" style={{ color: C.faint }} />
+            <div>
+              <p className="text-[10px] font-semibold uppercase tracking-wide" style={{ color: C.faint }}>TA(s)</p>
+              {cls.assistants?.length
+                ? cls.assistants.map((a, i) => <p key={i} className="text-xs font-bold" style={{ color: C.burgundy }}>{a}</p>)
+                : <p className="text-xs font-bold" style={{ color: C.burgundy }}>—</p>}
+            </div>
+          </div>
+          <div className="flex items-start gap-2">
+            <CalendarDaysIcon className="w-4 h-4 shrink-0 mt-0.5" style={{ color: C.faint }} />
+            <div>
+              <p className="text-[10px] font-semibold uppercase tracking-wide" style={{ color: C.faint }}>Schedule</p>
+              {cls.dayOfWeek
+                ? <p className="text-xs font-bold" style={{ color: C.burgundy }}>Every {cls.dayOfWeek}{cls.startTime ? `, ${fmtTime(cls.startTime)}–${fmtTime(cls.endTime)}` : ''}</p>
+                : <p className="text-xs font-bold" style={{ color: C.burgundy }}>—</p>}
+            </div>
+          </div>
+          <div className="flex items-start gap-2">
+            <UserGroupIcon className="w-4 h-4 shrink-0 mt-0.5" style={{ color: C.faint }} />
+            <div>
+              <p className="text-[10px] font-semibold uppercase tracking-wide" style={{ color: C.faint }}>Students</p>
+              <p className="text-xs font-bold" style={{ color: C.burgundy }}>{clsStudents.length}</p>
+            </div>
+          </div>
+        </div>
+        {/* Desktop layout */}
+        <div className="hidden md:flex items-center divide-x" style={{ divideColor: C.beige }}>
           <div className="flex items-center gap-3 pr-8">
             <UserIcon className="w-6 h-6 shrink-0" style={{ color: C.faint }} />
             <div>
@@ -1802,20 +1837,15 @@ function ClassDetail({ cls, semester, students, attendance, lessons, onBack, onU
               <p className="text-sm font-bold whitespace-nowrap" style={{ color: C.burgundy }}>{cls.teacher || '—'}</p>
             </div>
           </div>
-          {/* Assistant Teacher(s) */}
           <div className="flex items-center gap-3 px-8">
             <UserGroupIcon className="w-6 h-6 shrink-0" style={{ color: C.faint }} />
             <div>
               <p className="text-xs font-semibold" style={{ color: C.faint }}>Assistant Teacher(s)</p>
               {cls.assistants?.length
-                ? cls.assistants.map((a, i) => (
-                    <p key={i} className="text-sm font-bold whitespace-nowrap" style={{ color: C.burgundy }}>{a}</p>
-                  ))
-                : <p className="text-sm font-bold" style={{ color: C.burgundy }}>—</p>
-              }
+                ? cls.assistants.map((a, i) => <p key={i} className="text-sm font-bold whitespace-nowrap" style={{ color: C.burgundy }}>{a}</p>)
+                : <p className="text-sm font-bold" style={{ color: C.burgundy }}>—</p>}
             </div>
           </div>
-          {/* Schedule */}
           <div className="flex items-center gap-3 px-8">
             <CalendarDaysIcon className="w-6 h-6 shrink-0" style={{ color: C.faint }} />
             <div>
@@ -1828,7 +1858,6 @@ function ClassDetail({ cls, semester, students, attendance, lessons, onBack, onU
               ) : <p className="text-sm font-bold" style={{ color: C.burgundy }}>—</p>}
             </div>
           </div>
-          {/* Students */}
           <div className="flex items-center gap-3 pl-8">
             <UserGroupIcon className="w-6 h-6 shrink-0" style={{ color: C.faint }} />
             <div>
@@ -1856,11 +1885,12 @@ function ClassDetail({ cls, semester, students, attendance, lessons, onBack, onU
       </Card>
 
       {/* Tabs */}
-      <div className="flex items-center justify-between mb-6 border-b" style={{ borderColor: C.beige }}>
-        <div className="flex gap-1">
+      <div className="mb-4 border-b" style={{ borderColor: C.beige }}>
+        {/* Tab pills — scrollable on mobile */}
+        <div className="flex gap-1 overflow-x-auto pb-px" style={{ scrollbarWidth: 'none' }}>
           {TABS.map(t => (
             <button key={t.id} onClick={() => setTab(t.id)}
-              className="px-5 py-2.5 text-sm font-semibold transition-all rounded-t-xl"
+              className="shrink-0 px-4 py-2.5 text-sm font-semibold transition-all rounded-t-xl"
               style={tab === t.id
                 ? { color: C.orange, borderBottom: `2.5px solid ${C.orange}`, marginBottom: '-1.5px', backgroundColor: '#FFF4F0' }
                 : { color: C.muted }}>
@@ -1869,7 +1899,8 @@ function ClassDetail({ cls, semester, students, attendance, lessons, onBack, onU
             </button>
           ))}
         </div>
-        <div className="flex items-center gap-2 mb-1">
+        {/* Action button row below tabs on mobile */}
+        <div className="flex items-center gap-2 py-2">
           {tab === 'students' && (
             <Btn size="sm" onClick={() => onAddStudent(cls.id)}><PlusIcon className="w-3.5 h-3.5" /> Add Student</Btn>
           )}
@@ -1894,32 +1925,32 @@ function ClassDetail({ cls, semester, students, attendance, lessons, onBack, onU
         <div>
           <div>
             {/* Date nav card */}
-            <div className="rounded-2xl px-5 py-4 mb-3" style={{ backgroundColor: '#ffffff', border: `1.5px solid ${C.beige}`, boxShadow: '0 4px 20px rgba(0,0,0,0.06)' }}>
-              <div className="flex items-center gap-4">
+            <div className="rounded-2xl px-3 md:px-5 py-3 md:py-4 mb-3" style={{ backgroundColor: '#ffffff', border: `1.5px solid ${C.beige}`, boxShadow: '0 4px 20px rgba(0,0,0,0.06)' }}>
+              <div className="flex items-center gap-2 md:gap-4">
                 <button onClick={() => { const d = new Date(attendDate); d.setDate(d.getDate() - 7); setAttendDate(d.toISOString().slice(0, 10)) }}
-                  className="flex items-center gap-1.5 px-4 py-2 rounded-2xl text-xs font-semibold border hover:bg-orange-50 transition-colors"
+                  className="flex items-center gap-1 px-2 md:px-4 py-2 rounded-2xl text-xs font-semibold border hover:bg-orange-50 transition-colors shrink-0"
                   style={{ borderColor: C.beige, color: C.muted }}>
-                  <ChevronLeftIcon className="w-3.5 h-3.5" /> Previous Class
+                  <ChevronLeftIcon className="w-3.5 h-3.5" /> <span className="hidden md:inline">Previous Class</span>
                 </button>
                 <div className="flex-1 flex flex-col items-center">
-                  <div className="flex items-center gap-2">
-                    <CalendarDaysIcon className="w-4 h-4" style={{ color: C.orange }} />
-                    <span className="font-extrabold text-base" style={{ color: C.burgundy }}>
-                      {new Date(attendDate + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}
+                  <div className="flex items-center gap-1.5">
+                    <CalendarDaysIcon className="w-4 h-4 shrink-0" style={{ color: C.orange }} />
+                    <span className="font-extrabold text-xs md:text-base text-center" style={{ color: C.burgundy }}>
+                      {new Date(attendDate + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}
                     </span>
                   </div>
                   {cls.dayOfWeek && <span className="text-xs mt-0.5" style={{ color: C.faint }}>(Every {cls.dayOfWeek})</span>}
                 </div>
                 <button onClick={() => { const d = new Date(attendDate); d.setDate(d.getDate() + 7); setAttendDate(d.toISOString().slice(0, 10)) }}
-                  className="flex items-center gap-1.5 px-4 py-2 rounded-2xl text-xs font-semibold border hover:bg-orange-50 transition-colors"
+                  className="flex items-center gap-1 px-2 md:px-4 py-2 rounded-2xl text-xs font-semibold border hover:bg-orange-50 transition-colors shrink-0"
                   style={{ borderColor: C.beige, color: C.orange }}>
-                  Next Class <ChevronRightIcon className="w-3.5 h-3.5" />
+                  <span className="hidden md:inline">Next Class</span> <ChevronRightIcon className="w-3.5 h-3.5" />
                 </button>
               </div>
             </div>
 
             {/* Quick actions */}
-            <div className="flex justify-end gap-3 mb-4">
+            <div className="flex flex-wrap justify-end gap-2 mb-4">
               <button onClick={() => {
                   const records = clsStudents.map(s => ({ studentId: s.id, classId: cls.id, semesterId: semester.id, date: attendDate, status: 'Present', notes: getNote(s.id) || '' }))
                   setLocalAttend(prev => { const n = { ...prev }; clsStudents.forEach(s => { n[s.id] = { ...n[s.id], status: 'Present' } }); return n })
@@ -1940,14 +1971,15 @@ function ClassDetail({ cls, semester, students, attendance, lessons, onBack, onU
             </div>
 
             <Card className="overflow-hidden">
-              <table className="w-full text-sm" style={{ borderCollapse: 'collapse' }}>
+              <div className="overflow-x-auto">
+              <table className="w-full text-sm" style={{ borderCollapse: 'collapse', minWidth: '340px' }}>
                 <thead>
                   <tr style={{ backgroundColor: '#FFF0EA', borderBottom: `1.5px solid ${C.beige}` }}>
-                    <th className="px-4 py-3 text-left text-xs font-extrabold uppercase tracking-wide w-8" style={{ color: C.muted }}>No.</th>
-                    <th className="px-4 py-3 text-left text-xs font-extrabold uppercase tracking-wide" style={{ color: C.muted }}>Student Name</th>
-                    <th className="px-4 py-3 text-center text-xs font-extrabold uppercase tracking-wide" style={{ color: C.muted }}>Present</th>
-                    <th className="px-4 py-3 text-center text-xs font-extrabold uppercase tracking-wide" style={{ color: C.muted }}>Late</th>
-                    <th className="px-4 py-3 text-center text-xs font-extrabold uppercase tracking-wide" style={{ color: C.muted }}>Absent</th>
+                    <th className="px-2 md:px-4 py-3 text-left text-xs font-extrabold uppercase tracking-wide w-8" style={{ color: C.muted }}>No.</th>
+                    <th className="px-2 md:px-4 py-3 text-left text-xs font-extrabold uppercase tracking-wide" style={{ color: C.muted }}>Student Name</th>
+                    <th className="px-1 md:px-4 py-3 text-center text-xs font-extrabold uppercase tracking-wide" style={{ color: C.muted }}>Present</th>
+                    <th className="px-1 md:px-4 py-3 text-center text-xs font-extrabold uppercase tracking-wide" style={{ color: C.muted }}>Late</th>
+                    <th className="px-1 md:px-4 py-3 text-center text-xs font-extrabold uppercase tracking-wide" style={{ color: C.muted }}>Absent</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -1962,18 +1994,18 @@ function ClassDetail({ cls, semester, students, attendance, lessons, onBack, onU
                     return (
                       <tr key={s.id} style={{ borderBottom: i < clsStudents.length - 1 ? `1px solid #F5EDE4` : 'none' }}
                         className="hover:bg-orange-50 transition-colors">
-                        <td className="px-4 py-3 text-xs font-semibold" style={{ color: C.faint }}>{i + 1}</td>
-                        <td className="px-4 py-3">
-                          <span className="text-sm font-semibold" style={{ color: C.burgundy }}>{s.firstName} {s.lastName}</span>
+                        <td className="px-2 md:px-4 py-3 text-xs font-semibold" style={{ color: C.faint }}>{i + 1}</td>
+                        <td className="px-2 md:px-4 py-3">
+                          <span className="text-xs md:text-sm font-semibold" style={{ color: C.burgundy }}>{s.firstName} {s.lastName}</span>
                         </td>
                         {['Present', 'Late', 'Absent'].map(st => {
                           const active = status === st
                           const colors = { Present: { bg: '#E8F8EF', color: '#2D7A4F', border: '#A8DFC0', activeBg: '#D0F0DC' }, Late: { bg: '#FFF8EC', color: '#8A6200', border: '#F0D080', activeBg: '#FFE8A0' }, Absent: { bg: '#FFF0F5', color: '#B0305A', border: '#F4B0C8', activeBg: '#FFD0E0' } }
                           const cc = colors[st]
                           return (
-                            <td key={st} className="px-3 py-3 text-center">
+                            <td key={st} className="px-1 md:px-3 py-3 text-center">
                               <button onClick={() => setStatus(s.id, st)}
-                                className="px-3 py-1.5 rounded-xl text-xs font-semibold transition-all"
+                                className="px-2 md:px-3 py-1 md:py-1.5 rounded-xl text-xs font-semibold transition-all"
                                 style={{ backgroundColor: active ? cc.activeBg : cc.bg, color: cc.color, border: `1.5px solid ${active ? cc.color : cc.border}`, fontWeight: active ? 800 : 600, transform: active ? 'scale(1.05)' : 'scale(1)' }}>
                                 {st}
                               </button>
@@ -1985,6 +2017,7 @@ function ClassDetail({ cls, semester, students, attendance, lessons, onBack, onU
                   })}
                 </tbody>
               </table>
+              </div>
             </Card>
 
             {/* Note modal */}
@@ -2100,7 +2133,7 @@ function ClassDetail({ cls, semester, students, attendance, lessons, onBack, onU
       </div>{/* end left column */}
 
       {/* Right column — sticky Attendance Summary */}
-      <div className="w-64 shrink-0 sticky top-4">
+      <div className="hidden md:block w-64 shrink-0 sticky top-4">
         <Card className="p-5">
           <h4 className="text-sm font-extrabold mb-4" style={{ color: C.burgundy }}>Attendance Summary</h4>
           <div className="flex justify-center mb-4">

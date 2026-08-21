@@ -1124,7 +1124,7 @@ function DanceTeamSection({ eventId, onCountChange }) {
   const overviewCards = [
     { label: 'Confirmed Participants', value: confirmedCount.toString(),    sub: null, badge: null, Icon: TeamIcon, valueSize: '1rem' },
     { label: 'Total Practices',        value: totalPractices.toString(),    sub: null, badge: null, Icon: () => <ClockSvg size={20} />, valueSize: '1rem' },
-    { label: 'Next Practice',          value: fmtNextPractice(nextPractice), sub: null, badge: null, Icon: () => <CalendarDaysIcon className="w-5 h-5" />, valueSize: '1rem' },
+    { label: 'Next Practice',          value: fmtNextPractice(nextPractice), sub: null, badge: null, Icon: () => <CalendarDaysIcon className="w-5 h-5" />, valueSize: '0.875rem', noWrap: true },
     { label: 'Reminder Status',        value: null, sub: null,
       badge: hasPractices ? (allSent ? 'Sent' : 'Not sent yet') : 'No practices',
       badgeStyle: allSent
@@ -1146,7 +1146,7 @@ function DanceTeamSection({ eventId, onCountChange }) {
             <div className="mb-2" style={{ color: C.orange }}><card.Icon size={20} /></div>
             <p className="text-xs font-medium mb-1.5 leading-tight whitespace-nowrap" style={{ color: C.muted }}>{card.label}</p>
             {card.value !== null && (
-              <p className="font-bold leading-tight" style={{ color: C.text, fontFamily: "'Nunito', sans-serif", fontSize: card.valueSize || '1.4rem' }}>
+              <p className="font-bold leading-tight" style={{ color: C.text, fontFamily: "'Nunito', sans-serif", fontSize: card.valueSize || '1.4rem', whiteSpace: card.noWrap ? 'nowrap' : 'normal' }}>
                 {card.value}
               </p>
             )}

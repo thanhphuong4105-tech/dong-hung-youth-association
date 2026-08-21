@@ -131,7 +131,7 @@ export default function Dashboard() {
     const today = new Date().toISOString()
     const [eventsRes, tasksRes, profilesRes, generalRes, budgetRes, upcomingRes] = await Promise.all([
       supabase.from('events').select('id', { count: 'exact', head: true }).gte('start_date', today),
-      supabase.from('tasks').select('id', { count: 'exact', head: true }),
+      supabase.from('event_tasks').select('id', { count: 'exact', head: true }).neq('status', 'done'),
       supabase.from('profiles').select('id', { count: 'exact', head: true }),
       supabase.from('general_members').select('id', { count: 'exact', head: true }),
       supabase.from('budget_items').select('amount, category'),

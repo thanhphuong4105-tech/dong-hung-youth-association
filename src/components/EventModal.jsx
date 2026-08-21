@@ -481,112 +481,164 @@ function ParticipantModal({ eventId, editing, onClose, onSaved }) {
   )
 }
 
+function DancePairModal({ eventId, members, buildOpts, editing, nextOrder, onClose, onSaved }) {
+  const [m1, setM1] = useState(editing?.member1 || '')
+  const [m2, setM2] = useState(editing?.member2 || '')
+  const [saving, setSaving] = useState(false)
+
+  const opts = buildOpts()
+
+  async function handleSave() {
+    setSaving(true)
+    if (editing) {
+      await supabase.from('dance_event_pairs').update({ member1: m1 || null, member2: m2 || null }).eq('id', editing.id)
+    } else {
+      await supabase.from('dance_event_pairs').insert({ event_id: eventId, member1: m1 || null, member2: m2 || null, sort_order: nextOrder })
+    }
+    setSaving(false)
+    onSaved()
+    onClose()
+  }
+
+  return (
+    <div className="fixed inset-0 z-[75] flex items-end sm:items-center justify-center">
+      <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" onClick={onClose} />
+      <div className="relative w-full sm:max-w-md rounded-t-3xl sm:rounded-3xl p-6 z-10"
+        style={{ backgroundColor: '#FFFCF8', border: '1.5px solid #EDD0AC', boxShadow: '0 8px 40px rgba(0,0,0,0.12)' }}>
+        <h3 className="text-lg font-bold mb-4" style={{ color: C.text, fontFamily: "'Nunito', sans-serif" }}>
+          {editing ? 'Edit Pair' : 'Add Pair'}
+        </h3>
+        <div className="space-y-4 mb-6">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wide mb-1.5" style={{ color: '#7A5550' }}>Dancer 1</p>
+            <MemberSearchSelect options={opts} value={m1} onChange={setM1} placeholder="Select member…" />
+          </div>
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wide mb-1.5" style={{ color: '#7A5550' }}>Dancer 2</p>
+            <MemberSearchSelect options={opts} value={m2} onChange={setM2} placeholder="Select member…" />
+          </div>
+        </div>
+        <div className="flex gap-3">
+          <button onClick={onClose}
+            className="flex-1 py-2.5 text-sm font-semibold rounded-2xl border"
+            style={{ borderColor: C.peach, color: C.muted, backgroundColor: '#fff' }}>
+            Cancel
+          </button>
+          <button onClick={handleSave} disabled={saving}
+            className="flex-1 py-2.5 text-sm font-semibold text-white rounded-2xl shadow-md hover:opacity-90 disabled:opacity-60"
+            style={{ background: 'linear-gradient(135deg, #F1745E, #E06464)' }}>
+            {saving ? 'Saving…' : 'Save'}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function ParticipantsTab({ eventId, onCountChange }) {
-  const [rows, setRows] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [modal, setModal] = useState(null)
-  const dragIndex = useRef(null)
-  const [dragOver, setDragOver] = useState(null)
+  const [pairs, setPairs]           = useState([])
+  const [members, setMembers]       = useState({ appUsers: [], generalMembers: [], danceTeam: [] })
+  const [loading, setLoading]       = useState(true)
+  const [editingPair, setEditingPair] = useState(null) // null | 'new' | { id, member1, member2 }
+  const [draggingIdx, setDraggingIdx] = useState(null)
+  const [overIdx, setOverIdx]         = useState(null)
+  const dragItem  = useRef(null)
+  const dragOver  = useRef(null)
+  const rowRefs   = useRef([])
 
-  const fetch = useCallback(async () => {
+  const fetchAll = useCallback(async () => {
     setLoading(true)
-    const [epRes, rosterRes] = await Promise.all([
-      supabase.from('dance_participants').select('*').eq('event_id', eventId),
-      supabase.from('dance_team_participants').select('name, birthday, age, height, weight, clothing_size'),
+    const [pairsRes, appUsersRes, generalRes, danceRes] = await Promise.all([
+      supabase.from('dance_event_pairs').select('*').eq('event_id', eventId).order('sort_order'),
+      supabase.from('profiles').select('id, full_name, email').order('full_name'),
+      supabase.from('general_members').select('id, full_name').order('full_name'),
+      supabase.from('dance_team_participants').select('id, name').order('name'),
     ])
-    const roster = rosterRes.data || []
-    const rosterMap = {}
-    roster.forEach(p => { rosterMap[p.name?.toLowerCase()] = p })
-
-    function calcAge(birthday) {
-      if (!birthday) return null
-      const today = new Date()
-      const dob = new Date(birthday + 'T00:00:00')
-      let age = today.getFullYear() - dob.getFullYear()
-      const m = today.getMonth() - dob.getMonth()
-      if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) age--
-      return age >= 0 ? age : null
-    }
-
-    // Merge live data from dance_team_participants by name
-    const merged = (epRes.data || []).map(p => {
-      const live = rosterMap[p.name?.toLowerCase()] || {}
-      return {
-        ...p,
-        birthday:      live.birthday      ?? null,
-        age:           live.age           ?? null,
-        height:        live.height        ?? p.height        ?? null,
-        weight:        live.weight        ?? p.weight        ?? null,
-        clothing_size: live.clothing_size ?? p.clothing_size ?? null,
-      }
+    setPairs(pairsRes.data || [])
+    setMembers({
+      appUsers:       appUsersRes.data || [],
+      generalMembers: generalRes.data  || [],
+      danceTeam:      danceRes.data    || [],
     })
-
-    function resolveAge(row) {
-      const fromBirthday = calcAge(row.birthday)
-      if (fromBirthday != null) return fromBirthday
-      const n = parseFloat(row.age)
-      return isNaN(n) ? Infinity : n
-    }
-    const r = merged.slice().sort((a, b) => resolveAge(a) - resolveAge(b))
-    setRows(r); onCountChange(r.length); setLoading(false)
+    onCountChange((pairsRes.data || []).length)
+    setLoading(false)
   }, [eventId, onCountChange])
 
-  useEffect(() => { fetch() }, [fetch])
+  useEffect(() => { fetchAll() }, [fetchAll])
 
-  function calcRowAge(row) {
-    if (row.birthday) {
-      const today = new Date(), dob = new Date(row.birthday + 'T00:00:00')
-      let a = today.getFullYear() - dob.getFullYear()
-      const m = today.getMonth() - dob.getMonth()
-      if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) a--
-      return a >= 0 ? a : null
-    }
-    return row.age ?? null
+  function buildOpts() {
+    return [
+      { key: '', label: '—' },
+      ...(members.appUsers      || []).map(m => ({ key: `profile:${m.id}`, label: m.full_name || m.email })),
+      ...(members.generalMembers || []).map(m => ({ key: `general:${m.id}`, label: m.full_name })),
+      ...(members.danceTeam      || []).map(m => ({ key: `dance:${m.id}`,   label: m.name })),
+    ]
   }
 
-  async function remove(id) {
-    await supabase.from('dance_participants').delete().eq('id', id); fetch()
+  function resolveName(key) {
+    if (!key) return ''
+    const opts = buildOpts()
+    return opts.find(o => o.key === key)?.label || ''
   }
 
-  function onDragStart(i) {
-    dragIndex.current = i
+  async function removePair(id) {
+    await supabase.from('dance_event_pairs').delete().eq('id', id)
+    fetchAll()
   }
 
-  function onDragOver(e, i) {
-    e.preventDefault()
-    setDragOver(i)
+  async function persistOrder(reordered) {
+    await Promise.all(reordered.map((p, idx) =>
+      supabase.from('dance_event_pairs').update({ sort_order: idx }).eq('id', p.id)
+    ))
   }
 
-  async function onDrop(i) {
-    const from = dragIndex.current
-    if (from === null || from === i) { setDragOver(null); return }
-    const reordered = [...rows]
+  // Drag handlers
+  function handleDragStart(i) { dragItem.current = i; setDraggingIdx(i) }
+  function handleDragEnter(i) { dragOver.current = i; setOverIdx(i) }
+  function handleDragEnd() {
+    const from = dragItem.current, to = dragOver.current
+    dragItem.current = null; dragOver.current = null
+    setDraggingIdx(null); setOverIdx(null)
+    if (from === null || to === null || from === to) return
+    const reordered = [...pairs]
     const [moved] = reordered.splice(from, 1)
-    reordered.splice(i, 0, moved)
-    setRows(reordered)
-    setDragOver(null)
-    dragIndex.current = null
-    // Persist new order
-    await Promise.all(
-      reordered.map((row, idx) =>
-        supabase.from('dance_participants').update({ sort_order: idx + 1 }).eq('id', row.id)
-      )
-    )
+    reordered.splice(to, 0, moved)
+    setPairs(reordered)
+    persistOrder(reordered)
   }
-
-  function onDragEnd() {
-    dragIndex.current = null
-    setDragOver(null)
+  function handleTouchStart(e, i) { dragItem.current = i; setDraggingIdx(i) }
+  function handleTouchMove(e) {
+    e.preventDefault()
+    const y = e.touches[0].clientY
+    let closest = null, closestDist = Infinity
+    rowRefs.current.forEach((el, i) => {
+      if (!el) return
+      const rect = el.getBoundingClientRect()
+      const dist = Math.abs(y - (rect.top + rect.height / 2))
+      if (dist < closestDist) { closestDist = dist; closest = i }
+    })
+    if (closest !== null) { dragOver.current = closest; setOverIdx(closest) }
+  }
+  function handleTouchEnd() {
+    const from = dragItem.current, to = dragOver.current
+    dragItem.current = null; dragOver.current = null
+    setDraggingIdx(null); setOverIdx(null)
+    if (from === null || to === null || from === to) return
+    const reordered = [...pairs]
+    const [moved] = reordered.splice(from, 1)
+    reordered.splice(to, 0, moved)
+    setPairs(reordered)
+    persistOrder(reordered)
   }
 
   return (
     <>
       <div className="flex items-center justify-between mb-4">
         <span className="text-sm font-bold" style={{ color: C.text }}>Participants</span>
-        <button onClick={() => setModal('picker')}
+        <button onClick={() => setEditingPair('new')}
           className="flex items-center gap-1.5 px-3 py-1.5 text-white text-xs font-semibold rounded-xl shadow-md hover:opacity-90 transition-opacity"
           style={{ background: 'linear-gradient(135deg, #F1745E, #E06464)' }}>
-          <PlusIcon className="w-3.5 h-3.5" /> Add Participant
+          <PlusIcon className="w-3.5 h-3.5" /> Add Pair
         </button>
       </div>
 
@@ -594,100 +646,66 @@ function ParticipantsTab({ eventId, onCountChange }) {
         <div className="flex justify-center py-8">
           <div className="w-7 h-7 rounded-full border-2 animate-spin" style={{ borderColor: C.peach, borderTopColor: C.orange }} />
         </div>
-      ) : rows.length === 0 ? (
-        <DanceEmptyState icon={<TeamIcon size={28} />} label="No participants yet" sub='Click "Add Participant" to get started.' />
+      ) : pairs.length === 0 ? (
+        <DanceEmptyState icon={<TeamIcon size={28} />} label="No pairs yet" sub='Click "Add Pair" to assign dance partners.' />
       ) : (
-        <>
-        {/* Mobile cards */}
-        <div className="sm:hidden space-y-2">
-          {rows.map((row, i) => {
-            const age = calcRowAge(row)
+        <div className="flex flex-col gap-2">
+          {pairs.map((pair, idx) => {
+            const n1 = resolveName(pair.member1)
+            const n2 = resolveName(pair.member2)
+            const display = n1 && n2 ? `${n1} - ${n2}` : n1 || n2 || 'Unassigned'
+            const isDragging = draggingIdx === idx
+            const isOver     = overIdx === idx && draggingIdx !== idx
             return (
-              <div key={row.id} className="rounded-2xl p-3" style={{ backgroundColor: '#fff', border: `1.5px solid ${C.peach}` }}>
-                <div className="flex items-center justify-between gap-2">
-                  <div className="flex items-center gap-2.5 min-w-0">
-                    <span className="text-xs font-bold w-5 text-center shrink-0" style={{ color: C.faint }}>{i + 1}</span>
-                    <div className="w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0"
-                      style={{ background: 'linear-gradient(135deg, #F1745E, #E06464)' }}>
-                      {row.name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2)}
-                    </div>
-                    <div className="min-w-0">
-                      <p className="font-semibold truncate text-sm" style={{ color: C.text }}>{row.name}</p>
-                      {row.role && <p className="text-xs truncate" style={{ color: C.faint }}>{row.role}</p>}
-                    </div>
-                  </div>
-                  <DanceRowMenu onEdit={() => setModal(row)} onRemove={() => remove(row.id)} />
+              <div key={pair.id}
+                ref={el => rowRefs.current[idx] = el}
+                draggable
+                onDragStart={() => handleDragStart(idx)}
+                onDragEnter={() => handleDragEnter(idx)}
+                onDragEnd={handleDragEnd}
+                onDragOver={e => e.preventDefault()}
+                onTouchStart={e => handleTouchStart(e, idx)}
+                onTouchMove={handleTouchMove}
+                onTouchEnd={handleTouchEnd}
+                className="flex items-center gap-3 px-4 py-3 rounded-2xl transition-all"
+                style={{
+                  backgroundColor: '#fff',
+                  border: `1.5px solid ${isOver ? C.orange : C.peach}`,
+                  boxShadow: isOver ? '0 4px 16px rgba(200,90,48,0.18)' : '0 1px 6px rgba(0,0,0,0.04)',
+                  opacity: isDragging ? 0.4 : 1,
+                  cursor: 'grab',
+                }}>
+                <div className="shrink-0" style={{ color: C.faint }}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                    <rect x="4" y="5" width="16" height="2.5" rx="1.25"/>
+                    <rect x="4" y="11" width="16" height="2.5" rx="1.25"/>
+                    <rect x="4" y="17" width="16" height="2.5" rx="1.25"/>
+                  </svg>
                 </div>
-                <div className="mt-2 grid grid-cols-4 gap-2 text-xs">
-                  {[['Age', age != null ? age : '—'], ['Height', row.height || '—'], ['Weight', row.weight || '—'], ['Size', row.clothing_size || '—']].map(([label, val]) => (
-                    <div key={label}>
-                      <p className="font-bold uppercase tracking-wide" style={{ color: C.muted, fontSize: '10px' }}>{label}</p>
-                      <p style={{ color: C.text }}>{val}</p>
-                    </div>
-                  ))}
+                <div className="flex-1 min-w-0" onClick={() => setEditingPair(pair)} style={{ cursor: 'pointer' }}>
+                  <p className="text-sm font-semibold" style={{ color: C.text }}>{idx + 1}. {display}</p>
                 </div>
+                <button onClick={e => { e.stopPropagation(); removePair(pair.id) }}
+                  className="p-1 rounded-full hover:bg-red-50 transition-colors shrink-0"
+                  style={{ color: '#E06464' }}>
+                  <XMarkIcon className="w-4 h-4" />
+                </button>
               </div>
             )
           })}
         </div>
-
-        {/* Desktop table */}
-        <div className="hidden sm:block rounded-3xl overflow-hidden" style={{ border: '1.5px solid #EDD0AC', boxShadow: '0 2px 12px rgba(0,0,0,0.05)' }}>
-          <table className="w-full text-sm border-collapse">
-            <thead>
-              <tr style={{ backgroundColor: '#FFF0EA', borderBottom: '1.5px solid #EDD0AC' }}>
-                {['No.', 'Name', 'Age', 'Height', 'Weight', 'Size', ''].map((h, i) => (
-                  <th key={i} style={{ padding: '10px 12px', textAlign: 'left', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: '#A08070', whiteSpace: 'nowrap' }}>{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((row, i) => {
-                const age = calcRowAge(row)
-                return (
-                  <tr key={row.id}
-                    draggable
-                    onDragStart={() => { dragIndex.current = i }}
-                    onDragOver={e => { e.preventDefault(); setDragOver(i) }}
-                    onDrop={() => onDrop(i)}
-                    onDragEnd={onDragEnd}
-                    style={{ backgroundColor: dragOver === i ? C.orangeLight : '#ffffff', borderBottom: i < rows.length - 1 ? '1px solid #F5E8DC' : 'none', cursor: 'grab' }}>
-                    <td className="px-3 py-3 w-10 text-center text-xs font-semibold" style={{ color: C.faint }}>{i + 1}</td>
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-2.5">
-                        <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0"
-                          style={{ background: 'linear-gradient(135deg, #F1745E, #E06464)' }}>
-                          {row.name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2)}
-                        </div>
-                        <div>
-                          <p className="font-semibold" style={{ color: C.text }}>{row.name}</p>
-                          {row.role && <p className="text-xs" style={{ color: C.faint }}>{row.role}</p>}
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-4 py-3 whitespace-nowrap text-sm" style={{ color: C.muted }}>{age != null ? age : '—'}</td>
-                    <td className="px-4 py-3 whitespace-nowrap text-sm" style={{ color: C.muted }}>{row.height || '—'}</td>
-                    <td className="px-4 py-3 whitespace-nowrap text-sm" style={{ color: C.muted }}>{row.weight || '—'}</td>
-                    <td className="px-4 py-3 whitespace-nowrap text-sm" style={{ color: C.muted }}>{row.clothing_size || '—'}</td>
-                    <td className="px-4 py-3">
-                      <DanceRowMenu onEdit={() => setModal(row)} onRemove={() => remove(row.id)} />
-                    </td>
-                  </tr>
-                )
-              })}
-            </tbody>
-          </table>
-        </div>
-        </>
       )}
 
-      {modal === 'picker' && (
-        <ParticipantPickerModal eventId={eventId} existingNames={rows.map(r => r.name)}
-          onClose={() => setModal(null)} onSaved={fetch} />
-      )}
-      {modal && modal !== 'picker' && (
-        <ParticipantModal eventId={eventId} editing={modal}
-          onClose={() => setModal(null)} onSaved={fetch} />
+      {editingPair !== null && (
+        <DancePairModal
+          eventId={eventId}
+          members={members}
+          buildOpts={buildOpts}
+          editing={editingPair === 'new' ? null : editingPair}
+          nextOrder={pairs.length}
+          onClose={() => setEditingPair(null)}
+          onSaved={fetchAll}
+        />
       )}
     </>
   )

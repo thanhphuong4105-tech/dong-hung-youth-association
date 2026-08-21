@@ -3694,25 +3694,9 @@ function AnnouncementModal({ event, eventId, onClose }) {
         })
       }
 
-      // ─── Volunteer roles ──────────────────────────────────────────────────
-      const volRoles = volRes.data || []
-      if (volRoles.length > 0) {
-        volRoles.forEach(role => {
-          const assignees = (role.assigned_volunteers || []).map(k => resolveName(k)).filter(Boolean)
-          if (assignees.length === 0) return
-          lines.push('')
-          lines.push('')
-          lines.push(toBold(role.role_name?.toUpperCase() || ''))
-          lines.push('')
-          assignees.forEach((name, i) => lines.push(`${i + 1}. ${name}`))
-        })
-      }
-
       // ─── Thinh Su ─────────────────────────────────────────────────────────
       const thinhRows = thinhRes.data || []
       if (thinhRows.length > 0) {
-        // Single-pair roles (≤1 pair with ≤1 person each) go under THINH SU header as bullets
-        // Multi-pair roles get their own bold header
         const singleRoles = thinhRows.filter(r => {
           const pairs = r.assigned_pairs || []
           const total = pairs.reduce((s, p) => s + (p[0] ? 1 : 0) + (p[1] ? 1 : 0), 0)
@@ -3749,6 +3733,20 @@ function AnnouncementModal({ event, eventId, onClose }) {
             const display = n1 && n2 ? `${n1} - ${n2}` : n1 || n2
             if (display) { lines.push(`${pairNum}. ${display}`); pairNum++ }
           })
+        })
+      }
+
+      // ─── Volunteer roles ──────────────────────────────────────────────────
+      const volRoles = volRes.data || []
+      if (volRoles.length > 0) {
+        volRoles.forEach(role => {
+          const assignees = (role.assigned_volunteers || []).map(k => resolveName(k)).filter(Boolean)
+          if (assignees.length === 0) return
+          lines.push('')
+          lines.push('')
+          lines.push(toBold(role.role_name?.toUpperCase() || ''))
+          lines.push('')
+          assignees.forEach((name, i) => lines.push(`${i + 1}. ${name}`))
         })
       }
 

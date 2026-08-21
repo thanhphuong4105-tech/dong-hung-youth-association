@@ -2745,6 +2745,66 @@ function ThinhSuPickerModal({ eventId, addedNames, onClose, onSaved }) {
   )
 }
 
+function MemberSearchSelect({ options, value, onChange, placeholder = '—' }) {
+  const [open, setOpen]     = useState(false)
+  const [search, setSearch] = useState('')
+  const ref = useRef(null)
+
+  useEffect(() => {
+    if (!open) return
+    function handle(e) { if (ref.current && !ref.current.contains(e.target)) setOpen(false) }
+    document.addEventListener('mousedown', handle)
+    return () => document.removeEventListener('mousedown', handle)
+  }, [open])
+
+  const filtered = options.filter(o =>
+    o.key === '' || o.label.toLowerCase().includes(search.toLowerCase())
+  )
+  const selected = options.find(o => o.key === value)
+
+  return (
+    <div ref={ref} className="relative flex-1 min-w-0">
+      <button type="button" onClick={() => { setOpen(v => !v); setSearch('') }}
+        className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-sm"
+        style={{ border: `1.5px solid ${open ? C.orange : C.peach}`, backgroundColor: '#FFF7F3', color: selected?.key ? C.text : C.faint, fontFamily: "'Nunito', sans-serif" }}>
+        <span className="truncate">{selected?.key ? selected.label : placeholder}</span>
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="shrink-0 ml-1" style={{ color: C.faint }}>
+          <path d="M6 9l6 6 6-6"/>
+        </svg>
+      </button>
+
+      {open && (
+        <div className="absolute z-10 mt-1 w-full rounded-2xl overflow-hidden"
+          style={{ backgroundColor: '#fff', boxShadow: '0 8px 24px rgba(0,0,0,0.14)', border: `1.5px solid ${C.peach}`, maxHeight: '220px', display: 'flex', flexDirection: 'column' }}>
+          <div className="px-3 pt-2 pb-1 shrink-0">
+            <input
+              autoFocus
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              placeholder="Search…"
+              className="w-full px-3 py-1.5 text-sm rounded-lg outline-none"
+              style={{ border: `1.5px solid ${C.peach}`, backgroundColor: '#FFF7F3', color: C.text, fontFamily: "'Nunito', sans-serif" }}
+            />
+          </div>
+          <div className="overflow-y-auto">
+            {filtered.map(o => (
+              <button key={o.key} type="button"
+                onClick={() => { onChange(o.key); setOpen(false); setSearch('') }}
+                className="w-full text-left px-4 py-2 text-sm hover:bg-orange-50 transition-colors"
+                style={{ color: o.key ? C.text : C.faint, fontWeight: o.key === value ? 700 : 400, fontFamily: "'Nunito', sans-serif" }}>
+                {o.label}
+              </button>
+            ))}
+            {filtered.length === 0 && (
+              <p className="px-4 py-3 text-sm" style={{ color: C.faint }}>No results</p>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
 function ThinhSuAssignModal({ eventId, roleName, members, currentPairs, onClose, onSaved }) {
   const initPairs = currentPairs.length > 0 ? currentPairs : [['', '']]
   const [pairs, setPairs] = useState(initPairs)
@@ -2777,12 +2837,6 @@ function ThinhSuAssignModal({ eventId, roleName, members, currentPairs, onClose,
     setSaving(false)
     if (error) return setErr(error.message)
     onSaved(); onClose()
-  }
-
-  const selectStyle = {
-    flex: 1, padding: '0.55rem 0.75rem', borderRadius: '0.75rem',
-    border: `1.5px solid ${C.peach}`, backgroundColor: '#FFF7F3',
-    color: C.text, fontFamily: "'Nunito', sans-serif", fontSize: '0.875rem', outline: 'none',
   }
 
   return (
@@ -2829,13 +2883,9 @@ function ThinhSuAssignModal({ eventId, roleName, members, currentPairs, onClose,
           {pairs.map((pair, i) => (
             <div key={i} className="flex items-center gap-2">
               <span className="text-xs font-bold shrink-0 w-5 text-right" style={{ color: C.faint }}>{i + 1}.</span>
-              <select value={pair[0]} onChange={e => setSlot(i, 0, e.target.value)} style={selectStyle}>
-                {allOpts.map(o => <option key={o.key} value={o.key}>{o.label}</option>)}
-              </select>
+              <MemberSearchSelect options={allOpts} value={pair[0]} onChange={v => setSlot(i, 0, v)} />
               <span className="text-sm font-semibold shrink-0" style={{ color: C.faint }}>—</span>
-              <select value={pair[1]} onChange={e => setSlot(i, 1, e.target.value)} style={selectStyle}>
-                {allOpts.map(o => <option key={o.key} value={o.key}>{o.label}</option>)}
-              </select>
+              <MemberSearchSelect options={allOpts} value={pair[1]} onChange={v => setSlot(i, 1, v)} />
               <button type="button" onClick={() => removePair(i)}
                 className="p-1 rounded-full hover:bg-red-50 shrink-0" style={{ color: '#E06464' }}>
                 <XMarkIcon className="w-4 h-4" />

@@ -1107,8 +1107,8 @@ function ClassList({ semester, classes, students, attendance, onBack, onOpenClas
       <div className="mb-6">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
-            <h2 className="text-4xl font-extrabold mb-1" style={{ color: C.burgundy, fontFamily: "'Nunito', sans-serif" }}>{semester.name}</h2>
-            <p className="text-sm hidden sm:block" style={{ color: C.muted }}>Select a class for attendance and semester management.</p>
+            <h2 className="text-2xl sm:text-4xl font-extrabold mb-1" style={{ color: C.burgundy, fontFamily: "'Nunito', sans-serif" }}>{semester.name}</h2>
+            <p className="text-xs sm:text-sm hidden sm:block" style={{ color: C.muted }}>Select a class for attendance and semester management.</p>
           </div>
           {/* Desktop buttons */}
           <div className="hidden sm:flex gap-2 items-center shrink-0">
@@ -1153,7 +1153,7 @@ function ClassList({ semester, classes, students, attendance, onBack, onOpenClas
       </div>
 
       {/* Summary stats */}
-      <div className="grid grid-cols-2 sm:grid-cols-5 gap-4 mb-8">
+      <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-5">
         {[
           { label: 'Total Students',   value: semStudents.length,                        Icon: UserGroupIcon   },
           { label: 'Classes',          value: semClasses.length,                          Icon: AcademicCapIcon },
@@ -1161,12 +1161,12 @@ function ClassList({ semester, classes, students, attendance, onBack, onOpenClas
           { label: 'Total Class Days', value: totalClassDays,                             Icon: CalendarDaysIcon },
           { label: 'Attendance Today', value: `${todayPresent} / ${semStudents.length}`, Icon: CheckIcon       },
         ].map(s => (
-          <Card key={s.label} className="p-4">
-            <div className="flex items-center gap-3">
-              <s.Icon className="w-7 h-7 shrink-0" style={{ color: '#A08070' }} />
+          <Card key={s.label} className="p-3 sm:p-4">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <s.Icon className="w-5 h-5 sm:w-7 sm:h-7 shrink-0" style={{ color: '#A08070' }} />
               <div>
-                <p className="text-xl font-extrabold" style={{ color: C.burgundy }}>{s.value}</p>
-                <p className="text-xs" style={{ color: C.faint }}>{s.label}</p>
+                <p className="text-base sm:text-xl font-extrabold" style={{ color: C.burgundy }}>{s.value}</p>
+                <p className="text-[10px] sm:text-xs" style={{ color: C.faint }}>{s.label}</p>
               </div>
             </div>
           </Card>
@@ -1174,7 +1174,7 @@ function ClassList({ semester, classes, students, attendance, onBack, onOpenClas
       </div>
 
       {/* Classes grid */}
-      <h3 className="text-lg font-extrabold mb-4" style={{ color: C.burgundy, fontFamily: "'Nunito', sans-serif" }}>
+      <h3 className="text-sm sm:text-lg font-extrabold mb-3" style={{ color: C.burgundy, fontFamily: "'Nunito', sans-serif" }}>
         Classes for {semester.name}
       </h3>
 

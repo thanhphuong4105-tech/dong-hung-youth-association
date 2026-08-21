@@ -562,7 +562,7 @@ function ParticipantsTab({ eventId, onCountChange }) {
       generalMembers: generalRes.data  || [],
       danceTeam:      danceRes.data    || [],
     })
-    onCountChange((pairsRes.data || []).length)
+    onCountChange((pairsRes.data || []).reduce((sum, p) => sum + (p.member1 ? 1 : 0) + (p.member2 ? 1 : 0), 0))
     setLoading(false)
   }, [eventId, onCountChange])
 

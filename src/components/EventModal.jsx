@@ -595,6 +595,7 @@ function ParticipantsTab({ eventId, onCountChange }) {
       ) : rows.length === 0 ? (
         <DanceEmptyState icon={<TeamIcon size={28} />} label="No participants yet" sub='Click "Add Participant" to get started.' />
       ) : (
+        <>
         {/* Mobile cards */}
         <div className="sm:hidden space-y-2">
           {rows.map((row, i) => {
@@ -675,6 +676,7 @@ function ParticipantsTab({ eventId, onCountChange }) {
             </tbody>
           </table>
         </div>
+        </>
       )}
 
       {modal === 'picker' && (

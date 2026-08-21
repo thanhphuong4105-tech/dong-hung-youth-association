@@ -3,7 +3,7 @@ import { supabase } from '../lib/supabase'
 import {
   PlusIcon, ChevronRightIcon, ChevronLeftIcon, XMarkIcon,
   UserGroupIcon, UserIcon, AcademicCapIcon, PencilIcon, TrashIcon, DocumentTextIcon,
-  CalendarDaysIcon, CheckIcon, ArrowPathIcon,
+  CalendarDaysIcon, CheckIcon, ArrowPathIcon, CheckCircleIcon, FunnelIcon, PhoneIcon,
 } from '@heroicons/react/24/outline'
 
 // ─── Design tokens ─────────────────────────────────────────────────────────
@@ -1485,9 +1485,63 @@ function StudentsTab({ students, cls, onAddStudent, onUpdateStudent, onDeleteStu
   function addEditParent() { setEditParents(p => [...p, { name: '', phone: '', email: '' }]) }
   function removeEditParent(i) { setEditParents(p => p.filter((_, idx) => idx !== i)) }
 
+  const sortedStudents = [...students].sort((a, b) => {
+    const la = (a.lastName || '').toLowerCase(), lb = (b.lastName || '').toLowerCase()
+    if (la !== lb) return la.localeCompare(lb)
+    return (a.firstName || '').toLowerCase().localeCompare((b.firstName || '').toLowerCase())
+  })
+
   return (
     <div>
-      <Card className="overflow-hidden">
+      {/* ── Mobile card list ── */}
+      <div className="md:hidden space-y-3">
+        {sortedStudents.length === 0
+          ? <p className="py-10 text-center text-sm" style={{ color: C.faint }}>No students yet. Tap "+ Add Student" to enroll one.</p>
+          : sortedStudents.map((s, i) => {
+            const pList = s.parents?.length ? s.parents : (s.parentName ? [{ name: s.parentName, phone: s.parentPhone || '' }] : [])
+            const age = calcAge(s.birthday)
+            return (
+              <div key={s.id} className="rounded-2xl p-4" style={{ backgroundColor: '#ffffff', border: `1.5px solid ${C.beige}` }}>
+                <div className="flex items-start gap-3">
+                  {/* Number badge */}
+                  <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 text-sm font-bold" style={{ backgroundColor: '#FFF0E8', color: C.burgundy }}>{i + 1}</div>
+                  {/* Main info */}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-base font-extrabold mb-1" style={{ color: C.burgundy, fontFamily: "'Nunito', sans-serif" }}>{s.firstName} {s.lastName}</p>
+                    <div className="flex items-center gap-3 text-xs mb-3" style={{ color: C.muted }}>
+                      <span className="flex items-center gap-1"><UserIcon className="w-3.5 h-3.5" /> Age {age ?? '—'}</span>
+                      <span className="flex items-center gap-1"><CalendarDaysIcon className="w-3.5 h-3.5" /> {s.birthday ? fmt(s.birthday) : '—'}</span>
+                    </div>
+                    <div className="grid grid-cols-3 gap-1 text-xs">
+                      <div>
+                        <p className="font-semibold mb-0.5" style={{ color: C.faint }}>Parent / Guardian</p>
+                        {pList.length ? pList.map((p, pi) => <p key={pi} style={{ color: C.burgundy }}>{p.name || '—'}</p>) : <p style={{ color: C.faint }}>—</p>}
+                      </div>
+                      <div>
+                        <p className="font-semibold mb-0.5 flex items-center gap-1" style={{ color: C.faint }}><PhoneIcon className="w-3 h-3" /> Phone</p>
+                        {pList.length ? pList.map((p, pi) => <p key={pi} style={{ color: C.muted }}>{p.phone || '—'}</p>) : <p style={{ color: C.faint }}>—</p>}
+                      </div>
+                      <div>
+                        <p className="font-semibold mb-0.5" style={{ color: C.faint }}>Allergy</p>
+                        <span className="px-2 py-0.5 rounded-full text-[11px] font-semibold" style={s.allergy ? { backgroundColor: '#FFF0F5', color: '#B0305A' } : { backgroundColor: '#F5F5F5', color: C.faint }}>
+                          {s.allergy || 'None'}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                  {/* Actions */}
+                  <div className="flex flex-col gap-1 shrink-0">
+                    <button onClick={() => openEdit(s)} className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ backgroundColor: '#F5F0EC', color: C.muted }}><PencilIcon className="w-4 h-4" /></button>
+                    <button onClick={() => setDeletingStudent(s)} className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ backgroundColor: '#FFF0EC', color: C.coral }}><TrashIcon className="w-4 h-4" /></button>
+                  </div>
+                </div>
+              </div>
+            )
+          })}
+      </div>
+
+      {/* ── Desktop table ── */}
+      <Card className="hidden md:block overflow-hidden">
         <table className="w-full text-sm" style={{ borderCollapse: 'collapse' }}>
           <thead>
             <tr style={{ backgroundColor: '#FFF0EA', borderBottom: `1.5px solid ${C.beige}` }}>
@@ -1498,35 +1552,21 @@ function StudentsTab({ students, cls, onAddStudent, onUpdateStudent, onDeleteStu
             </tr>
           </thead>
           <tbody>
-            {students.length === 0
+            {sortedStudents.length === 0
               ? <tr><td colSpan={8} className="py-10 text-center text-sm" style={{ color: C.faint }}>No students yet. Click "+ Add Student" to enroll one.</td></tr>
-              : [...students].sort((a, b) => {
-                  const la = (a.lastName || '').toLowerCase(), lb = (b.lastName || '').toLowerCase()
-                  if (la !== lb) return la.localeCompare(lb)
-                  return (a.firstName || '').toLowerCase().localeCompare((b.firstName || '').toLowerCase())
-                }).map((s, i) => (
-              <tr key={s.id} style={{ borderBottom: i < students.length - 1 ? `1px solid #F5EDE4` : 'none' }} className="hover:bg-orange-50">
+              : sortedStudents.map((s, i) => (
+              <tr key={s.id} style={{ borderBottom: i < sortedStudents.length - 1 ? `1px solid #F5EDE4` : 'none' }} className="hover:bg-orange-50">
                 <td className="px-4 py-3 text-xs font-semibold" style={{ color: C.faint }}>{i + 1}</td>
-                <td className="px-4 py-3">
-                  <span className="font-semibold" style={{ color: C.burgundy }}>{s.firstName} {s.lastName}</span>
-                </td>
+                <td className="px-4 py-3"><span className="font-semibold" style={{ color: C.burgundy }}>{s.firstName} {s.lastName}</span></td>
                 <td className="px-4 py-3 text-xs" style={{ color: C.muted }}>{calcAge(s.birthday) ?? '—'}</td>
                 <td className="px-4 py-3 text-xs whitespace-nowrap" style={{ color: C.muted }}>{s.birthday ? fmt(s.birthday) : '—'}</td>
                 <td className="px-4 py-3 text-xs" style={{ color: C.muted }}>
-                  {(() => {
-                    const pList = s.parents?.length ? s.parents : (s.parentName ? [{ name: s.parentName }] : [])
-                    return pList.length ? pList.map((p, i) => <div key={i}>{p.name || '—'}</div>) : '—'
-                  })()}
+                  {(() => { const pl = s.parents?.length ? s.parents : (s.parentName ? [{ name: s.parentName }] : []); return pl.length ? pl.map((p, i) => <div key={i}>{p.name || '—'}</div>) : '—' })()}
                 </td>
                 <td className="px-4 py-3 text-xs" style={{ color: C.muted }}>
-                  {(() => {
-                    const pList = s.parents?.length ? s.parents : (s.parentPhone ? [{ phone: s.parentPhone }] : [])
-                    return pList.length ? pList.map((p, i) => <div key={i}>{p.phone || '—'}</div>) : '—'
-                  })()}
+                  {(() => { const pl = s.parents?.length ? s.parents : (s.parentPhone ? [{ phone: s.parentPhone }] : []); return pl.length ? pl.map((p, i) => <div key={i}>{p.phone || '—'}</div>) : '—' })()}
                 </td>
-                <td className="px-4 py-3 text-xs" style={{ color: s.allergy ? '#B0305A' : C.faint }}>
-                  {s.allergy || <span style={{ color: C.faint }}>None</span>}
-                </td>
+                <td className="px-4 py-3 text-xs" style={{ color: s.allergy ? '#B0305A' : C.faint }}>{s.allergy || <span style={{ color: C.faint }}>None</span>}</td>
                 <td className="px-4 py-3">
                   <div className="flex gap-1">
                     <button onClick={() => openEdit(s)} className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-orange-100" style={{ color: C.muted }}><PencilIcon className="w-3.5 h-3.5" /></button>
@@ -1751,10 +1791,10 @@ function ClassDetail({ cls, semester, students, attendance, lessons, onBack, onU
   const pct = clsStudents.length ? Math.round(((presentCount + lateCount) / clsStudents.length) * 100) : 0
 
   const TABS = [
-    { id: 'students',   label: 'Students'   },
-    { id: 'attendance', label: 'Attendance' },
-    { id: 'lessons',    label: 'Lessons'    },
-    { id: 'parents',    label: 'Parents'    },
+    { id: 'students',   label: 'Students',   Icon: UserIcon          },
+    { id: 'attendance', label: 'Attendance', Icon: CheckCircleIcon   },
+    { id: 'lessons',    label: 'Lessons',    Icon: DocumentTextIcon  },
+    { id: 'parents',    label: 'Parents',    Icon: UserGroupIcon     },
   ]
 
   const clsLessons = lessons.filter(l => l.classId === cls.id)
@@ -1886,26 +1926,37 @@ function ClassDetail({ cls, semester, students, attendance, lessons, onBack, onU
 
       {/* Tabs */}
       <div className="mb-4 border-b" style={{ borderColor: C.beige }}>
-        {/* Tab pills — scrollable on mobile */}
-        <div className="flex gap-1 overflow-x-auto pb-px" style={{ scrollbarWidth: 'none' }}>
-          {TABS.map(t => (
-            <button key={t.id} onClick={() => setTab(t.id)}
-              className="shrink-0 px-4 py-2.5 text-sm font-semibold transition-all rounded-t-xl"
-              style={tab === t.id
+        {/* Tab pills — scrollable on mobile, with icons */}
+        <div className="flex gap-0 overflow-x-auto pb-px" style={{ scrollbarWidth: 'none' }}>
+          {TABS.map(({ id, label, Icon }) => (
+            <button key={id} onClick={() => setTab(id)}
+              className="shrink-0 flex items-center gap-1.5 px-3 md:px-4 py-2.5 text-sm font-semibold transition-all rounded-t-xl"
+              style={tab === id
                 ? { color: C.orange, borderBottom: `2.5px solid ${C.orange}`, marginBottom: '-1.5px', backgroundColor: '#FFF4F0' }
                 : { color: C.muted }}>
-              {t.label}
-              {t.id === 'attendance' && <span className="ml-1.5 text-xs px-1.5 py-0.5 rounded-full" style={{ backgroundColor: '#FFF0EC', color: C.orange }}>★</span>}
+              <Icon className="w-4 h-4 shrink-0" />
+              {label}
             </button>
           ))}
         </div>
-        {/* Action button row below tabs on mobile */}
-        <div className="flex items-center gap-2 py-2">
+      </div>
+
+      {/* Action row below tabs */}
+      <div className="flex items-center justify-between gap-2 mb-4">
+        <div className="flex items-center gap-2">
           {tab === 'students' && (
-            <Btn size="sm" onClick={() => onAddStudent(cls.id)}><PlusIcon className="w-3.5 h-3.5" /> Add Student</Btn>
+            <button onClick={() => onAddStudent(cls.id)}
+              className="flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-bold text-white"
+              style={{ backgroundColor: C.orange }}>
+              <PlusIcon className="w-4 h-4" /> Add Student
+            </button>
           )}
           {tab === 'lessons' && (
-            <Btn size="sm" onClick={onAddLesson}><PlusIcon className="w-3.5 h-3.5" /> Add Lesson</Btn>
+            <button onClick={onAddLesson}
+              className="flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-bold text-white"
+              style={{ backgroundColor: C.orange }}>
+              <PlusIcon className="w-4 h-4" /> Add Lesson
+            </button>
           )}
           {tab === 'attendance' && (
             <button onClick={() => printAttendance(semester.startDate, semester.endDate)}
@@ -1918,6 +1969,12 @@ function ClassDetail({ cls, semester, students, attendance, lessons, onBack, onU
             </button>
           )}
         </div>
+        {tab === 'students' && (
+          <button className="flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-semibold border"
+            style={{ borderColor: C.beige, color: C.muted, backgroundColor: '#ffffff' }}>
+            <FunnelIcon className="w-4 h-4" /> Filter
+          </button>
+        )}
       </div>
 
       {/* ── Attendance Tab ── */}

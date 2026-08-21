@@ -3025,7 +3025,7 @@ function VolunteerSection({ eventId, onCountChange, onAssignedCountChange }) {
     const [rolesRes, appUsersRes, generalRes, danceRes] = await Promise.all([
       supabase
         .from('volunteer_roles')
-        .select('id, role_name, description, assigned_to, assigned_general_member_id, assigned_volunteers, sort_order, profiles(full_name), general_members(full_name)')
+        .select('id, role_name, description, assigned_to, assigned_general_member_id, assigned_volunteers, sale_items, sort_order, profiles(full_name), general_members(full_name)')
         .eq('event_id', eventId)
         .order('sort_order', { ascending: true, nullsFirst: false })
         .order('created_at', { ascending: true }),

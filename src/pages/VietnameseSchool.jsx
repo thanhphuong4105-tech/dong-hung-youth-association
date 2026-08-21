@@ -1969,12 +1969,6 @@ function ClassDetail({ cls, semester, students, attendance, lessons, onBack, onU
             </button>
           )}
         </div>
-        {tab === 'students' && (
-          <button className="flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-semibold border"
-            style={{ borderColor: C.beige, color: C.muted, backgroundColor: '#ffffff' }}>
-            <FunnelIcon className="w-4 h-4" /> Filter
-          </button>
-        )}
       </div>
 
       {/* ── Attendance Tab ── */}

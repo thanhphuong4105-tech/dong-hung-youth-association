@@ -321,19 +321,11 @@ export default function Dashboard() {
                     <button key={ev.id} onClick={() => navigate('/events')}
                       className="w-full text-left flex items-center gap-3 px-4 py-3"
                       style={{ borderBottom: i < Math.min(upcomingEvents.length, 3) - 1 ? '1px solid #F5EDE4' : 'none' }}>
-                      {/* Thumbnail */}
-                      <div className="w-16 h-16 rounded-xl overflow-hidden shrink-0 flex items-center justify-center"
-                        style={{ backgroundColor: pick.bg }}>
-                        {ev.image_url
-                          ? <img src={ev.image_url} alt="" className="w-full h-full object-cover" />
-                          : <span className="text-2xl">{pick.icon}</span>
-                        }
-                      </div>
                       {/* Date block */}
-                      <div className="w-10 shrink-0 flex flex-col items-center justify-center rounded-xl py-1"
+                      <div className="w-12 shrink-0 flex flex-col items-center justify-center rounded-xl py-2"
                         style={{ backgroundColor: '#FFF0EC', border: '1.5px solid #EFCAC8' }}>
                         <span className="text-[9px] font-extrabold uppercase leading-none" style={{ color: '#E06464' }}>{month}</span>
-                        <span className="text-lg font-extrabold leading-tight" style={{ color: '#4F252A' }}>{day}</span>
+                        <span className="text-xl font-extrabold leading-tight" style={{ color: '#4F252A' }}>{day}</span>
                       </div>
                       {/* Info */}
                       <div className="flex-1 min-w-0">

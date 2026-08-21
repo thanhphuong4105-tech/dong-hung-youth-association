@@ -2508,7 +2508,7 @@ function RolePickerModal({ eventId, existingNames, onClose, onSaved }) {
 
 // ─── Volunteer Roles section ──────────────────────────────────────────────────
 // ─── Thinh Su Section ────────────────────────────────────────────────────────
-const THINH_SU_ROLES = ['Kẻng', 'Trầm', 'Đèn hoa sen', 'Đèn', 'Khiêng kiệu', 'Lộng', 'Cờ', 'Hoa']
+const THINH_SU_ROLES = ['Kẻng', 'Trầm', 'Lotus Light', 'Đèn', 'Khiêng kiệu', 'Lộng', 'Flag', 'Flowers', 'Tossing flower petals']
 
 function ThinhSuSection({ eventId, onCountChange }) {
   const [rows, setRows]               = useState([])

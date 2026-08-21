@@ -521,11 +521,13 @@ function ParticipantsTab({ eventId, onCountChange }) {
       }
     })
 
-    const r = merged.slice().sort((a, b) => {
-      const ageA = calcAge(a.birthday) ?? parseFloat(a.age) ?? Infinity
-      const ageB = calcAge(b.birthday) ?? parseFloat(b.age) ?? Infinity
-      return ageA - ageB
-    })
+    function resolveAge(row) {
+      const fromBirthday = calcAge(row.birthday)
+      if (fromBirthday != null) return fromBirthday
+      const n = parseFloat(row.age)
+      return isNaN(n) ? Infinity : n
+    }
+    const r = merged.slice().sort((a, b) => resolveAge(a) - resolveAge(b))
     setRows(r); onCountChange(r.length); setLoading(false)
   }, [eventId, onCountChange])
 

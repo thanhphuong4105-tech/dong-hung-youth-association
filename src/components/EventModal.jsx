@@ -3198,7 +3198,8 @@ function VolunteerSection({ eventId, onCountChange, onAssignedCountChange }) {
               const resolveName = k => allOpts.find(o => o.key === k)?.label || ''
               let displayNames = []
               // For Dang Hoa Len Phat, show pairs
-              if (role.role_name?.toLowerCase() === 'dang hoa len phat' && role.dang_hoa_pairs?.length > 0) {
+              const isDangHoa = role.role_name?.toLowerCase() === 'dang hoa len phat'
+              if (isDangHoa && role.dang_hoa_pairs?.length > 0) {
                 displayNames = role.dang_hoa_pairs
                   .map(p => { const n1 = resolveName(p[0]), n2 = resolveName(p[1]); return n1 && n2 ? `${n1} - ${n2}` : n1 || n2 })
                   .filter(Boolean)
@@ -3226,9 +3227,19 @@ function VolunteerSection({ eventId, onCountChange, onAssignedCountChange }) {
                       {role.role_name}
                     </p>
                     {displayNames.length > 0 && (
-                      <p className="text-sm mt-0.5 leading-relaxed" style={{ color: C.muted }}>
-                        {displayNames.join(', ')}
-                      </p>
+                      isDangHoa ? (
+                        <div className="mt-1 flex flex-col gap-0.5">
+                          {displayNames.map((name, i) => (
+                            <p key={i} className="text-sm leading-snug" style={{ color: C.muted }}>
+                              {i + 1}. {name}
+                            </p>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-sm mt-0.5 leading-relaxed" style={{ color: C.muted }}>
+                          {displayNames.join(', ')}
+                        </p>
+                      )
                     )}
                   </div>
 

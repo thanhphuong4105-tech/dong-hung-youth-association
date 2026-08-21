@@ -2199,6 +2199,7 @@ function AssignRoleModal({ eventId, members, editingRole, onClose, onSaved }) {
     description:         editingRole?.description  ?? '',
     assigned_volunteers: seedSelected(editingRole),
     sale_items:          editingRole?.sale_items   ?? '',
+    dang_hoa_pairs:      editingRole?.dang_hoa_pairs ?? [],
   })
   const [saving, setSaving] = useState(false)
   const [err, setErr]       = useState('')
@@ -2221,7 +2222,8 @@ function AssignRoleModal({ eventId, members, editingRole, onClose, onSaved }) {
       assigned_volunteers:        volunteers.length > 0 ? volunteers : null,
       assigned_to:                firstProfile ? firstProfile.slice('profile:'.length) : null,
       assigned_general_member_id: firstGeneral ? firstGeneral.slice('general:'.length) : null,
-      sale_items:                 form.role_name.trim().toLowerCase() === 'food sale' ? (form.sale_items.trim() || null) : null,
+      sale_items:      form.role_name.trim().toLowerCase() === 'food sale' ? (form.sale_items.trim() || null) : null,
+      dang_hoa_pairs:  form.role_name.trim().toLowerCase() === 'dang hoa len phat' ? (form.dang_hoa_pairs.length > 0 ? form.dang_hoa_pairs : null) : null,
     }
     const { error } = editingRole
       ? await supabase.from('volunteer_roles').update(payload).eq('id', editingRole.id)
@@ -2315,6 +2317,70 @@ function AssignRoleModal({ eventId, members, editingRole, onClose, onSaved }) {
               />
             </div>
           )}
+
+          {/* Pairs — only for Dang Hoa Len Phat */}
+          {form.role_name.trim().toLowerCase() === 'dang hoa len phat' && (() => {
+            const pairOpts = [
+              { key: '', label: '—' },
+              ...(members.appUsers      || []).map(m => ({ key: `profile:${m.id}`, label: m.full_name || m.email })),
+              ...(members.generalMembers || []).map(m => ({ key: `general:${m.id}`, label: m.full_name })),
+              ...(members.danceTeam      || []).map(m => ({ key: `dance:${m.id}`,   label: m.name })),
+            ]
+            const pairs = form.dang_hoa_pairs || []
+            const usedKeys = pairs.flatMap(p => [p[0], p[1]].filter(Boolean))
+            function optsFor(self) {
+              return pairOpts.filter(o => !o.key || o.key === self || !usedKeys.includes(o.key))
+            }
+            return (
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="block text-xs font-bold uppercase tracking-widest" style={{ color: C.muted }}>Pairs</label>
+                  <button type="button"
+                    onClick={() => setForm(f => ({ ...f, dang_hoa_pairs: [...(f.dang_hoa_pairs || []), ['', '']] }))}
+                    className="flex items-center gap-1 px-2.5 py-1 text-xs font-semibold rounded-xl text-white"
+                    style={{ background: 'linear-gradient(135deg, #F1745E, #E06464)' }}>
+                    <PlusIcon className="w-3 h-3" /> Add Pair
+                  </button>
+                </div>
+                {pairs.length === 0 && (
+                  <p className="text-xs text-center py-3" style={{ color: C.faint }}>No pairs yet. Click "Add Pair" to start.</p>
+                )}
+                <div className="flex flex-col gap-2">
+                  {pairs.map((pair, idx) => (
+                    <div key={idx} className="flex items-center gap-2">
+                      <span className="text-xs font-bold w-4 shrink-0 text-center" style={{ color: C.faint }}>{idx + 1}.</span>
+                      <div className="flex-1">
+                        <MemberSearchSelect
+                          options={optsFor(pair[0]).filter(o => !o.key || o.key === pair[0] || o.key !== pair[1])}
+                          value={pair[0]}
+                          onChange={v => setForm(f => {
+                            const p = [...f.dang_hoa_pairs]; p[idx] = [v, p[idx][1]]; return { ...f, dang_hoa_pairs: p }
+                          })}
+                          placeholder="Person 1…"
+                        />
+                      </div>
+                      <span className="text-xs" style={{ color: C.faint }}>-</span>
+                      <div className="flex-1">
+                        <MemberSearchSelect
+                          options={optsFor(pair[1]).filter(o => !o.key || o.key === pair[1] || o.key !== pair[0])}
+                          value={pair[1]}
+                          onChange={v => setForm(f => {
+                            const p = [...f.dang_hoa_pairs]; p[idx] = [p[idx][0], v]; return { ...f, dang_hoa_pairs: p }
+                          })}
+                          placeholder="Person 2…"
+                        />
+                      </div>
+                      <button type="button"
+                        onClick={() => setForm(f => ({ ...f, dang_hoa_pairs: f.dang_hoa_pairs.filter((_, i) => i !== idx) }))}
+                        className="p-1 rounded-full hover:bg-red-50 shrink-0" style={{ color: '#E06464' }}>
+                        <XMarkIcon className="w-4 h-4" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )
+          })()}
 
           {/* Assign to Member */}
           <div>
@@ -3025,7 +3091,7 @@ function VolunteerSection({ eventId, onCountChange, onAssignedCountChange }) {
     const [rolesRes, appUsersRes, generalRes, danceRes] = await Promise.all([
       supabase
         .from('volunteer_roles')
-        .select('id, role_name, description, assigned_to, assigned_general_member_id, assigned_volunteers, sale_items, sort_order, profiles(full_name), general_members(full_name)')
+        .select('id, role_name, description, assigned_to, assigned_general_member_id, assigned_volunteers, sale_items, dang_hoa_pairs, sort_order, profiles(full_name), general_members(full_name)')
         .eq('event_id', eventId)
         .order('sort_order', { ascending: true, nullsFirst: false })
         .order('created_at', { ascending: true }),
@@ -3672,7 +3738,7 @@ function AnnouncementModal({ event, eventId, onClose }) {
       const [pairsRes, thinhRes, volRes, profilesRes, generalRes, danceRes] = await Promise.all([
         supabase.from('dance_event_pairs').select('*').eq('event_id', eventId).order('sort_order'),
         supabase.from('thinh_su_assignments').select('role_name, assigned_pairs, sort_order').eq('event_id', eventId).order('sort_order'),
-        supabase.from('volunteer_roles').select('role_name, assigned_volunteers, sale_items').eq('event_id', eventId),
+        supabase.from('volunteer_roles').select('role_name, assigned_volunteers, sale_items, dang_hoa_pairs').eq('event_id', eventId),
         supabase.from('profiles').select('id, full_name, email'),
         supabase.from('general_members').select('id, full_name'),
         supabase.from('dance_team_participants').select('id, name'),
@@ -3716,13 +3782,24 @@ function AnnouncementModal({ event, eventId, onClose }) {
       const volRoles = volRes.data || []
       const dangHoa = volRoles.find(r => r.role_name?.toLowerCase().includes('dang hoa len phat'))
       if (dangHoa) {
+        const pairs = dangHoa.dang_hoa_pairs || []
         const assignees = (dangHoa.assigned_volunteers || []).map(k => resolveName(k)).filter(Boolean)
-        if (assignees.length > 0) {
+        const hasPairs = pairs.some(p => p[0] || p[1])
+        if (hasPairs || assignees.length > 0) {
           lines.push('')
           lines.push('')
           lines.push(toBold(dangHoa.role_name.toUpperCase()))
           lines.push('')
-          assignees.forEach((name, i) => lines.push(`${i + 1}. ${name}`))
+          if (hasPairs) {
+            let num = 1
+            pairs.forEach(p => {
+              const n1 = resolveName(p[0]), n2 = resolveName(p[1])
+              const display = n1 && n2 ? `${n1} - ${n2}` : n1 || n2
+              if (display) { lines.push(`${num}. ${display}`); num++ }
+            })
+          } else {
+            assignees.forEach((name, i) => lines.push(`${i + 1}. ${name}`))
+          }
         }
       }
 

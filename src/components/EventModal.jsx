@@ -3694,6 +3694,20 @@ function AnnouncementModal({ event, eventId, onClose }) {
         })
       }
 
+      // ─── Dang Hoa Len Phat (always after dance) ───────────────────────────
+      const volRoles = volRes.data || []
+      const dangHoa = volRoles.find(r => r.role_name?.toLowerCase().includes('dang hoa len phat'))
+      if (dangHoa) {
+        const assignees = (dangHoa.assigned_volunteers || []).map(k => resolveName(k)).filter(Boolean)
+        if (assignees.length > 0) {
+          lines.push('')
+          lines.push('')
+          lines.push(toBold(dangHoa.role_name.toUpperCase()))
+          lines.push('')
+          assignees.forEach((name, i) => lines.push(`${i + 1}. ${name}`))
+        }
+      }
+
       // ─── Thinh Su ─────────────────────────────────────────────────────────
       const thinhRows = thinhRes.data || []
       if (thinhRows.length > 0) {
@@ -3737,9 +3751,9 @@ function AnnouncementModal({ event, eventId, onClose }) {
       }
 
       // ─── Volunteer roles ──────────────────────────────────────────────────
-      const volRoles = volRes.data || []
       if (volRoles.length > 0) {
         volRoles.forEach(role => {
+          if (role.role_name?.toLowerCase().includes('dang hoa len phat')) return
           const assignees = (role.assigned_volunteers || []).map(k => resolveName(k)).filter(Boolean)
           if (assignees.length === 0) return
           lines.push('')

@@ -599,20 +599,32 @@ function ParticipantsTab({ eventId, onCountChange }) {
             return (
               <div key={row.id} className="rounded-2xl p-3" style={{ backgroundColor: '#fff', border: `1.5px solid ${C.peach}` }}>
                 <div className="flex items-center justify-between gap-2">
-                  <div className="flex items-center gap-2.5 min-w-0">
+                  <div className="flex items-center gap-2.5 min-w-0 flex-1">
                     <span className="text-xs font-bold w-5 text-center shrink-0" style={{ color: C.faint }}>{i + 1}</span>
                     <div className="w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0"
                       style={{ background: 'linear-gradient(135deg, #F1745E, #E06464)' }}>
                       {row.name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2)}
                     </div>
-                    <div className="min-w-0">
+                    {/* Mobile: name stacked above stats */}
+                    <div className="min-w-0 flex-1 sm:hidden">
                       <p className="font-semibold truncate text-sm" style={{ color: C.text }}>{row.name}</p>
                       {row.role && <p className="text-xs truncate" style={{ color: C.faint }}>{row.role}</p>}
+                    </div>
+                    {/* Desktop: name + stats on same row */}
+                    <div className="hidden sm:flex items-center gap-4 flex-1 min-w-0">
+                      <p className="font-semibold text-sm shrink-0" style={{ color: C.text }}>{row.name}</p>
+                      {[['Age', age != null ? age : '—'], ['Height', row.height || '—'], ['Weight', row.weight || '—'], ['Size', row.clothing_size || '—']].map(([label, val]) => (
+                        <div key={label} className="flex items-center gap-1 text-xs shrink-0">
+                          <span className="font-bold uppercase" style={{ color: C.muted, fontSize: '10px' }}>{label}:</span>
+                          <span style={{ color: C.text }}>{val}</span>
+                        </div>
+                      ))}
                     </div>
                   </div>
                   <DanceRowMenu onEdit={() => setModal(row)} onRemove={() => remove(row.id)} />
                 </div>
-                <div className="mt-2 grid grid-cols-4 gap-2 text-xs">
+                {/* Mobile stats row */}
+                <div className="mt-2 grid grid-cols-4 gap-2 text-xs sm:hidden">
                   {[['Age', age != null ? age : '—'], ['Height', row.height || '—'], ['Weight', row.weight || '—'], ['Size', row.clothing_size || '—']].map(([label, val]) => (
                     <div key={label}>
                       <p className="font-bold uppercase tracking-wide" style={{ color: C.muted, fontSize: '10px' }}>{label}</p>

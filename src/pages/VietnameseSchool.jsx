@@ -1104,28 +1104,51 @@ function ClassList({ semester, classes, students, attendance, onBack, onOpenClas
       <button onClick={onBack} className="flex items-center gap-1.5 text-sm font-semibold mb-4 hover:opacity-70 transition-opacity" style={{ color: C.orange }}>
         <ChevronLeftIcon className="w-4 h-4" /> Back to Semesters
       </button>
-      <div className="flex items-start justify-between mb-6">
-        <div>
-          <h2 className="text-4xl font-extrabold mb-1" style={{ color: C.burgundy, fontFamily: "'Nunito', sans-serif" }}>{semester.name}</h2>
-          <p className="text-sm" style={{ color: C.muted }}>Select a class for attendance and semester management.</p>
-        </div>
-        <div className="flex gap-2 items-center">
-          <button onClick={() => { setDateForm({ startDate: semester.startDate || '', endDate: semester.endDate || '', calEvents: semester.calEvents || {} }); setShowDateModal(true) }}
-            className="flex items-center gap-1.5 px-4 py-2 rounded-2xl text-sm font-semibold border hover:bg-orange-50 transition-colors"
-            style={{ borderColor: C.beige, color: C.burgundy, backgroundColor: C.card }}>
-            <CalendarDaysIcon className="w-4 h-4" style={{ color: C.orange }} /> Calendar
-          </button>
-          <button onClick={() => printStudentList(semester, semClasses, students)}
-            className="flex items-center gap-1.5 px-4 py-2 rounded-2xl text-sm font-semibold border hover:bg-orange-50 transition-colors"
-            style={{ borderColor: C.beige, color: C.burgundy, backgroundColor: C.card }}>
-            <DocumentTextIcon className="w-4 h-4" style={{ color: C.orange }} /> Student List
-          </button>
-          <FormsMenu />
+      <div className="mb-6">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <h2 className="text-4xl font-extrabold mb-1" style={{ color: C.burgundy, fontFamily: "'Nunito', sans-serif" }}>{semester.name}</h2>
+            <p className="text-sm hidden sm:block" style={{ color: C.muted }}>Select a class for attendance and semester management.</p>
+          </div>
+          {/* Desktop buttons */}
+          <div className="hidden sm:flex gap-2 items-center shrink-0">
+            <button onClick={() => { setDateForm({ startDate: semester.startDate || '', endDate: semester.endDate || '', calEvents: semester.calEvents || {} }); setShowDateModal(true) }}
+              className="flex items-center gap-1.5 px-4 py-2 rounded-2xl text-sm font-semibold border hover:bg-orange-50 transition-colors"
+              style={{ borderColor: C.beige, color: C.burgundy, backgroundColor: C.card }}>
+              <CalendarDaysIcon className="w-4 h-4" style={{ color: C.orange }} /> Calendar
+            </button>
+            <button onClick={() => printStudentList(semester, semClasses, students)}
+              className="flex items-center gap-1.5 px-4 py-2 rounded-2xl text-sm font-semibold border hover:bg-orange-50 transition-colors"
+              style={{ borderColor: C.beige, color: C.burgundy, backgroundColor: C.card }}>
+              <DocumentTextIcon className="w-4 h-4" style={{ color: C.orange }} /> Student List
+            </button>
+            <FormsMenu />
+            <button onClick={onAddClass}
+              className="flex items-center gap-1.5 px-4 py-2 rounded-2xl text-sm font-semibold text-white hover:opacity-90 transition-opacity"
+              style={{ background: 'linear-gradient(135deg, #F1745E, #E06464)' }}>
+              <PlusIcon className="w-4 h-4" /> Add Class
+            </button>
+          </div>
+          {/* Mobile: only Add Class button */}
           <button onClick={onAddClass}
-            className="flex items-center gap-1.5 px-4 py-2 rounded-2xl text-sm font-semibold text-white hover:opacity-90 transition-opacity"
+            className="sm:hidden flex items-center gap-1.5 px-3 py-2 rounded-2xl text-sm font-semibold text-white hover:opacity-90 transition-opacity shrink-0"
             style={{ background: 'linear-gradient(135deg, #F1745E, #E06464)' }}>
             <PlusIcon className="w-4 h-4" /> Add Class
           </button>
+        </div>
+        {/* Mobile action buttons row */}
+        <div className="flex sm:hidden gap-2 mt-3" style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+          <button onClick={() => { setDateForm({ startDate: semester.startDate || '', endDate: semester.endDate || '', calEvents: semester.calEvents || {} }); setShowDateModal(true) }}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border shrink-0"
+            style={{ borderColor: C.beige, color: C.burgundy, backgroundColor: C.card }}>
+            <CalendarDaysIcon className="w-3.5 h-3.5" style={{ color: C.orange }} /> Calendar
+          </button>
+          <button onClick={() => printStudentList(semester, semClasses, students)}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border shrink-0"
+            style={{ borderColor: C.beige, color: C.burgundy, backgroundColor: C.card }}>
+            <DocumentTextIcon className="w-3.5 h-3.5" style={{ color: C.orange }} /> Student List
+          </button>
+          <FormsMenu />
         </div>
       </div>
 

@@ -2382,17 +2382,19 @@ function AssignRoleModal({ eventId, members, editingRole, onClose, onSaved }) {
             )
           })()}
 
-          {/* Assign to Member */}
-          <div>
-            <label className="block text-xs font-bold uppercase tracking-widest mb-2" style={{ color: C.muted }}>
-              Assign to Member
-            </label>
-            <VolunteerMultiSelect
-              members={members}
-              selected={form.assigned_volunteers}
-              onChange={val => setForm(f => ({ ...f, assigned_volunteers: val }))}
-            />
-          </div>
+          {/* Assign to Member — hidden for Dang Hoa Len Phat since it uses pairs */}
+          {form.role_name.trim().toLowerCase() !== 'dang hoa len phat' && (
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-widest mb-2" style={{ color: C.muted }}>
+                Assign to Member
+              </label>
+              <VolunteerMultiSelect
+                members={members}
+                selected={form.assigned_volunteers}
+                onChange={val => setForm(f => ({ ...f, assigned_volunteers: val }))}
+              />
+            </div>
+          )}
 
           {/* Buttons inside scroll so they're always reachable */}
           <div className="flex gap-3 pt-2">
@@ -3188,16 +3190,20 @@ function VolunteerSection({ eventId, onCountChange, onAssignedCountChange }) {
           <div className="flex flex-col gap-2">
             {roles.map((role, index) => {
               // Resolve display names: prefer assigned_volunteers array, fall back to single columns
+              const allOpts = [
+                ...(members.appUsers      || []).map(m => ({ key: `profile:${m.id}`, label: m.full_name || m.email })),
+                ...(members.generalMembers || []).map(m => ({ key: `general:${m.id}`, label: m.full_name })),
+                ...(members.danceTeam      || []).map(m => ({ key: `dance:${m.id}`,   label: m.name })),
+              ]
+              const resolveName = k => allOpts.find(o => o.key === k)?.label || ''
               let displayNames = []
-              if (role.assigned_volunteers?.length > 0) {
-                const allOpts = [
-                  ...(members.appUsers      || []).map(m => ({ key: `profile:${m.id}`, label: m.full_name || m.email })),
-                  ...(members.generalMembers || []).map(m => ({ key: `general:${m.id}`, label: m.full_name })),
-                  ...(members.danceTeam      || []).map(m => ({ key: `dance:${m.id}`,   label: m.name })),
-                ]
-                displayNames = role.assigned_volunteers
-                  .map(k => allOpts.find(o => o.key === k)?.label)
+              // For Dang Hoa Len Phat, show pairs
+              if (role.role_name?.toLowerCase() === 'dang hoa len phat' && role.dang_hoa_pairs?.length > 0) {
+                displayNames = role.dang_hoa_pairs
+                  .map(p => { const n1 = resolveName(p[0]), n2 = resolveName(p[1]); return n1 && n2 ? `${n1} - ${n2}` : n1 || n2 })
                   .filter(Boolean)
+              } else if (role.assigned_volunteers?.length > 0) {
+                displayNames = role.assigned_volunteers.map(k => resolveName(k)).filter(Boolean)
               }
               if (displayNames.length === 0) {
                 const fallback = role.profiles?.full_name || role.general_members?.full_name

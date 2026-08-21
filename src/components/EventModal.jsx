@@ -3215,12 +3215,6 @@ function VolunteerSection({ eventId, onCountChange, onAssignedCountChange }) {
                   className="flex items-center gap-3 px-4 py-3 rounded-2xl"
                   style={{ backgroundColor: '#ffffff', border: `1.5px solid ${C.peach}`, boxShadow: '0 1px 6px rgba(0,0,0,0.04)' }}>
 
-                  {/* Hand icon */}
-                  <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
-                    style={{ backgroundColor: C.orangeLight, color: C.orange }}>
-                    <HandsIcon size={18} />
-                  </div>
-
                   {/* Role name + assigned names */}
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-semibold" style={{ color: C.text }}>

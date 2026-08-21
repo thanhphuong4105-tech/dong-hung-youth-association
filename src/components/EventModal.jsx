@@ -2448,7 +2448,7 @@ function ThinhSuSection({ eventId, onCountChange }) {
   const fetchAll = useCallback(async () => {
     setLoading(true)
     const [assignRes, appUsersRes, generalRes, danceRes] = await Promise.all([
-      supabase.from('thinh_su_assignments').select('role_name, assigned_volunteers, sort_order').eq('event_id', eventId),
+      supabase.from('thinh_su_assignments').select('role_name, assigned_volunteers, assigned_pairs, sort_order').eq('event_id', eventId),
       supabase.from('profiles').select('id, full_name, email').order('full_name'),
       supabase.from('general_members').select('id, full_name').order('full_name'),
       supabase.from('dance_team_participants').select('id, name').order('name'),
@@ -2464,7 +2464,10 @@ function ThinhSuSection({ eventId, onCountChange }) {
       generalMembers: generalRes.data  || [],
       danceTeam:      danceRes.data    || [],
     })
-    const totalAssigned = fetched.reduce((sum, r) => sum + (r.assigned_volunteers?.length ?? 0), 0)
+    const totalAssigned = fetched.reduce((sum, r) => {
+      const pairs = r.assigned_pairs || []
+      return sum + pairs.reduce((s, p) => s + (p[0] ? 1 : 0) + (p[1] ? 1 : 0), 0)
+    }, 0)
     onCountChange(totalAssigned)
     setLoading(false)
   }, [eventId, onCountChange])
@@ -2533,13 +2536,23 @@ function ThinhSuSection({ eventId, onCountChange }) {
     fetchAll()
   }
 
-  function resolveNames(keys) {
-    const allOpts = [
+  function buildOpts() {
+    return [
       ...(members.appUsers      || []).map(m => ({ key: `profile:${m.id}`, label: m.full_name || m.email })),
       ...(members.generalMembers || []).map(m => ({ key: `general:${m.id}`, label: m.full_name })),
       ...(members.danceTeam      || []).map(m => ({ key: `dance:${m.id}`,   label: m.name })),
     ]
-    return (keys || []).map(k => allOpts.find(o => o.key === k)?.label).filter(Boolean)
+  }
+
+  function resolvePairs(pairs) {
+    if (!pairs || pairs.length === 0) return []
+    const opts = buildOpts()
+    return pairs.map(([k1, k2]) => {
+      const n1 = opts.find(o => o.key === k1)?.label || ''
+      const n2 = opts.find(o => o.key === k2)?.label || ''
+      if (n1 && n2) return `${n1} - ${n2}`
+      return n1 || n2
+    }).filter(Boolean)
   }
 
   const addedNames = new Set(rows.map(r => r.role_name))
@@ -2576,7 +2589,7 @@ function ThinhSuSection({ eventId, onCountChange }) {
         ) : (
           <div className="flex flex-col gap-2">
             {rows.map((row, idx) => {
-              const names    = resolveNames(row.assigned_volunteers)
+              const pairLines  = resolvePairs(row.assigned_pairs)
               const isDragging = draggingIdx === idx
               const isOver     = overIdx === idx && draggingIdx !== idx
               return (
@@ -2611,12 +2624,12 @@ function ThinhSuSection({ eventId, onCountChange }) {
 
                   <div className="flex-1 min-w-0" onClick={() => setEditingRole(row.role_name)} style={{ cursor: 'pointer' }}>
                     <p className="text-sm font-semibold" style={{ color: C.text }}>{idx + 1}. {row.role_name}</p>
-                    {names.length > 0 && (
-                      <p className="text-sm mt-0.5 leading-relaxed" style={{ color: C.muted }}>{names.join(', ')}</p>
-                    )}
+                    {pairLines.map((line, pi) => (
+                      <p key={pi} className="text-sm leading-relaxed" style={{ color: C.muted }}>{pi + 1}. {line}</p>
+                    ))}
                   </div>
 
-                  {names.length === 0 && (
+                  {pairLines.length === 0 && (
                     <span className="text-xs font-medium px-2.5 py-1 rounded-full shrink-0"
                       style={{ backgroundColor: '#FEF0EE', color: '#E06464', border: '1px solid #EDD0AC' }}>
                       Unassigned
@@ -2649,7 +2662,7 @@ function ThinhSuSection({ eventId, onCountChange }) {
           eventId={eventId}
           roleName={editingRole}
           members={members}
-          currentVolunteers={rows.find(r => r.role_name === editingRole)?.assigned_volunteers || []}
+          currentPairs={rows.find(r => r.role_name === editingRole)?.assigned_pairs || []}
           onClose={() => setEditingRole(null)}
           onSaved={fetchAll}
         />
@@ -2732,27 +2745,44 @@ function ThinhSuPickerModal({ eventId, addedNames, onClose, onSaved }) {
   )
 }
 
-function ThinhSuAssignModal({ eventId, roleName, members, currentVolunteers, onClose, onSaved }) {
-  const [selected, setSelected] = useState(currentVolunteers)
-  const [saving, setSaving]     = useState(false)
-  const [err, setErr]           = useState('')
+function ThinhSuAssignModal({ eventId, roleName, members, currentPairs, onClose, onSaved }) {
+  const initPairs = currentPairs.length > 0 ? currentPairs : [['', '']]
+  const [pairs, setPairs] = useState(initPairs)
+  const [saving, setSaving] = useState(false)
+  const [err, setErr]       = useState('')
+
+  const allOpts = [
+    { key: '', label: '—' },
+    ...(members.appUsers      || []).map(m => ({ key: `profile:${m.id}`, label: m.full_name || m.email })),
+    ...(members.generalMembers || []).map(m => ({ key: `general:${m.id}`, label: m.full_name })),
+    ...(members.danceTeam      || []).map(m => ({ key: `dance:${m.id}`,   label: m.name })),
+  ]
+
+  function addPair() { setPairs(p => [...p, ['', '']]) }
+  function removePair(i) { setPairs(p => p.filter((_, idx) => idx !== i)) }
+  function setSlot(pairIdx, slot, val) {
+    setPairs(p => p.map((pair, i) => {
+      if (i !== pairIdx) return pair
+      return slot === 0 ? [val, pair[1]] : [pair[0], val]
+    }))
+  }
 
   async function handleSave(e) {
     e.preventDefault()
-    setSaving(true)
-    setErr('')
+    setSaving(true); setErr('')
+    const clean = pairs.filter(([a, b]) => a || b)
     const { error } = await supabase
       .from('thinh_su_assignments')
-      .upsert({ event_id: eventId, role_name: roleName, assigned_volunteers: selected }, { onConflict: 'event_id,role_name' })
+      .upsert({ event_id: eventId, role_name: roleName, assigned_pairs: clean }, { onConflict: 'event_id,role_name' })
     setSaving(false)
     if (error) return setErr(error.message)
     onSaved(); onClose()
   }
 
-  const fieldStyle = {
-    width: '100%', padding: '0.7rem 1rem', borderRadius: '0.875rem',
+  const selectStyle = {
+    flex: 1, padding: '0.55rem 0.75rem', borderRadius: '0.75rem',
     border: `1.5px solid ${C.peach}`, backgroundColor: '#FFF7F3',
-    color: C.text, fontFamily: "'Nunito', sans-serif", fontSize: '0.9rem', outline: 'none',
+    color: C.text, fontFamily: "'Nunito', sans-serif", fontSize: '0.875rem', outline: 'none',
   }
 
   return (
@@ -2777,14 +2807,14 @@ function ThinhSuAssignModal({ eventId, roleName, members, currentVolunteers, onC
             <h3 className="text-2xl font-bold" style={{ color: C.text, fontFamily: "'Nunito', sans-serif" }}>
               {roleName}
             </h3>
-            <p className="text-xs mt-1" style={{ color: C.faint }}>Assign members to this role</p>
+            <p className="text-xs mt-1" style={{ color: C.faint }}>Assign members in pairs</p>
           </div>
           <button onClick={onClose} className="p-1.5 rounded-full hover:bg-orange-100 transition-colors" style={{ color: C.muted }}>
             <XMarkIcon className="w-5 h-5" />
           </button>
         </div>
 
-        <form onSubmit={handleSave} className="flex-1 overflow-y-auto px-7 py-6 space-y-6" style={{ paddingBottom: 'calc(5rem + env(safe-area-inset-bottom))' }}>
+        <form onSubmit={handleSave} className="flex-1 overflow-y-auto px-7 py-6 space-y-4" style={{ paddingBottom: 'calc(5rem + env(safe-area-inset-bottom))' }}>
           {err && (
             <div className="px-4 py-2.5 rounded-xl text-sm"
               style={{ backgroundColor: '#FFF7F3', border: '1px solid #EFCAC8', color: '#E06464' }}>
@@ -2792,16 +2822,32 @@ function ThinhSuAssignModal({ eventId, roleName, members, currentVolunteers, onC
             </div>
           )}
 
-          <div>
-            <label className="block text-xs font-bold uppercase tracking-widest mb-2" style={{ color: C.muted }}>
-              Assign to Member
-            </label>
-            <VolunteerMultiSelect
-              members={members}
-              selected={selected}
-              onChange={setSelected}
-            />
-          </div>
+          <label className="block text-xs font-bold uppercase tracking-widest mb-1" style={{ color: C.muted }}>
+            Pairs
+          </label>
+
+          {pairs.map((pair, i) => (
+            <div key={i} className="flex items-center gap-2">
+              <span className="text-xs font-bold shrink-0 w-5 text-right" style={{ color: C.faint }}>{i + 1}.</span>
+              <select value={pair[0]} onChange={e => setSlot(i, 0, e.target.value)} style={selectStyle}>
+                {allOpts.map(o => <option key={o.key} value={o.key}>{o.label}</option>)}
+              </select>
+              <span className="text-sm font-semibold shrink-0" style={{ color: C.faint }}>—</span>
+              <select value={pair[1]} onChange={e => setSlot(i, 1, e.target.value)} style={selectStyle}>
+                {allOpts.map(o => <option key={o.key} value={o.key}>{o.label}</option>)}
+              </select>
+              <button type="button" onClick={() => removePair(i)}
+                className="p-1 rounded-full hover:bg-red-50 shrink-0" style={{ color: '#E06464' }}>
+                <XMarkIcon className="w-4 h-4" />
+              </button>
+            </div>
+          ))}
+
+          <button type="button" onClick={addPair}
+            className="flex items-center gap-1.5 text-sm font-semibold px-3 py-2 rounded-xl hover:opacity-80 transition-opacity"
+            style={{ color: C.orange, backgroundColor: C.orangeLight }}>
+            <PlusIcon className="w-4 h-4" /> Add Pair
+          </button>
 
           <div className="flex gap-3 pt-2">
             <button type="button" onClick={onClose}
@@ -4292,7 +4338,7 @@ export default function EventModal({ event, onClose, onEdit }) {
         supabase.from('event_agenda').select('id', { count: 'exact', head: true }).eq('event_id', event.id),
         supabase.from('retreat_participants').select('id', { count: 'exact', head: true }).eq('event_id', event.id),
         supabase.from('event_documents').select('id', { count: 'exact', head: true }).eq('event_id', event.id),
-        supabase.from('thinh_su_assignments').select('assigned_volunteers').eq('event_id', event.id),
+        supabase.from('thinh_su_assignments').select('assigned_pairs').eq('event_id', event.id),
       ])
       setTodoCount(todoRes.count ?? 0)
       if (!agendaRes.error) setAgendaCount(agendaRes.count ?? 0)
@@ -4314,7 +4360,8 @@ export default function EventModal({ event, onClose, onEdit }) {
       }
       if (!danceRes.error) setDanceCount(danceRes.count ?? 0)
       if (!thinhSuRes.error) {
-        const total = (thinhSuRes.data || []).reduce((sum, row) => sum + (row.assigned_volunteers?.length ?? 0), 0)
+        const total = (thinhSuRes.data || []).reduce((sum, row) =>
+          sum + (row.assigned_pairs || []).reduce((s, p) => s + (p[0] ? 1 : 0) + (p[1] ? 1 : 0), 0), 0)
         setThinhSuCount(total)
       }
     }

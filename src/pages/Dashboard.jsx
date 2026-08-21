@@ -163,8 +163,10 @@ export default function Dashboard() {
     // Fetch reminders from Supabase
     const today = new Date(); today.setHours(0,0,0,0)
     const todayStr = today.toISOString().slice(0,10)
+    const in7Days = new Date(today); in7Days.setDate(in7Days.getDate() + 7)
+    const in7DaysStr = in7Days.toISOString().slice(0,10)
     Promise.all([
-      supabase.from('event_tasks').select('*').neq('status', 'done').order('due_date'),
+      supabase.from('event_tasks').select('*, events!inner(start_date)').neq('status', 'done').gte('events.start_date', todayStr).lte('events.start_date', in7DaysStr + 'T23:59:59').order('due_date'),
       supabase.from('profiles').select('id, full_name'),
       supabase.from('general_members').select('id, full_name'),
     ]).then(([taskRes, pRes, gRes]) => {

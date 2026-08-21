@@ -2198,6 +2198,7 @@ function AssignRoleModal({ eventId, members, editingRole, onClose, onSaved }) {
     role_name:           editingRole?.role_name    ?? '',
     description:         editingRole?.description  ?? '',
     assigned_volunteers: seedSelected(editingRole),
+    sale_items:          editingRole?.sale_items   ?? '',
   })
   const [saving, setSaving] = useState(false)
   const [err, setErr]       = useState('')
@@ -2220,6 +2221,7 @@ function AssignRoleModal({ eventId, members, editingRole, onClose, onSaved }) {
       assigned_volunteers:        volunteers.length > 0 ? volunteers : null,
       assigned_to:                firstProfile ? firstProfile.slice('profile:'.length) : null,
       assigned_general_member_id: firstGeneral ? firstGeneral.slice('general:'.length) : null,
+      sale_items:                 form.role_name.trim().toLowerCase() === 'food sale' ? (form.sale_items.trim() || null) : null,
     }
     const { error } = editingRole
       ? await supabase.from('volunteer_roles').update(payload).eq('id', editingRole.id)
@@ -2297,6 +2299,22 @@ function AssignRoleModal({ eventId, members, editingRole, onClose, onSaved }) {
               style={{ ...fieldStyle, resize: 'vertical', lineHeight: '1.5' }}
             />
           </div>
+
+          {/* Items for sale — only shown for Food Sale role */}
+          {form.role_name.trim().toLowerCase() === 'food sale' && (
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-widest mb-2" style={{ color: C.muted }}>
+                Items for Sale
+              </label>
+              <textarea
+                value={form.sale_items}
+                onChange={e => setForm(f => ({ ...f, sale_items: e.target.value }))}
+                rows={4}
+                placeholder={"List items to be sold, one per line...\ne.g.\nBánh mì - $3\nNước dừa - $2"}
+                style={{ ...fieldStyle, resize: 'vertical', lineHeight: '1.5' }}
+              />
+            </div>
+          )}
 
           {/* Assign to Member */}
           <div>
@@ -3654,7 +3672,7 @@ function AnnouncementModal({ event, eventId, onClose }) {
       const [pairsRes, thinhRes, volRes, profilesRes, generalRes, danceRes] = await Promise.all([
         supabase.from('dance_event_pairs').select('*').eq('event_id', eventId).order('sort_order'),
         supabase.from('thinh_su_assignments').select('role_name, assigned_pairs, sort_order').eq('event_id', eventId).order('sort_order'),
-        supabase.from('volunteer_roles').select('role_name, assigned_volunteers').eq('event_id', eventId),
+        supabase.from('volunteer_roles').select('role_name, assigned_volunteers, sale_items').eq('event_id', eventId),
         supabase.from('profiles').select('id, full_name, email'),
         supabase.from('general_members').select('id, full_name'),
         supabase.from('dance_team_participants').select('id, name'),
@@ -3761,6 +3779,10 @@ function AnnouncementModal({ event, eventId, onClose }) {
           lines.push(toBold(role.role_name?.toUpperCase() || ''))
           lines.push('')
           assignees.forEach((name, i) => lines.push(`${i + 1}. ${name}`))
+          if (role.role_name?.toLowerCase() === 'food sale' && role.sale_items?.trim()) {
+            lines.push('')
+            role.sale_items.trim().split('\n').forEach(item => { if (item.trim()) lines.push(`• ${item.trim()}`) })
+          }
         })
       }
 

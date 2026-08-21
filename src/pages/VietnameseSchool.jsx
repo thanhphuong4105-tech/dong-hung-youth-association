@@ -1099,7 +1099,7 @@ function ClassList({ semester, classes, students, attendance, onBack, onOpenClas
   }
 
   return (
-    <div>
+    <div style={{ paddingBottom: 'calc(80px + env(safe-area-inset-bottom))' }}>
       {/* Back + header */}
       <button onClick={onBack} className="flex items-center gap-1.5 text-sm font-semibold mb-4 hover:opacity-70 transition-opacity" style={{ color: C.orange }}>
         <ChevronLeftIcon className="w-4 h-4" /> Back to Semesters

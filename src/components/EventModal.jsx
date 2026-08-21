@@ -481,12 +481,14 @@ function ParticipantModal({ eventId, editing, onClose, onSaved }) {
   )
 }
 
-function DancePairModal({ eventId, members, buildOpts, editing, nextOrder, onClose, onSaved }) {
+function DancePairModal({ eventId, members, buildOpts, editing, nextOrder, usedKeys = [], onClose, onSaved }) {
   const [m1, setM1] = useState(editing?.member1 || '')
   const [m2, setM2] = useState(editing?.member2 || '')
   const [saving, setSaving] = useState(false)
 
-  const opts = buildOpts()
+  const allOpts = buildOpts()
+  // For each picker, exclude keys used in OTHER pairs; always show the current selection
+  const optsFor = (self) => allOpts.filter(o => !o.key || o.key === self || !usedKeys.includes(o.key))
 
   async function handleSave() {
     setSaving(true)
@@ -511,11 +513,11 @@ function DancePairModal({ eventId, members, buildOpts, editing, nextOrder, onClo
         <div className="space-y-4 mb-6">
           <div>
             <p className="text-xs font-semibold uppercase tracking-wide mb-1.5" style={{ color: '#7A5550' }}>Dancer 1</p>
-            <MemberSearchSelect options={opts} value={m1} onChange={setM1} placeholder="Select member…" />
+            <MemberSearchSelect options={optsFor(m1).filter(o => !o.key || o.key === m1 || o.key !== m2)} value={m1} onChange={setM1} placeholder="Select member…" />
           </div>
           <div>
             <p className="text-xs font-semibold uppercase tracking-wide mb-1.5" style={{ color: '#7A5550' }}>Dancer 2</p>
-            <MemberSearchSelect options={opts} value={m2} onChange={setM2} placeholder="Select member…" />
+            <MemberSearchSelect options={optsFor(m2).filter(o => !o.key || o.key === m2 || o.key !== m1)} value={m2} onChange={setM2} placeholder="Select member…" />
           </div>
         </div>
         <div className="flex gap-3">
@@ -703,6 +705,9 @@ function ParticipantsTab({ eventId, onCountChange }) {
           buildOpts={buildOpts}
           editing={editingPair === 'new' ? null : editingPair}
           nextOrder={pairs.length}
+          usedKeys={pairs
+            .filter(p => editingPair === 'new' || p.id !== editingPair?.id)
+            .flatMap(p => [p.member1, p.member2].filter(Boolean))}
           onClose={() => setEditingPair(null)}
           onSaved={fetchAll}
         />

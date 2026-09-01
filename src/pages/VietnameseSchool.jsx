@@ -1753,6 +1753,33 @@ function ClassDetail({ cls, semester, students, attendance, lessons, onBack, onU
   }
   const [noteText, setNoteText] = useState('')
 
+  // Parent edit/add state
+  const [parentModal, setParentModal] = useState(null) // { student, parentIndex: number|-1 (add) }
+  const [parentForm, setParentForm] = useState({ name: '', phone: '', email: '' })
+  function openEditParent(student, parentIndex) {
+    const p = student.parents?.[parentIndex] ?? { name: '', phone: '', email: '' }
+    setParentForm({ studentId: student.id, name: p.name || '', phone: p.phone || '', email: p.email || '' })
+    setParentModal({ student, parentIndex })
+  }
+  function openAddParent(student) {
+    setParentForm({ studentId: student?.id ?? '', name: '', phone: '', email: '' })
+    setParentModal({ student: student ?? null, parentIndex: -1 })
+  }
+  function saveParent() {
+    const s = parentModal.student ?? clsStudents.find(x => x.id === parentForm.studentId)
+    if (!s) return
+    const parents = [...(s.parents?.length ? s.parents : [])]
+    const entry = { name: parentForm.name, phone: parentForm.phone, email: parentForm.email }
+    if (parentModal.parentIndex === -1) parents.push(entry)
+    else parents[parentModal.parentIndex] = entry
+    onUpdateStudent({ ...s, parents })
+    setParentModal(null)
+  }
+  function removeParent(student, parentIndex) {
+    const parents = (student.parents || []).filter((_, i) => i !== parentIndex)
+    onUpdateStudent({ ...student, parents })
+  }
+
   // Build attendance map for selected date
   const attendMap = useMemo(() => {
     const map = {}
@@ -1974,6 +2001,13 @@ function ClassDetail({ cls, semester, students, attendance, lessons, onBack, onU
               Print Attendance Record
             </button>
           )}
+          {tab === 'parents' && (
+            <button onClick={() => setParentModal({ student: null, parentIndex: -1 })}
+              className="flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-bold text-white"
+              style={{ backgroundColor: C.orange }}>
+              <PlusIcon className="w-4 h-4" /> Add Parent(s)
+            </button>
+          )}
         </div>
       </div>
 
@@ -2158,27 +2192,39 @@ function ClassDetail({ cls, semester, students, attendance, lessons, onBack, onU
       {tab === 'parents' && (() => {
         const rows = clsStudents.flatMap(s => {
           const pList = s.parents?.length ? s.parents : (s.parentName ? [{ name: s.parentName, phone: s.parentPhone || '', email: s.parentEmail || '' }] : [])
-          return pList.map((p, pi) => ({ ...p, studentName: `${s.firstName} ${s.lastName}`, key: `${s.id}-${pi}` }))
+          return pList.map((p, pi) => ({ ...p, student: s, studentName: `${s.firstName} ${s.lastName}`, parentIndex: pi, key: `${s.id}-${pi}` }))
         })
         return (
           <Card className="overflow-hidden">
             <table className="w-full text-sm" style={{ borderCollapse: 'collapse' }}>
               <thead>
                 <tr style={{ backgroundColor: '#FFF0EA', borderBottom: `1.5px solid ${C.beige}` }}>
-                  {['Parent Name','Student','Phone','Email'].map(h => (
+                  {['Parent Name','Student','Phone','Email','Actions'].map(h => (
                     <th key={h} className="px-4 py-3 text-left text-xs font-extrabold uppercase tracking-wide whitespace-nowrap" style={{ color: C.muted }}>{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
                 {rows.length === 0
-                  ? <tr><td colSpan={4} className="py-10 text-center text-sm" style={{ color: C.faint }}>No parents listed. Add students with parent info to see them here.</td></tr>
+                  ? <tr><td colSpan={5} className="py-10 text-center text-sm" style={{ color: C.faint }}>No parents listed. Click "+ Add Parent(s)" to add one.</td></tr>
                   : rows.map((r, i) => (
                   <tr key={r.key} style={{ borderBottom: i < rows.length - 1 ? `1px solid #F5EDE4` : 'none' }} className="hover:bg-orange-50">
                     <td className="px-4 py-3 font-semibold text-xs" style={{ color: C.burgundy }}>{r.name || '—'}</td>
                     <td className="px-4 py-3 text-xs" style={{ color: C.muted }}>{r.studentName}</td>
                     <td className="px-4 py-3 text-xs" style={{ color: C.muted }}>{r.phone || '—'}</td>
                     <td className="px-4 py-3 text-xs" style={{ color: C.muted }}>{r.email || '—'}</td>
+                    <td className="px-4 py-3">
+                      <div className="flex gap-1">
+                        <button onClick={() => openEditParent(r.student, r.parentIndex)}
+                          className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-orange-100" style={{ color: C.muted }}>
+                          <PencilIcon className="w-3.5 h-3.5" />
+                        </button>
+                        <button onClick={() => removeParent(r.student, r.parentIndex)}
+                          className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-red-50" style={{ color: C.coral }}>
+                          <TrashIcon className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -2186,6 +2232,38 @@ function ClassDetail({ cls, semester, students, attendance, lessons, onBack, onU
           </Card>
         )
       })()}
+
+      {/* Parent add/edit modal */}
+      {parentModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ backgroundColor: 'rgba(50,30,10,0.4)' }}
+          onClick={e => { if (e.target === e.currentTarget) setParentModal(null) }}>
+          <div className="w-full max-w-sm rounded-3xl p-6" style={{ backgroundColor: '#fff', border: `1.5px solid ${C.beige}` }}>
+            <h4 className="font-extrabold text-lg mb-4" style={{ color: C.burgundy }}>
+              {parentModal.parentIndex === -1 ? 'Add Parent' : 'Edit Parent'}
+            </h4>
+            {parentModal.parentIndex === -1 && (
+              <div className="mb-3">
+                <Field label="Student">
+                  <select value={parentForm.studentId} onChange={e => setParentForm(f => ({ ...f, studentId: e.target.value }))} style={inputStyle}>
+                    <option value="">— Select student —</option>
+                    {clsStudents.map(s => <option key={s.id} value={s.id}>{s.firstName} {s.lastName}</option>)}
+                  </select>
+                </Field>
+              </div>
+            )}
+            <div className="space-y-3">
+              <Field label="Parent Name"><input value={parentForm.name} onChange={e => setParentForm(f => ({ ...f, name: e.target.value }))} placeholder="Full name" style={inputStyle} /></Field>
+              <Field label="Phone"><input value={parentForm.phone} onChange={e => setParentForm(f => ({ ...f, phone: e.target.value }))} placeholder="(757) 000-0000" style={inputStyle} /></Field>
+              <Field label="Email"><input value={parentForm.email} onChange={e => setParentForm(f => ({ ...f, email: e.target.value }))} placeholder="email@example.com" style={inputStyle} /></Field>
+            </div>
+            <div className="flex gap-3 mt-5">
+              <Btn variant="secondary" className="flex-1" onClick={() => setParentModal(null)}>Cancel</Btn>
+              <button onClick={saveParent} className="flex-1 py-2.5 text-sm font-semibold rounded-2xl text-white hover:opacity-90"
+                style={{ background: 'linear-gradient(135deg, #F1745E, #E06464)' }}>Save</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       </div>{/* end left column */}
 

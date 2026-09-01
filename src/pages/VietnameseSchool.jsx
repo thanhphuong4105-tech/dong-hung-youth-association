@@ -1868,58 +1868,64 @@ function ClassDetail({ cls, semester, students, attendance, lessons, onBack, onU
             </div>
           </div>
         </div>
-        {/* Desktop layout */}
-        <div className="hidden md:flex items-center divide-x" style={{ divideColor: C.beige }}>
-          <div className="flex items-center gap-3 pr-8">
-            <UserIcon className="w-6 h-6 shrink-0" style={{ color: C.faint }} />
+        {/* Desktop layout — 4-column grid */}
+        <div className="hidden md:grid grid-cols-4 gap-0 divide-x" style={{ borderColor: C.beige }}>
+          {/* Main Teacher */}
+          <div className="flex items-center gap-3 px-6 py-1">
+            <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style={{ backgroundColor: '#FFF0E8' }}>
+              <UserIcon className="w-5 h-5" style={{ color: C.orange }} />
+            </div>
             <div>
-              <p className="text-xs font-semibold" style={{ color: C.faint }}>Main Teacher</p>
-              <p className="text-sm font-bold whitespace-nowrap" style={{ color: C.burgundy }}>{cls.teacher || '—'}</p>
+              <p className="text-xs font-semibold mb-0.5" style={{ color: C.faint }}>Main Teacher</p>
+              <p className="text-sm font-bold" style={{ color: C.burgundy }}>{cls.teacher || '—'}</p>
             </div>
           </div>
-          <div className="flex items-center gap-3 px-8">
-            <UserGroupIcon className="w-6 h-6 shrink-0" style={{ color: C.faint }} />
+          {/* Assistant Teacher(s) */}
+          <div className="flex items-center gap-3 px-6 py-1">
+            <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style={{ backgroundColor: '#FFF0E8' }}>
+              <UserGroupIcon className="w-5 h-5" style={{ color: C.orange }} />
+            </div>
             <div>
-              <p className="text-xs font-semibold" style={{ color: C.faint }}>Assistant Teacher(s)</p>
+              <p className="text-xs font-semibold mb-0.5" style={{ color: C.faint }}>Assistant Teacher(s)</p>
               {cls.assistants?.length
-                ? cls.assistants.map((a, i) => <p key={i} className="text-sm font-bold whitespace-nowrap" style={{ color: C.burgundy }}>{a}</p>)
+                ? <p className="text-sm font-bold" style={{ color: C.burgundy }}>{cls.assistants.join(', ')}</p>
                 : <p className="text-sm font-bold" style={{ color: C.burgundy }}>—</p>}
             </div>
           </div>
-          <div className="flex items-center gap-3 px-8">
-            <CalendarDaysIcon className="w-6 h-6 shrink-0" style={{ color: C.faint }} />
+          {/* Schedule */}
+          <div className="flex items-center gap-3 px-6 py-1">
+            <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style={{ backgroundColor: '#FFF0E8' }}>
+              <CalendarDaysIcon className="w-5 h-5" style={{ color: C.orange }} />
+            </div>
             <div>
-              <p className="text-xs font-semibold" style={{ color: C.faint }}>Schedule</p>
-              {cls.dayOfWeek ? (
-                <>
-                  <p className="text-sm font-bold" style={{ color: C.burgundy }}>Every {cls.dayOfWeek}</p>
-                  {cls.startTime && <p className="text-xs font-semibold" style={{ color: C.muted }}>{fmtTime(cls.startTime)} – {fmtTime(cls.endTime)}</p>}
-                </>
-              ) : <p className="text-sm font-bold" style={{ color: C.burgundy }}>—</p>}
+              <p className="text-xs font-semibold mb-0.5" style={{ color: C.faint }}>Schedule</p>
+              {cls.dayOfWeek
+                ? <><p className="text-sm font-bold" style={{ color: C.burgundy }}>Every {cls.dayOfWeek}</p>
+                    {cls.startTime && <p className="text-xs" style={{ color: C.muted }}>{fmtTime(cls.startTime)} – {fmtTime(cls.endTime)}</p>}</>
+                : <p className="text-sm font-bold" style={{ color: C.burgundy }}>—</p>}
             </div>
           </div>
-          <div className="flex items-center gap-3 pl-8">
-            <UserGroupIcon className="w-6 h-6 shrink-0" style={{ color: C.faint }} />
-            <div>
-              <p className="text-xs font-semibold" style={{ color: C.faint }}>Students</p>
-              <p className="text-sm font-bold" style={{ color: C.burgundy }}>{clsStudents.length}</p>
+          {/* Students + attendance badges */}
+          <div className="flex items-center gap-3 px-6 py-1">
+            <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style={{ backgroundColor: '#FFF0E8' }}>
+              <AcademicCapIcon className="w-5 h-5" style={{ color: C.orange }} />
             </div>
-            {(perfectStudents.length > 0 || goodStudents.length > 0) && (
-              <div className="flex flex-col gap-1 ml-4 pl-4" style={{ borderLeft: `1px solid ${C.beige}` }}>
+            <div>
+              <p className="text-xs font-semibold mb-0.5" style={{ color: C.faint }}>Students</p>
+              <p className="text-sm font-bold mb-1" style={{ color: C.burgundy }}>{clsStudents.length} enrolled</p>
+              <div className="flex flex-wrap gap-1">
                 {perfectStudents.length > 0 && (
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-xs font-bold px-1.5 py-0.5 rounded-full whitespace-nowrap" style={{ backgroundColor: '#F0FAF4', color: '#2D7A4F' }}>⭐ Perfect Attendance</span>
-                    <span className="text-xs font-semibold" style={{ color: C.burgundy }}>{perfectStudents.join(', ')}</span>
-                  </div>
+                  <span className="text-xs font-bold px-2 py-0.5 rounded-full" style={{ backgroundColor: '#F0FAF4', color: '#2D7A4F' }}>
+                    ⭐ {perfectStudents.length} perfect
+                  </span>
                 )}
                 {goodStudents.length > 0 && (
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-xs font-bold px-1.5 py-0.5 rounded-full whitespace-nowrap" style={{ backgroundColor: '#FFF8EC', color: '#8A6200' }}>👍 Good Attendance</span>
-                    <span className="text-xs font-semibold" style={{ color: C.burgundy }}>{goodStudents.join(', ')}</span>
-                  </div>
+                  <span className="text-xs font-bold px-2 py-0.5 rounded-full" style={{ backgroundColor: '#FFF8EC', color: '#8A6200' }}>
+                    👍 {goodStudents.length} good
+                  </span>
                 )}
               </div>
-            )}
+            </div>
           </div>
         </div>
       </Card>

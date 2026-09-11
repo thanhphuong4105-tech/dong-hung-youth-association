@@ -1640,7 +1640,7 @@ function StudentsTab({ students, cls, onAddStudent, onUpdateStudent, onDeleteStu
 }
 
 // ─── Step 3: Class Detail ─────────────────────────────────────────────────────
-function ClassDetail({ cls, semester, students, attendance, lessons, onBack, onUpdateAttendance, onAddLesson, onAddStudent, onUpdateStudent, onDeleteStudent }) {
+function ClassDetail({ cls, semester, students, attendance, lessons, onBack, onUpdateAttendance, onAddLesson, onUpdateLesson, onDeleteLesson, onAddStudent, onUpdateStudent, onDeleteStudent }) {
   const [tab, setTab] = useState('attendance')
   const clsStudents = students.filter(s => s.classId === cls.id)
   const todayStr = new Date().toISOString().slice(0, 10)
@@ -1752,6 +1752,20 @@ function ClassDetail({ cls, semester, students, attendance, lessons, onBack, onU
     w.document.close()
   }
   const [noteText, setNoteText] = useState('')
+
+  // Lesson edit state
+  const [editingLesson, setEditingLesson] = useState(null)
+  const [lessonForm, setLessonForm] = useState({})
+  const [deletingLesson, setDeletingLesson] = useState(null)
+  function openEditLesson(l) {
+    setLessonForm({ title: l.title, date: l.date || '', topic: l.topic || '', materials: l.materials || '', status: l.status || 'Planned' })
+    setEditingLesson(l)
+  }
+  function saveLessonEdit(e) {
+    e.preventDefault()
+    onUpdateLesson({ ...editingLesson, ...lessonForm })
+    setEditingLesson(null)
+  }
 
   // Parent edit/add state
   const [parentModal, setParentModal] = useState(null) // { student, parentIndex: number|-1 (add) }
@@ -2176,8 +2190,8 @@ function ClassDetail({ cls, semester, students, attendance, lessons, onBack, onU
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex gap-1">
-                        <button className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-orange-100" style={{ color: C.muted }}><PencilIcon className="w-3.5 h-3.5" /></button>
-                        <button className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-red-50" style={{ color: C.coral }}><TrashIcon className="w-3.5 h-3.5" /></button>
+                        <button onClick={() => openEditLesson(l)} className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-orange-100" style={{ color: C.muted }}><PencilIcon className="w-3.5 h-3.5" /></button>
+                        <button onClick={() => setDeletingLesson(l)} className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-red-50" style={{ color: C.coral }}><TrashIcon className="w-3.5 h-3.5" /></button>
                       </div>
                     </td>
                   </tr>
@@ -2185,6 +2199,51 @@ function ClassDetail({ cls, semester, students, attendance, lessons, onBack, onU
               </tbody>
             </table>
           </Card>
+
+          {/* Edit lesson modal */}
+          {editingLesson && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ backgroundColor: 'rgba(50,30,10,0.4)' }}
+              onClick={e => { if (e.target === e.currentTarget) setEditingLesson(null) }}>
+              <div className="w-full max-w-md rounded-3xl p-6" style={{ backgroundColor: '#fff', border: `1.5px solid ${C.beige}` }}>
+                <h4 className="font-extrabold text-lg mb-4" style={{ color: C.burgundy }}>Edit Lesson</h4>
+                <form onSubmit={saveLessonEdit} className="space-y-3">
+                  <Field label="Lesson Title" required><input value={lessonForm.title} onChange={e => setLessonForm(f => ({ ...f, title: e.target.value }))} required style={inputStyle} /></Field>
+                  <Field label="Date"><input type="date" value={lessonForm.date} onChange={e => setLessonForm(f => ({ ...f, date: e.target.value }))} style={inputStyle} /></Field>
+                  <Field label="Topic"><input value={lessonForm.topic} onChange={e => setLessonForm(f => ({ ...f, topic: e.target.value }))} style={inputStyle} /></Field>
+                  <Field label="Materials"><input value={lessonForm.materials} onChange={e => setLessonForm(f => ({ ...f, materials: e.target.value }))} style={inputStyle} /></Field>
+                  <Field label="Status">
+                    <select value={lessonForm.status} onChange={e => setLessonForm(f => ({ ...f, status: e.target.value }))} style={inputStyle}>
+                      <option>Planned</option><option>Completed</option><option>Cancelled</option>
+                    </select>
+                  </Field>
+                  <div className="flex gap-3 pt-2">
+                    <Btn variant="secondary" onClick={() => setEditingLesson(null)} className="flex-1">Cancel</Btn>
+                    <button type="submit" className="flex-1 py-2.5 text-sm font-semibold rounded-2xl text-white hover:opacity-90"
+                      style={{ background: 'linear-gradient(135deg, #F1745E, #E06464)' }}>Save</button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
+
+          {/* Delete lesson confirm */}
+          {deletingLesson && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ backgroundColor: 'rgba(50,30,10,0.45)' }}>
+              <div className="w-full max-w-sm rounded-3xl p-7" style={{ backgroundColor: '#fff', border: `1.5px solid ${C.beige}` }}>
+                <div className="w-12 h-12 rounded-2xl flex items-center justify-center mb-4" style={{ backgroundColor: '#FFF0EC' }}>
+                  <TrashIcon className="w-6 h-6" style={{ color: C.coral }} />
+                </div>
+                <h3 className="text-lg font-extrabold mb-1" style={{ color: C.burgundy }}>Delete Lesson?</h3>
+                <p className="text-sm mb-6" style={{ color: C.muted }}>Delete <strong>{deletingLesson.title}</strong>? This cannot be undone.</p>
+                <div className="flex gap-3">
+                  <Btn variant="secondary" className="flex-1" onClick={() => setDeletingLesson(null)}>Cancel</Btn>
+                  <button onClick={() => { onDeleteLesson(deletingLesson.id); setDeletingLesson(null) }}
+                    className="flex-1 py-2.5 text-sm font-semibold rounded-2xl text-white hover:opacity-90"
+                    style={{ background: 'linear-gradient(135deg, #E06464, #C04040)' }}>Delete</button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
@@ -2525,6 +2584,14 @@ export default function VietnameseSchool() {
     setDrawerType(null)
     fetchAll()
   }
+  async function handleUpdateLesson(lesson) {
+    await supabase.from('vs_lessons').update(lesToDB(lesson)).eq('id', lesson.id)
+    fetchAll()
+  }
+  async function handleDeleteLesson(id) {
+    await supabase.from('vs_lessons').delete().eq('id', id)
+    fetchAll()
+  }
   async function handleUpdateAttendance(records, date) {
     if (records === null) {
       await supabase.from('vs_attendance').delete().eq('class_id', view.cls?.id).eq('date', date)
@@ -2608,6 +2675,8 @@ export default function VietnameseSchool() {
           onBack={() => setView({ type: 'classes', semester: curSemester })}
           onUpdateAttendance={handleUpdateAttendance}
           onAddLesson={() => setDrawerType('lesson')}
+          onUpdateLesson={handleUpdateLesson}
+          onDeleteLesson={handleDeleteLesson}
           onAddStudent={(cid) => { setDrawerClassId(cid || curClass.id); setDrawerType('student') }}
           onUpdateStudent={handleUpdateStudent}
           onDeleteStudent={handleDeleteStudent}

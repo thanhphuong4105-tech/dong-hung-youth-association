@@ -1114,7 +1114,10 @@ function StudentListModal({ semester, semClasses, students, onUpdateStudent, onC
               <CheckIcon className="w-4 h-4" style={{ color: saved ? '#2D7A4F' : C.orange }} />
               {saving ? 'Saving…' : saved ? 'Saved' : 'Save'}
             </button>
-            <button onClick={() => window.print()}
+            <button onClick={() => {
+                const merged = students.map(s => ({ ...s, ...(localEditsRef.current[s.id] || {}) }))
+                printStudentList(semester, semClasses, merged)
+              }}
               className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold text-white hover:opacity-90 transition-opacity"
               style={{ background: 'linear-gradient(135deg, #F1745E, #E06464)' }}>
               <DocumentTextIcon className="w-4 h-4" /> Print

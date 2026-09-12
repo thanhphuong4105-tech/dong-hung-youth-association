@@ -1077,7 +1077,7 @@ function StudentListModal({ semester, semClasses, students, onUpdateStudent, onC
 
   function fmtDate(d) {
     if (!d) return ''
-    try { return new Date(d + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) } catch { return d }
+    try { const [y, m, day] = d.split('-'); return `${m}/${day}/${y}` } catch { return d }
   }
 
   const hasUnsaved = Object.keys(localEdits).length > 0
@@ -1140,15 +1140,20 @@ function StudentListModal({ semester, semClasses, students, onUpdateStudent, onC
                       {clsStudents.map((s, i) => {
                         const stu = getStudent(s)
                         const name = [stu.firstName, stu.lastName].filter(Boolean).join(' ') || '—'
-                        const parentNames = (stu.parents || []).map(p => p.name).filter(Boolean).join(', ')
-                        const phones = (stu.parents || []).map(p => p.phone).filter(Boolean).join(', ')
+                        const parents = stu.parents || []
                         const hasAllergy = stu.allergy && stu.allergy.trim() && stu.allergy.toLowerCase() !== 'none' && stu.allergy.toLowerCase() !== 'n/a'
                         const isDirty = !!localEdits[s.id]
                         const isEditing = field => editingCell?.studentId === s.id && editingCell?.field === field
+
+                        function storeParentEdit(pi, key, val) {
+                          const updated = parents.map((p, idx) => idx === pi ? { ...p, [key]: val } : p)
+                          storeEdit(s, 'parents', updated)
+                        }
+
                         return (
                           <tr key={s.id} style={{ backgroundColor: i % 2 === 0 ? C.card : '#FFF5F0' }}>
-                            <td className="px-3 py-2 text-xs text-center" style={{ color: C.muted }}>{i + 1}</td>
-                            <td className="px-3 py-2 font-semibold" style={{ color: C.burgundy }}>
+                            <td className="px-3 py-2 text-xs text-center align-top pt-3" style={{ color: C.muted }}>{i + 1}</td>
+                            <td className="px-3 py-2 font-semibold align-top pt-3" style={{ color: C.burgundy }}>
                               {(isEditing('firstName') || isEditing('lastName')) ? (
                                 <div className="flex gap-1">
                                   <input autoFocus defaultValue={stu.firstName}
@@ -1163,8 +1168,8 @@ function StudentListModal({ semester, semClasses, students, onUpdateStudent, onC
                                   style={{ borderBottom: isDirty ? `1px dashed ${C.orange}` : 'none' }}>{name}</span>
                               )}
                             </td>
-                            <td className="px-3 py-2 text-xs text-center" style={{ color: C.muted }}>{stu.age || ''}</td>
-                            <td className="px-3 py-2 text-xs" style={{ color: C.muted }}>
+                            <td className="px-3 py-2 text-xs text-center align-top pt-3" style={{ color: C.muted }}>{stu.age || ''}</td>
+                            <td className="px-3 py-2 text-xs align-top pt-3 whitespace-nowrap" style={{ color: C.muted }}>
                               {isEditing('birthday') ? (
                                 <input autoFocus type="date" defaultValue={stu.birthday}
                                   onBlur={e => storeEdit(s, 'birthday', e.target.value)}
@@ -1173,9 +1178,35 @@ function StudentListModal({ semester, semClasses, students, onUpdateStudent, onC
                                 <span className="cursor-pointer hover:underline" onClick={() => startEdit(s, 'birthday')}>{fmtDate(stu.birthday) || '—'}</span>
                               )}
                             </td>
-                            <td className="px-3 py-2 text-xs" style={{ color: C.muted }}>{parentNames || '—'}</td>
-                            <td className="px-3 py-2 text-xs" style={{ color: C.muted }}>{phones || '—'}</td>
-                            <td className="px-3 py-2 text-xs">
+                            {/* Parent names — one per line, editable */}
+                            <td className="px-3 py-2 text-xs align-top" style={{ color: C.muted }}>
+                              {parents.length === 0 ? <span className="text-xs" style={{ color: C.faint }}>—</span> : parents.map((p, pi) => (
+                                <div key={pi} className="leading-5">
+                                  {isEditing(`parent-name-${pi}`) ? (
+                                    <input autoFocus defaultValue={p.name}
+                                      onBlur={e => storeParentEdit(pi, 'name', e.target.value)}
+                                      className="w-32 px-1 py-0.5 rounded border text-xs" style={{ borderColor: C.orange, color: C.burgundy }} />
+                                  ) : (
+                                    <span className="cursor-pointer hover:underline" onClick={() => startEdit(s, `parent-name-${pi}`)}>{p.name || '—'}</span>
+                                  )}
+                                </div>
+                              ))}
+                            </td>
+                            {/* Phones — one per line, editable */}
+                            <td className="px-3 py-2 text-xs align-top" style={{ color: C.muted }}>
+                              {parents.length === 0 ? <span className="text-xs" style={{ color: C.faint }}>—</span> : parents.map((p, pi) => (
+                                <div key={pi} className="leading-5 whitespace-nowrap">
+                                  {isEditing(`parent-phone-${pi}`) ? (
+                                    <input autoFocus defaultValue={p.phone}
+                                      onBlur={e => storeParentEdit(pi, 'phone', e.target.value)}
+                                      className="w-32 px-1 py-0.5 rounded border text-xs" style={{ borderColor: C.orange }} />
+                                  ) : (
+                                    <span className="cursor-pointer hover:underline" onClick={() => startEdit(s, `parent-phone-${pi}`)}>{p.phone || '—'}</span>
+                                  )}
+                                </div>
+                              ))}
+                            </td>
+                            <td className="px-3 py-2 text-xs align-top pt-3">
                               {isEditing('allergy') ? (
                                 <input autoFocus defaultValue={stu.allergy}
                                   onBlur={e => storeEdit(s, 'allergy', e.target.value)}
@@ -1185,7 +1216,7 @@ function StudentListModal({ semester, semClasses, students, onUpdateStudent, onC
                                   style={{ color: hasAllergy ? C.coral : C.muted }}>{stu.allergy || 'None'}</span>
                               )}
                             </td>
-                            <td className="px-3 py-2 text-center">
+                            <td className="px-3 py-2 text-center align-top pt-3">
                               <input type="checkbox" checked={!!paidMap[s.id]} onChange={() => togglePaid(s.id)}
                                 className="w-4 h-4 cursor-pointer" style={{ accentColor: C.orange }} />
                             </td>

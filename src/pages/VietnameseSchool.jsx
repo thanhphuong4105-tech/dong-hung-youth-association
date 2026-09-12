@@ -1049,136 +1049,156 @@ function StudentListModal({ semester, semClasses, students, onUpdateStudent, onC
   const [paidMap, setPaidMap] = useState({})
   const [editingCell, setEditingCell] = useState(null)
   const [localEdits, setLocalEdits] = useState({})
+  const [saving, setSaving] = useState(false)
+  const [saved, setSaved] = useState(false)
 
   function getStudent(s) { return { ...s, ...(localEdits[s.id] || {}) } }
 
   function startEdit(s, field) { setEditingCell({ studentId: s.id, field }) }
 
-  function commitEdit(s, field, value) {
+  function storeEdit(s, field, value) {
     setLocalEdits(prev => ({ ...prev, [s.id]: { ...(prev[s.id] || {}), [field]: value } }))
-    onUpdateStudent({ ...getStudent(s), [field]: value })
     setEditingCell(null)
+    setSaved(false)
   }
 
-  function togglePaid(id) { setPaidMap(prev => ({ ...prev, [id]: !prev[id] })) }
+  function togglePaid(id) { setPaidMap(prev => ({ ...prev, [id]: !prev[id] })); setSaved(false) }
+
+  async function handleSave() {
+    setSaving(true)
+    const edited = Object.keys(localEdits)
+    for (const id of edited) {
+      const original = students.find(s => s.id === id)
+      if (original) await onUpdateStudent({ ...original, ...localEdits[id] })
+    }
+    setSaving(false)
+    setSaved(true)
+  }
 
   function fmtDate(d) {
     if (!d) return ''
     try { return new Date(d + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) } catch { return d }
   }
 
-  function handlePrint() { window.print() }
+  const hasUnsaved = Object.keys(localEdits).length > 0
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col" style={{ backgroundColor: C.bg }}>
-      <style>{`@media print { .no-print { display: none !important } body { background: white } }`}</style>
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ backgroundColor: 'rgba(50,20,10,0.45)' }}
+      onClick={e => { if (e.target === e.currentTarget) onClose() }}>
+      <style>{`@media print { .no-print { display: none !important } }`}</style>
 
-      {/* Header */}
-      <div className="no-print flex items-center justify-between px-5 py-4 border-b shrink-0" style={{ borderColor: C.beige }}>
-        <div>
-          <h2 className="text-xl font-extrabold" style={{ color: C.burgundy, fontFamily: "'Nunito', sans-serif" }}>{semester.name} — Student List</h2>
-          <p className="text-xs" style={{ color: C.muted }}>Danh Sách Học Sinh • Click any field to edit</p>
+      <div className="w-full max-w-5xl flex flex-col rounded-3xl overflow-hidden"
+        style={{ backgroundColor: C.bg, border: `1.5px solid ${C.beige}`, boxShadow: '0 12px 48px rgba(0,0,0,0.22)', maxHeight: '88vh' }}>
+
+        {/* Header */}
+        <div className="no-print flex items-center justify-between px-6 py-4 border-b shrink-0" style={{ borderColor: C.beige }}>
+          <div>
+            <h2 className="text-lg font-extrabold" style={{ color: C.burgundy, fontFamily: "'Nunito', sans-serif" }}>{semester.name} — Student List</h2>
+            <p className="text-xs" style={{ color: C.muted }}>Click any field to edit · changes saved when you click Save</p>
+          </div>
+          <div className="flex items-center gap-2">
+            <button onClick={handleSave} disabled={saving || !hasUnsaved}
+              className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold border transition-colors disabled:opacity-40"
+              style={{ borderColor: C.beige, color: saved ? '#2D7A4F' : C.burgundy, backgroundColor: saved ? '#F0FAF4' : C.card }}>
+              <CheckIcon className="w-4 h-4" style={{ color: saved ? '#2D7A4F' : C.orange }} />
+              {saving ? 'Saving…' : saved ? 'Saved' : 'Save'}
+            </button>
+            <button onClick={() => window.print()}
+              className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold text-white hover:opacity-90 transition-opacity"
+              style={{ background: 'linear-gradient(135deg, #F1745E, #E06464)' }}>
+              <DocumentTextIcon className="w-4 h-4" /> Print
+            </button>
+            <button onClick={onClose} className="p-2 rounded-xl hover:bg-orange-50 transition-colors" style={{ color: C.muted }}>
+              <XMarkIcon className="w-5 h-5" />
+            </button>
+          </div>
         </div>
-        <div className="flex items-center gap-2">
-          <button onClick={handlePrint}
-            className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold text-white hover:opacity-90 transition-opacity"
-            style={{ background: 'linear-gradient(135deg, #F1745E, #E06464)' }}>
-            <DocumentTextIcon className="w-4 h-4" /> Print
-          </button>
-          <button onClick={onClose} className="p-2 rounded-xl hover:bg-orange-50 transition-colors" style={{ color: C.muted }}>
-            <XMarkIcon className="w-5 h-5" />
-          </button>
+
+        {/* Scrollable content */}
+        <div className="flex-1 overflow-y-auto px-6 py-5" style={{ WebkitOverflowScrolling: 'touch' }}>
+          {semClasses.map(cls => {
+            const clsStudents = students.filter(s => s.classId === cls.id)
+            if (!clsStudents.length) return null
+            const teachers = [cls.teacher, ...(cls.assistants || [])].filter(Boolean).join(', ')
+            return (
+              <div key={cls.id} className="mb-8">
+                <div className="flex items-center gap-2 mb-3">
+                  <h3 className="text-base font-extrabold" style={{ color: C.burgundy, fontFamily: "'Nunito', sans-serif" }}>{cls.className}</h3>
+                  {teachers && <span className="text-xs" style={{ color: C.muted }}>— {teachers}</span>}
+                  <span className="text-xs ml-auto" style={{ color: C.muted }}>{clsStudents.length} students</span>
+                </div>
+                <div className="overflow-x-auto rounded-2xl border" style={{ borderColor: C.beige }}>
+                  <table className="w-full text-sm border-collapse">
+                    <thead>
+                      <tr style={{ backgroundColor: C.beige }}>
+                        {['#', 'Name', 'Age', 'Birthday', 'Parent / Guardian', 'Phone', 'Allergy', 'Paid'].map(h => (
+                          <th key={h} className="px-3 py-2 text-left text-xs font-bold whitespace-nowrap" style={{ color: C.burgundy }}>{h}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {clsStudents.map((s, i) => {
+                        const stu = getStudent(s)
+                        const name = [stu.firstName, stu.lastName].filter(Boolean).join(' ') || '—'
+                        const parentNames = (stu.parents || []).map(p => p.name).filter(Boolean).join(', ')
+                        const phones = (stu.parents || []).map(p => p.phone).filter(Boolean).join(', ')
+                        const hasAllergy = stu.allergy && stu.allergy.trim() && stu.allergy.toLowerCase() !== 'none' && stu.allergy.toLowerCase() !== 'n/a'
+                        const isDirty = !!localEdits[s.id]
+                        const isEditing = field => editingCell?.studentId === s.id && editingCell?.field === field
+                        return (
+                          <tr key={s.id} style={{ backgroundColor: i % 2 === 0 ? C.card : '#FFF5F0' }}>
+                            <td className="px-3 py-2 text-xs text-center" style={{ color: C.muted }}>{i + 1}</td>
+                            <td className="px-3 py-2 font-semibold" style={{ color: C.burgundy }}>
+                              {(isEditing('firstName') || isEditing('lastName')) ? (
+                                <div className="flex gap-1">
+                                  <input autoFocus defaultValue={stu.firstName}
+                                    onBlur={e => storeEdit(s, 'firstName', e.target.value)}
+                                    className="w-20 px-1 py-0.5 rounded border text-xs" style={{ borderColor: C.orange, color: C.burgundy }} />
+                                  <input defaultValue={stu.lastName}
+                                    onBlur={e => storeEdit(s, 'lastName', e.target.value)}
+                                    className="w-20 px-1 py-0.5 rounded border text-xs" style={{ borderColor: C.orange, color: C.burgundy }} />
+                                </div>
+                              ) : (
+                                <span className="cursor-pointer hover:underline" onClick={() => startEdit(s, 'firstName')}
+                                  style={{ borderBottom: isDirty ? `1px dashed ${C.orange}` : 'none' }}>{name}</span>
+                              )}
+                            </td>
+                            <td className="px-3 py-2 text-xs text-center" style={{ color: C.muted }}>{stu.age || ''}</td>
+                            <td className="px-3 py-2 text-xs" style={{ color: C.muted }}>
+                              {isEditing('birthday') ? (
+                                <input autoFocus type="date" defaultValue={stu.birthday}
+                                  onBlur={e => storeEdit(s, 'birthday', e.target.value)}
+                                  className="px-1 py-0.5 rounded border text-xs" style={{ borderColor: C.orange }} />
+                              ) : (
+                                <span className="cursor-pointer hover:underline" onClick={() => startEdit(s, 'birthday')}>{fmtDate(stu.birthday) || '—'}</span>
+                              )}
+                            </td>
+                            <td className="px-3 py-2 text-xs" style={{ color: C.muted }}>{parentNames || '—'}</td>
+                            <td className="px-3 py-2 text-xs" style={{ color: C.muted }}>{phones || '—'}</td>
+                            <td className="px-3 py-2 text-xs">
+                              {isEditing('allergy') ? (
+                                <input autoFocus defaultValue={stu.allergy}
+                                  onBlur={e => storeEdit(s, 'allergy', e.target.value)}
+                                  className="w-24 px-1 py-0.5 rounded border text-xs" style={{ borderColor: C.orange }} />
+                              ) : (
+                                <span className="cursor-pointer hover:underline" onClick={() => startEdit(s, 'allergy')}
+                                  style={{ color: hasAllergy ? C.coral : C.muted }}>{stu.allergy || 'None'}</span>
+                              )}
+                            </td>
+                            <td className="px-3 py-2 text-center">
+                              <input type="checkbox" checked={!!paidMap[s.id]} onChange={() => togglePaid(s.id)}
+                                className="w-4 h-4 cursor-pointer" style={{ accentColor: C.orange }} />
+                            </td>
+                          </tr>
+                        )
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )
+          })}
         </div>
-      </div>
-
-      {/* Print title (only visible on print) */}
-      <div className="hidden px-8 pt-6 pb-2" style={{ display: 'none' }}>
-        <p className="text-xl font-bold" style={{ color: C.burgundy }}>{semester.name} — Student List</p>
-        <p className="text-sm" style={{ color: C.muted }}>Danh Sách Học Sinh Lớp Tiếng Việt</p>
-      </div>
-
-      {/* Scrollable content */}
-      <div className="flex-1 overflow-y-auto px-5 py-4" style={{ WebkitOverflowScrolling: 'touch' }}>
-        {semClasses.map(cls => {
-          const clsStudents = students.filter(s => s.classId === cls.id)
-          if (!clsStudents.length) return null
-          const teachers = [cls.teacher, ...(cls.assistants || [])].filter(Boolean).join(', ')
-          return (
-            <div key={cls.id} className="mb-8">
-              <div className="flex items-center gap-2 mb-3">
-                <h3 className="text-base font-extrabold" style={{ color: C.burgundy, fontFamily: "'Nunito', sans-serif" }}>{cls.className}</h3>
-                {teachers && <span className="text-xs" style={{ color: C.muted }}>— {teachers}</span>}
-                <span className="text-xs ml-auto" style={{ color: C.muted }}>{clsStudents.length} students</span>
-              </div>
-              <div className="overflow-x-auto rounded-2xl border" style={{ borderColor: C.beige }}>
-                <table className="w-full text-sm border-collapse">
-                  <thead>
-                    <tr style={{ backgroundColor: C.beige }}>
-                      {['#', 'Name', 'Age', 'Birthday', 'Parent / Guardian', 'Phone', 'Allergy', 'Paid'].map(h => (
-                        <th key={h} className="px-3 py-2 text-left text-xs font-bold whitespace-nowrap" style={{ color: C.burgundy }}>{h}</th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {clsStudents.map((s, i) => {
-                      const stu = getStudent(s)
-                      const name = [stu.firstName, stu.lastName].filter(Boolean).join(' ') || '—'
-                      const parentNames = (stu.parents || []).map(p => p.name).filter(Boolean).join(', ')
-                      const phones = (stu.parents || []).map(p => p.phone).filter(Boolean).join(', ')
-                      const hasAllergy = stu.allergy && stu.allergy.trim() && stu.allergy.toLowerCase() !== 'none' && stu.allergy.toLowerCase() !== 'n/a'
-                      const isEditing = field => editingCell?.studentId === s.id && editingCell?.field === field
-                      return (
-                        <tr key={s.id} style={{ backgroundColor: i % 2 === 0 ? C.card : '#FFF5F0' }}>
-                          <td className="px-3 py-2 text-xs text-center" style={{ color: C.muted }}>{i + 1}</td>
-                          <td className="px-3 py-2 font-semibold" style={{ color: C.burgundy }}>
-                            {(isEditing('firstName') || isEditing('lastName')) ? (
-                              <div className="flex gap-1">
-                                <input autoFocus defaultValue={stu.firstName}
-                                  onBlur={e => { setLocalEdits(prev => ({ ...prev, [s.id]: { ...(prev[s.id] || {}), firstName: e.target.value } })); onUpdateStudent({ ...getStudent(s), firstName: e.target.value }); setEditingCell(null) }}
-                                  className="w-20 px-1 py-0.5 rounded border text-xs" style={{ borderColor: C.beige, color: C.burgundy }} />
-                                <input defaultValue={stu.lastName}
-                                  onBlur={e => { setLocalEdits(prev => ({ ...prev, [s.id]: { ...(prev[s.id] || {}), lastName: e.target.value } })); onUpdateStudent({ ...getStudent(s), lastName: e.target.value }); setEditingCell(null) }}
-                                  className="w-20 px-1 py-0.5 rounded border text-xs" style={{ borderColor: C.beige, color: C.burgundy }} />
-                              </div>
-                            ) : (
-                              <span className="cursor-pointer hover:underline" onClick={() => startEdit(s, 'firstName')}>{name}</span>
-                            )}
-                          </td>
-                          <td className="px-3 py-2 text-xs text-center" style={{ color: C.muted }}>{stu.age || ''}</td>
-                          <td className="px-3 py-2 text-xs" style={{ color: C.muted }}>
-                            {isEditing('birthday') ? (
-                              <input autoFocus type="date" defaultValue={stu.birthday}
-                                onBlur={e => commitEdit(s, 'birthday', e.target.value)}
-                                className="px-1 py-0.5 rounded border text-xs" style={{ borderColor: C.beige }} />
-                            ) : (
-                              <span className="cursor-pointer hover:underline" onClick={() => startEdit(s, 'birthday')}>{fmtDate(stu.birthday) || '—'}</span>
-                            )}
-                          </td>
-                          <td className="px-3 py-2 text-xs" style={{ color: C.muted }}>{parentNames || '—'}</td>
-                          <td className="px-3 py-2 text-xs" style={{ color: C.muted }}>{phones || '—'}</td>
-                          <td className="px-3 py-2 text-xs">
-                            {isEditing('allergy') ? (
-                              <input autoFocus defaultValue={stu.allergy}
-                                onBlur={e => commitEdit(s, 'allergy', e.target.value)}
-                                className="w-24 px-1 py-0.5 rounded border text-xs" style={{ borderColor: C.beige }} />
-                            ) : (
-                              <span className="cursor-pointer hover:underline" onClick={() => startEdit(s, 'allergy')}
-                                style={{ color: hasAllergy ? C.coral : C.muted }}>{stu.allergy || 'None'}</span>
-                            )}
-                          </td>
-                          <td className="px-3 py-2 text-center">
-                            <input type="checkbox" checked={!!paidMap[s.id]} onChange={() => togglePaid(s.id)}
-                              className="w-4 h-4 cursor-pointer" style={{ accentColor: C.orange }} />
-                          </td>
-                        </tr>
-                      )
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          )
-        })}
       </div>
     </div>
   )

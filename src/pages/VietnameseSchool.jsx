@@ -1182,8 +1182,7 @@ function StudentListModal({ semester, semClasses, students, onUpdateStudent, onC
                                   }}
                                   className="w-36 px-1 py-0.5 rounded border text-xs" style={{ borderColor: C.orange, color: C.burgundy }} />
                               ) : (
-                                <span className="cursor-pointer hover:underline" onClick={() => startEdit(s, 'fullName')}
-                                  style={{ borderBottom: isDirty ? `1px dashed ${C.orange}` : 'none' }}>{name}</span>
+                                <span className="cursor-pointer hover:underline" onClick={() => startEdit(s, 'fullName')}>{name}</span>
                               )}
                             </td>
                             <td className="px-3 py-2 text-xs text-center align-top pt-3" style={{ color: C.muted }}>{stu.age || ''}</td>
@@ -1231,7 +1230,7 @@ function StudentListModal({ semester, semClasses, students, onUpdateStudent, onC
                                   className="w-24 px-1 py-0.5 rounded border text-xs" style={{ borderColor: C.orange }} />
                               ) : (
                                 <span className="cursor-pointer hover:underline" onClick={() => startEdit(s, 'allergy')}
-                                  style={{ color: hasAllergy ? C.coral : C.muted }}>{stu.allergy || 'None'}</span>
+                                  style={{ color: hasAllergy ? C.coral : C.muted }}>{hasAllergy ? stu.allergy : ''}</span>
                               )}
                             </td>
                             <td className="px-3 py-2 text-center align-top pt-3">

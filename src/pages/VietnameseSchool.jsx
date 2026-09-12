@@ -1165,17 +1165,21 @@ function StudentListModal({ semester, semClasses, students, onUpdateStudent, onC
                           <tr key={s.id} style={{ backgroundColor: i % 2 === 0 ? C.card : '#FFF5F0' }}>
                             <td className="px-3 py-2 text-xs text-center align-top pt-3" style={{ color: C.muted }}>{i + 1}</td>
                             <td className="px-3 py-2 font-semibold align-top pt-3" style={{ color: C.burgundy }}>
-                              {(isEditing('firstName') || isEditing('lastName')) ? (
-                                <div className="flex gap-1">
-                                  <input autoFocus defaultValue={stu.firstName}
-                                    onBlur={e => storeEdit(s, 'firstName', e.target.value)}
-                                    className="w-20 px-1 py-0.5 rounded border text-xs" style={{ borderColor: C.orange, color: C.burgundy }} />
-                                  <input defaultValue={stu.lastName}
-                                    onBlur={e => storeEdit(s, 'lastName', e.target.value)}
-                                    className="w-20 px-1 py-0.5 rounded border text-xs" style={{ borderColor: C.orange, color: C.burgundy }} />
-                                </div>
+                              {isEditing('fullName') ? (
+                                <input autoFocus defaultValue={name}
+                                  onBlur={e => {
+                                    const parts = e.target.value.trim().split(/\s+/)
+                                    const last = parts.length > 1 ? parts.pop() : ''
+                                    const first = parts.join(' ')
+                                    const next = { ...localEditsRef.current, [s.id]: { ...(localEditsRef.current[s.id] || {}), firstName: first, lastName: last } }
+                                    localEditsRef.current = next
+                                    setLocalEdits(next)
+                                    setEditingCell(null)
+                                    setSaved(false)
+                                  }}
+                                  className="w-36 px-1 py-0.5 rounded border text-xs" style={{ borderColor: C.orange, color: C.burgundy }} />
                               ) : (
-                                <span className="cursor-pointer hover:underline" onClick={() => startEdit(s, 'firstName')}
+                                <span className="cursor-pointer hover:underline" onClick={() => startEdit(s, 'fullName')}
                                   style={{ borderBottom: isDirty ? `1px dashed ${C.orange}` : 'none' }}>{name}</span>
                               )}
                             </td>

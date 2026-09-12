@@ -1049,15 +1049,18 @@ function StudentListModal({ semester, semClasses, students, onUpdateStudent, onC
   const [paidMap, setPaidMap] = useState({})
   const [editingCell, setEditingCell] = useState(null)
   const [localEdits, setLocalEdits] = useState({})
+  const localEditsRef = useRef({})
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
 
-  function getStudent(s) { return { ...s, ...(localEdits[s.id] || {}) } }
+  function getStudent(s) { return { ...s, ...(localEditsRef.current[s.id] || {}) } }
 
   function startEdit(s, field) { setEditingCell({ studentId: s.id, field }) }
 
   function storeEdit(s, field, value) {
-    setLocalEdits(prev => ({ ...prev, [s.id]: { ...(prev[s.id] || {}), [field]: value } }))
+    const next = { ...localEditsRef.current, [s.id]: { ...(localEditsRef.current[s.id] || {}), [field]: value } }
+    localEditsRef.current = next
+    setLocalEdits(next)
     setEditingCell(null)
     setSaved(false)
   }
@@ -1066,10 +1069,11 @@ function StudentListModal({ semester, semClasses, students, onUpdateStudent, onC
 
   async function handleSave() {
     setSaving(true)
-    const edited = Object.keys(localEdits)
+    const edits = localEditsRef.current
+    const edited = Object.keys(edits)
     for (const id of edited) {
       const original = students.find(s => s.id === id)
-      if (original) await onUpdateStudent({ ...original, ...localEdits[id] })
+      if (original) await onUpdateStudent({ ...original, ...edits[id] })
     }
     setSaving(false)
     setSaved(true)

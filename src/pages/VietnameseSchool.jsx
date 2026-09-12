@@ -672,7 +672,7 @@ function printStudentList(semester, semClasses, students) {
         <td>${parentNames || '—'}</td>
         <td>${phones || '—'}</td>
         <td>${allergyText}</td>
-        <td></td>
+        <td style="text-align:center;font-size:16px">${s.paid ? '✓' : ''}</td>
       </tr>`
     }).join('')
 

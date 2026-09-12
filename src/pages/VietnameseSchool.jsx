@@ -1046,7 +1046,7 @@ function SemesterCalendarModal({ semester, dateForm, setDateForm, classDayOfWeek
 }
 
 function StudentListModal({ semester, semClasses, students, onUpdateStudent, onClose }) {
-  const [paidMap, setPaidMap] = useState({})
+  const [paidMap, setPaidMap] = useState(() => Object.fromEntries(students.map(s => [s.id, s.paid || false])))
   const [editingCell, setEditingCell] = useState(null)
   const [localEdits, setLocalEdits] = useState({})
   const localEditsRef = useRef({})
@@ -1065,7 +1065,14 @@ function StudentListModal({ semester, semClasses, students, onUpdateStudent, onC
     setSaved(false)
   }
 
-  function togglePaid(id) { setPaidMap(prev => ({ ...prev, [id]: !prev[id] })); setSaved(false) }
+  function togglePaid(id) {
+    const newVal = !paidMap[id]
+    setPaidMap(prev => ({ ...prev, [id]: newVal }))
+    const next = { ...localEditsRef.current, [id]: { ...(localEditsRef.current[id] || {}), paid: newVal } }
+    localEditsRef.current = next
+    setLocalEdits(next)
+    setSaved(false)
+  }
 
   async function handleSave() {
     setSaving(true)
@@ -2624,8 +2631,8 @@ function semToDB(s)   { return { id: s.id, name: s.name, start_date: s.startDate
 function clsFromDB(r) { return { id: r.id, semesterId: r.semester_id, className: r.class_name, level: r.level || '', teacher: r.teacher || '', assistants: r.assistants || [], dayOfWeek: r.day_of_week || 'Sunday', startTime: r.start_time || '', endTime: r.end_time || '', room: r.room || '' } }
 function clsToDB(c)   { return { id: c.id, semester_id: c.semesterId, class_name: c.className, level: c.level || null, teacher: c.teacher || null, assistants: c.assistants || [], day_of_week: c.dayOfWeek || null, start_time: c.startTime || null, end_time: c.endTime || null, room: c.room || null } }
 
-function stuFromDB(r) { return { id: r.id, semesterId: r.semester_id, classId: r.class_id || null, firstName: r.first_name || '', lastName: r.last_name || '', birthday: r.birthday || '', allergy: r.allergy || '', parents: r.parents || [], age: r.age || null } }
-function stuToDB(s)   { return { id: s.id, semester_id: s.semesterId, class_id: s.classId || null, first_name: s.firstName || null, last_name: s.lastName || null, birthday: s.birthday || null, allergy: s.allergy || null, parents: s.parents || [], age: s.age || null } }
+function stuFromDB(r) { return { id: r.id, semesterId: r.semester_id, classId: r.class_id || null, firstName: r.first_name || '', lastName: r.last_name || '', birthday: r.birthday || '', allergy: r.allergy || '', parents: r.parents || [], age: r.age || null, paid: r.paid || false } }
+function stuToDB(s)   { return { id: s.id, semester_id: s.semesterId, class_id: s.classId || null, first_name: s.firstName || null, last_name: s.lastName || null, birthday: s.birthday || null, allergy: s.allergy || null, parents: s.parents || [], age: s.age || null, paid: s.paid || false } }
 
 function lesFromDB(r) { return { id: r.id, semesterId: r.semester_id, classId: r.class_id, title: r.title, date: r.date || '', topic: r.topic || '', materials: r.materials || '', status: r.status || 'Planned' } }
 function lesToDB(l)   { return { id: l.id, semester_id: l.semesterId, class_id: l.classId, title: l.title, date: l.date || null, topic: l.topic || null, materials: l.materials || null, status: l.status || 'Planned' } }

@@ -1097,7 +1097,7 @@ function StudentListModal({ semester, semClasses, students, onUpdateStudent, onC
             <p className="text-xs" style={{ color: C.muted }}>Click any field to edit · changes saved when you click Save</p>
           </div>
           <div className="flex items-center gap-2">
-            <button onClick={handleSave} disabled={saving || !hasUnsaved}
+            <button onClick={handleSave} disabled={saving}
               className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold border transition-colors disabled:opacity-40"
               style={{ borderColor: C.beige, color: saved ? '#2D7A4F' : C.burgundy, backgroundColor: saved ? '#F0FAF4' : C.card }}>
               <CheckIcon className="w-4 h-4" style={{ color: saved ? '#2D7A4F' : C.orange }} />

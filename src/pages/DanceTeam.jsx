@@ -126,7 +126,7 @@ function RowMenu({ onEdit, onDelete }) {
 // ─── Modal shell ──────────────────────────────────────────────────────────────
 function ModalShell({ title, onClose, children }) {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4"
+    <div className="fixed inset-0 z-[70] flex items-center justify-center p-4"
       style={{ backgroundColor: 'rgba(50,30,10,0.4)', backdropFilter: 'blur(2px)' }}
       onClick={e => { if (e.target === e.currentTarget) onClose() }}>
       <div className="w-full max-w-md rounded-3xl overflow-hidden"

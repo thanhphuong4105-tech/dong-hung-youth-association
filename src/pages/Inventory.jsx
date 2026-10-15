@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react'
+﻿import { useState, useMemo, useEffect } from 'react'
 import {
   PlusIcon, MagnifyingGlassIcon, PencilIcon, TrashIcon,
   XMarkIcon, ExclamationTriangleIcon, ArrowPathIcon,
@@ -6,7 +6,7 @@ import {
 } from '@heroicons/react/24/outline'
 import { supabase } from '../lib/supabase'
 
-// ─── Design tokens ────────────────────────────────────────────────────────────
+// â”€â”€â”€ Design tokens â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const C = {
   burgundy: '#4F252A',
   coral:    '#E06464',
@@ -25,7 +25,7 @@ const inputStyle = {
   color: C.burgundy, fontFamily: "'Nunito', sans-serif", fontSize: '0.875rem', outline: 'none',
 }
 
-// ─── Color map ────────────────────────────────────────────────────────────────
+// â”€â”€â”€ Color map â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const COLOR_DOT = {
   Red:     '#E06464',
   Pink:    '#F4A0B0',
@@ -43,9 +43,9 @@ const SIZES    = ['XS','S','M','L','XL','XXL','XXXL']
 const CONDITIONS = ['Excellent','Good','Needs Cleaning','Needs Repair','Needs Review']
 const LOCATIONS  = ['Storage Closet','Temple Storage','Dance Room','Office','Other']
 
-// ─── Helpers ─────────────────────────────────────────────────────────────────
+// â”€â”€â”€ Helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function fmt(dateStr) {
-  if (!dateStr) return '—'
+  if (!dateStr) return 'â€”'
   try { return new Date(dateStr + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) }
   catch { return dateStr }
 }
@@ -92,7 +92,7 @@ function ColorDot({ color }) {
   )
 }
 
-// ─── Derive icon color from item name keywords ────────────────────────────────
+// â”€â”€â”€ Derive icon color from item name keywords â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const NAME_COLOR_MAP = [
   { keywords: ['red'],      color: '#E06464' },
   { keywords: ['hot pink'], color: '#FF1493' },
@@ -117,7 +117,7 @@ function iconColorFromName(name = '') {
   return '#F1745E'
 }
 
-// ─── T-shirt (crew neck) icon ─────────────────────────────────────────────────
+// â”€â”€â”€ T-shirt (crew neck) icon â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function ShirtIcon({ color = '#F1745E', size = 40 }) {
   return (
     <svg width={size} height={size} viewBox="0 0 40 44" fill="none">
@@ -141,7 +141,7 @@ function ShirtIcon({ color = '#F1745E', size = 40 }) {
 
 function isVatHo(name = '') {
   const n = name.toLowerCase()
-  return n.includes('vạt hò') || n.includes('vat ho') || n.includes('vạt ho') || n.includes('vat hò')
+  return n.includes('váº¡t hÃ²') || n.includes('vat ho') || n.includes('váº¡t ho') || n.includes('vat hÃ²')
 }
 
 function isShirt(name = '') {
@@ -154,7 +154,7 @@ function ClothingIcon({ itemName, color, size = 28 }) {
   return <AoDaiIcon color={color} size={size} />
 }
 
-// ─── Áo Dài clothing icon ────────────────────────────────────────────────────
+// â”€â”€â”€ Ão DÃ i clothing icon â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function AoDaiIcon({ color = '#F1745E', size = 40 }) {
   return (
     <svg width={size} height={size} viewBox="0 0 40 56" fill="none">
@@ -168,17 +168,17 @@ function AoDaiIcon({ color = '#F1745E', size = 40 }) {
   )
 }
 
-// ─── Vạt Hò (Buddhist clothes) icon ─────────────────────────────────────────
+// â”€â”€â”€ Váº¡t HÃ² (Buddhist clothes) icon â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function VatHoIcon({ color = '#9E9E9E', size = 40 }) {
   return (
     <svg width={size} height={size} viewBox="0 0 40 48" fill="none">
-      {/* Body — boxy, wide tunic */}
+      {/* Body â€” boxy, wide tunic */}
       <path d="M11 14 L8 14 L8 36 L32 36 L32 14 L29 14 Z"
         fill={color} opacity="0.85" />
-      {/* Left sleeve — wide and drooping */}
+      {/* Left sleeve â€” wide and drooping */}
       <path d="M11 14 L8 14 L2 22 L6 23 L11 18 Z"
         fill={color} opacity="0.80" />
-      {/* Right sleeve — wide and drooping */}
+      {/* Right sleeve â€” wide and drooping */}
       <path d="M29 14 L32 14 L38 22 L34 23 L29 18 Z"
         fill={color} opacity="0.80" />
       {/* Round neckline cutout */}
@@ -194,11 +194,11 @@ function VatHoIcon({ color = '#9E9E9E', size = 40 }) {
   )
 }
 
-// ─── Drawer ───────────────────────────────────────────────────────────────────
+// â”€â”€â”€ Drawer â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function Drawer({ open, onClose, title, children }) {
   if (!open) return null
   return (
-    <div className="fixed inset-0 z-[65] flex justify-end">
+    <div className="fixed inset-0 z-[70] flex justify-end">
       <div className="absolute inset-0 bg-black/40" onClick={onClose} />
       <div className="relative flex flex-col w-full max-w-md overflow-y-auto shadow-2xl"
         style={{ backgroundColor: '#FFFCF8', borderLeft: `1.5px solid ${C.beige}`, height: '100%', paddingBottom: 'env(safe-area-inset-bottom)' }}>
@@ -214,7 +214,7 @@ function Drawer({ open, onClose, title, children }) {
   )
 }
 
-// ─── Add/Edit Áo Dài Form ─────────────────────────────────────────────────────
+// â”€â”€â”€ Add/Edit Ão DÃ i Form â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function InventoryForm({ initial, onSave, onClose }) {
   const blank = { itemName: '', color: 'Red', size: 'M', totalQuantity: 1, condition: 'Good', location: 'Storage Closet', notes: '' }
   const [form, setForm] = useState(initial ? { itemName: initial.itemName, color: initial.color, size: initial.size, totalQuantity: initial.totalQuantity, condition: initial.condition, location: initial.location, notes: initial.notes } : blank)
@@ -230,12 +230,12 @@ function InventoryForm({ initial, onSave, onClose }) {
       {err && <div className="px-4 py-2.5 rounded-xl text-sm font-medium" style={{ backgroundColor: '#FFF0EC', border: '1px solid #F4B8A8', color: '#C05040' }}>{err}</div>}
       <div>
         <label className="block text-xs font-semibold uppercase tracking-wide mb-1.5" style={{ color: C.muted }}>Item Name *</label>
-        <input name="itemName" value={form.itemName} onChange={hc} placeholder="Red Áo Dài Set" required style={inputStyle} />
+        <input name="itemName" value={form.itemName} onChange={hc} placeholder="Red Ão DÃ i Set" required style={inputStyle} />
       </div>
       <div className="grid grid-cols-2 gap-4">
         <div>
           <label className="block text-xs font-semibold uppercase tracking-wide mb-1.5" style={{ color: C.muted }}>Size</label>
-          <input name="size" value={form.size} onChange={hc} placeholder="e.g. S, M, L, XL…" style={inputStyle} />
+          <input name="size" value={form.size} onChange={hc} placeholder="e.g. S, M, L, XLâ€¦" style={inputStyle} />
         </div>
         <div>
           <label className="block text-xs font-semibold uppercase tracking-wide mb-1.5" style={{ color: C.muted }}>Total Quantity</label>
@@ -244,7 +244,7 @@ function InventoryForm({ initial, onSave, onClose }) {
       </div>
       <div>
         <label className="block text-xs font-semibold uppercase tracking-wide mb-1.5" style={{ color: C.muted }}>Notes</label>
-        <textarea name="notes" value={form.notes} onChange={hc} rows={2} placeholder="Any additional notes…" style={{ ...inputStyle, resize: 'vertical' }} />
+        <textarea name="notes" value={form.notes} onChange={hc} rows={2} placeholder="Any additional notesâ€¦" style={{ ...inputStyle, resize: 'vertical' }} />
       </div>
       <div className="flex gap-3 pt-2">
         <button type="button" onClick={onClose}
@@ -260,7 +260,7 @@ function InventoryForm({ initial, onSave, onClose }) {
   )
 }
 
-// ─── Borrow Form ──────────────────────────────────────────────────────────────
+// â”€â”€â”€ Borrow Form â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function BorrowForm({ initial, inventory = [], borrows = [], participantMap = {}, onSave, onClose }) {
   const [form, setForm] = useState(initial ? {
     itemName: initial.itemName || '',
@@ -298,14 +298,14 @@ function BorrowForm({ initial, inventory = [], borrows = [], participantMap = {}
         <div>
           <label className="block text-xs font-semibold uppercase tracking-wide mb-1.5" style={{ color: C.muted }}>Item Name *</label>
           <select name="itemName" value={form.itemName} onChange={e => setForm(f => ({ ...f, itemName: e.target.value, size: '' }))} required style={inputStyle}>
-            <option value="">— Select item —</option>
+            <option value="">â€” Select item â€”</option>
             {uniqueItemNames.map(name => <option key={name} value={name}>{name}</option>)}
           </select>
         </div>
         <div>
           <label className="block text-xs font-semibold uppercase tracking-wide mb-1.5" style={{ color: C.muted }}>Size</label>
           <select name="size" value={form.size} onChange={hc} style={inputStyle} disabled={!form.itemName}>
-            <option value="">—</option>
+            <option value="">â€”</option>
             {sizesForItem.map(i => {
               const avail = calcAvailable(i, borrows, participantMap)
               return (
@@ -323,7 +323,7 @@ function BorrowForm({ initial, inventory = [], borrows = [], participantMap = {}
       </div>
       <div>
         <label className="block text-xs font-semibold uppercase tracking-wide mb-1.5" style={{ color: C.muted }}>Related Event</label>
-        <input name="eventName" value={form.eventName} onChange={hc} placeholder="e.g. Tết Trung Thu" style={inputStyle} />
+        <input name="eventName" value={form.eventName} onChange={hc} placeholder="e.g. Táº¿t Trung Thu" style={inputStyle} />
       </div>
       <div>
         <label className="block text-xs font-semibold uppercase tracking-wide mb-1.5" style={{ color: C.muted }}>Quantity Borrowed</label>
@@ -368,7 +368,7 @@ function BorrowForm({ initial, inventory = [], borrows = [], participantMap = {}
   )
 }
 
-// ─── Sale Form ────────────────────────────────────────────────────────────────
+// â”€â”€â”€ Sale Form â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function SaleForm({ initial, onSave, onClose }) {
   const [form, setForm] = useState(initial ? {
     itemName: initial.itemName || '',
@@ -398,11 +398,11 @@ function SaleForm({ initial, onSave, onClose }) {
       <div className="grid grid-cols-2 gap-4">
         <div>
           <label className="block text-xs font-semibold uppercase tracking-wide mb-1.5" style={{ color: C.muted }}>Item Name *</label>
-          <input name="itemName" value={form.itemName} onChange={hc} placeholder="Red Áo Dài Set" required style={inputStyle} />
+          <input name="itemName" value={form.itemName} onChange={hc} placeholder="Red Ão DÃ i Set" required style={inputStyle} />
         </div>
         <div>
           <label className="block text-xs font-semibold uppercase tracking-wide mb-1.5" style={{ color: C.muted }}>Size</label>
-          <input name="size" value={form.size} onChange={hc} placeholder="e.g. S, M, L…" style={inputStyle} />
+          <input name="size" value={form.size} onChange={hc} placeholder="e.g. S, M, Lâ€¦" style={inputStyle} />
         </div>
       </div>
       <div>
@@ -411,7 +411,7 @@ function SaleForm({ initial, onSave, onClose }) {
       </div>
       <div>
         <label className="block text-xs font-semibold uppercase tracking-wide mb-1.5" style={{ color: C.muted }}>Related Event / Occasion</label>
-        <input name="eventName" value={form.eventName} onChange={hc} placeholder="e.g. Tết 2026" style={inputStyle} />
+        <input name="eventName" value={form.eventName} onChange={hc} placeholder="e.g. Táº¿t 2026" style={inputStyle} />
       </div>
       <div className="grid grid-cols-2 gap-4">
         <div>
@@ -445,10 +445,10 @@ function SaleForm({ initial, onSave, onClose }) {
   )
 }
 
-// ─── Delete confirm modal ─────────────────────────────────────────────────────
+// â”€â”€â”€ Delete confirm modal â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function DeleteModal({ name, onConfirm, onClose }) {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4"
+    <div className="fixed inset-0 z-[70] flex items-center justify-center p-4"
       style={{ backgroundColor: 'rgba(50,30,10,0.4)', backdropFilter: 'blur(2px)' }}
       onClick={e => { if (e.target === e.currentTarget) onClose() }}>
       <div className="w-full max-w-sm rounded-3xl p-6" style={{ backgroundColor: '#fff', border: `1.5px solid ${C.beige}`, boxShadow: '0 16px 48px rgba(0,0,0,0.15)' }}>
@@ -465,7 +465,7 @@ function DeleteModal({ name, onConfirm, onClose }) {
   )
 }
 
-// ─── Computed available qty (module-level so all components can use it) ──────
+// â”€â”€â”€ Computed available qty (module-level so all components can use it) â”€â”€â”€â”€â”€â”€
 function calcAvailable(item, borrows = [], participantMap = {}) {
   const borrowUsed = borrows
     .filter(b => b.itemName === item.itemName && b.size === item.size && b.status !== 'Returned')
@@ -474,7 +474,7 @@ function calcAvailable(item, borrows = [], participantMap = {}) {
   return Math.max(0, item.totalQuantity - borrowUsed - participantUsed)
 }
 
-// ─── Low Stock Card ───────────────────────────────────────────────────────────
+// â”€â”€â”€ Low Stock Card â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function LowStockCard({ inventory, borrows = [], participantMap = {}, onViewAll }) {
   const LOW_THRESHOLD = 0.5
   const lowItems = inventory.filter(i =>
@@ -517,7 +517,7 @@ function LowStockCard({ inventory, borrows = [], participantMap = {}, onViewAll 
   )
 }
 
-// ─── Main page ────────────────────────────────────────────────────────────────
+// â”€â”€â”€ Main page â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const PAGE_SIZE = 6
 
 export default function Inventory() {
@@ -584,7 +584,7 @@ export default function Inventory() {
   const [statusF,   setStatusF]   = useState('')
   const [page, setPage] = useState(1)
 
-  // ── Filtered inventory ──
+  // â”€â”€ Filtered inventory â”€â”€
   const filtered = useMemo(() => {
     return inventory.filter(i => {
       const matchSearch = !search || i.itemName.toLowerCase().includes(search.toLowerCase()) || i.color.toLowerCase().includes(search.toLowerCase())
@@ -603,7 +603,7 @@ export default function Inventory() {
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
   const paginated  = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
 
-  // ── Handlers ──
+  // â”€â”€ Handlers â”€â”€
   async function handleAdd(form) {
     const { error } = await supabase.from('inventory_items').insert({
       itemName: form.itemName, color: form.color || '', size: form.size,
@@ -703,14 +703,14 @@ export default function Inventory() {
   return (
     <div>
 
-      {/* ── Mobile layout ── */}
+      {/* â”€â”€ Mobile layout â”€â”€ */}
       <div className="block md:hidden" style={{ backgroundColor: '#FFF7F3', minHeight: '100vh', paddingBottom: 'calc(80px + env(safe-area-inset-bottom))' }}>
 
         {/* Header */}
         <div className="px-4 pt-5 pb-3 flex items-center justify-between gap-3">
           <div>
             <h1 className="text-2xl font-extrabold" style={{ color: C.burgundy, fontFamily: "'Nunito', sans-serif" }}>Inventory</h1>
-            <p className="text-xs mt-0.5" style={{ color: C.muted }}>Áo dài, borrows & sales</p>
+            <p className="text-xs mt-0.5" style={{ color: C.muted }}>Ão dÃ i, borrows & sales</p>
           </div>
           <button onClick={() => mobileTab === 'borrows' ? setAddBorrowOpen(true) : mobileTab === 'sold' ? setAddSaleOpen(true) : setAddOpen(true)}
             className="shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold text-white"
@@ -866,7 +866,7 @@ export default function Inventory() {
                       <ClothingIcon itemName={p.uniform} color={iconColorFromName(p.uniform)} size={28} />
                       <div className="min-w-0 flex-1">
                         <p className="font-semibold text-sm truncate" style={{ color: C.burgundy }}>{p.uniform}</p>
-                        <p className="text-xs" style={{ color: C.muted }}>{p.name}{p.clothesSize ? ` · ${p.clothesSize}` : ''}{p.eventTitle ? ` · ${p.eventTitle}` : ''}</p>
+                        <p className="text-xs" style={{ color: C.muted }}>{p.name}{p.clothesSize ? ` Â· ${p.clothesSize}` : ''}{p.eventTitle ? ` Â· ${p.eventTitle}` : ''}</p>
                       </div>
                     </div>
                   </div>
@@ -876,20 +876,20 @@ export default function Inventory() {
         )}
       </div>
 
-      {/* ── Desktop layout ── */}
+      {/* â”€â”€ Desktop layout â”€â”€ */}
       <div className="hidden md:block">
       {/* Page header */}
       <div className="flex items-start justify-between mb-6 gap-4">
         <div>
           <h2 className="text-4xl font-extrabold mb-1" style={{ color: C.burgundy, fontFamily: "'Nunito', sans-serif" }}>Inventory</h2>
-          <p className="text-sm" style={{ color: C.muted }}>Track áo dài sizes, colors, quantities, and borrowed items.</p>
+          <p className="text-sm" style={{ color: C.muted }}>Track Ã¡o dÃ i sizes, colors, quantities, and borrowed items.</p>
         </div>
       </div>
 
       {/* Two-column layout */}
       <div className="flex gap-6 items-start">
 
-        {/* ── Left main column ── */}
+        {/* â”€â”€ Left main column â”€â”€ */}
         <div className="flex-1 min-w-0 space-y-6">
 
           {/* Search + Filters */}
@@ -993,7 +993,7 @@ export default function Inventory() {
             </div>
           </div>
 
-          {/* ── Borrow History ── */}
+          {/* â”€â”€ Borrow History â”€â”€ */}
           <div className="rounded-3xl overflow-hidden" style={{ backgroundColor: C.card, border: `1.5px solid ${C.beige}`, boxShadow: '0 4px 20px rgba(0,0,0,0.06)' }}>
             <div className="flex items-center justify-between px-5 py-4 border-b" style={{ borderColor: '#F5EDE4' }}>
               <div className="flex items-center gap-2">
@@ -1031,7 +1031,7 @@ export default function Inventory() {
                       </td>
                       <td className="px-4 py-3 text-xs" style={{ color: C.muted }}>{b.size}</td>
                       <td className="px-4 py-3 text-xs font-semibold whitespace-nowrap" style={{ color: C.burgundy }}>{b.borrowerName}</td>
-                      <td className="px-4 py-3 text-xs whitespace-nowrap" style={{ color: C.muted }}>{b.eventName || '—'}</td>
+                      <td className="px-4 py-3 text-xs whitespace-nowrap" style={{ color: C.muted }}>{b.eventName || 'â€”'}</td>
                       <td className="px-4 py-3 text-xs text-center font-semibold" style={{ color: C.burgundy }}>{b.quantity}</td>
                       <td className="px-4 py-3 text-xs whitespace-nowrap" style={{ color: C.muted }}>{fmt(b.borrowDate)}</td>
                       <td className="px-4 py-3 text-xs whitespace-nowrap" style={{ color: C.muted }}>{fmt(b.expectedReturnDate)}</td>
@@ -1077,7 +1077,7 @@ export default function Inventory() {
               </div>
             )}
           </div>
-          {/* ── Sold History ── */}
+          {/* â”€â”€ Sold History â”€â”€ */}
           <div className="rounded-3xl overflow-hidden" style={{ backgroundColor: C.card, border: `1.5px solid ${C.beige}`, boxShadow: '0 4px 20px rgba(0,0,0,0.06)' }}>
             <div className="flex items-center justify-between px-5 py-4 border-b" style={{ borderColor: '#F5EDE4' }}>
               <div className="flex items-center gap-2">
@@ -1113,10 +1113,10 @@ export default function Inventory() {
                           <span className="font-semibold text-xs whitespace-nowrap" style={{ color: C.burgundy }}>{p.uniform}</span>
                         </div>
                       </td>
-                      <td className="px-4 py-3 text-xs" style={{ color: C.muted }}>{p.clothesSize || '—'}</td>
+                      <td className="px-4 py-3 text-xs" style={{ color: C.muted }}>{p.clothesSize || 'â€”'}</td>
                       <td className="px-4 py-3 text-xs font-semibold whitespace-nowrap" style={{ color: C.burgundy }}>{p.name}</td>
-                      <td className="px-4 py-3 text-xs whitespace-nowrap" style={{ color: C.muted }}>{p.eventTitle || '—'}</td>
-                      <td className="px-4 py-3 text-xs" style={{ color: C.faint }}>—</td>
+                      <td className="px-4 py-3 text-xs whitespace-nowrap" style={{ color: C.muted }}>{p.eventTitle || 'â€”'}</td>
+                      <td className="px-4 py-3 text-xs" style={{ color: C.faint }}>â€”</td>
                     </tr>
                   ))}
                 </tbody>
@@ -1135,14 +1135,14 @@ export default function Inventory() {
           </div>
         </div>
 
-        {/* ── Right column ── */}
+        {/* â”€â”€ Right column â”€â”€ */}
         <div className="w-72 shrink-0 hidden lg:block">
           <LowStockCard inventory={inventory} borrows={borrows} participantMap={participantMap} onViewAll={() => setStatusF('low')} />
         </div>
       </div>
       </div>{/* end desktop */}
 
-      {/* ── Drawers / Modals ── */}
+      {/* â”€â”€ Drawers / Modals â”€â”€ */}
       <Drawer open={addOpen} onClose={() => setAddOpen(false)} title="Add Item">
         <InventoryForm onSave={handleAdd} onClose={() => setAddOpen(false)} />
       </Drawer>

@@ -4086,7 +4086,7 @@ function DocumentsSection({ eventId, eventName, onCountChange }) {
       )}
 
       {deleteTarget && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ backgroundColor: 'rgba(0,0,0,0.35)' }}>
+        <div className="fixed inset-0 z-[70] flex items-center justify-center p-4" style={{ backgroundColor: 'rgba(0,0,0,0.35)' }}>
           <div className="rounded-2xl p-6 w-full max-w-xs text-center" style={{ backgroundColor: '#fff', boxShadow: '0 20px 60px rgba(0,0,0,0.18)' }}>
             <p className="text-sm font-semibold mb-1" style={{ color: C.text }}>Delete this document?</p>
             <p className="text-xs mb-4" style={{ color: C.faint }}>{deleteTarget.file_name}</p>
@@ -4727,7 +4727,7 @@ function RetreatParticipantsSection({ eventId, eventName, onCountChange }) {
 
       {/* Delete confirmation */}
       {deleteTarget && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ backgroundColor: 'rgba(0,0,0,0.35)' }}>
+        <div className="fixed inset-0 z-[70] flex items-center justify-center p-4" style={{ backgroundColor: 'rgba(0,0,0,0.35)' }}>
           <div className="rounded-2xl p-6 w-full max-w-xs text-center" style={{ backgroundColor: '#fff', boxShadow: '0 20px 60px rgba(0,0,0,0.18)' }}>
             <p className="text-sm font-semibold mb-4" style={{ color: C.text }}>Remove this participant?</p>
             <div className="flex gap-2">
@@ -4869,7 +4869,7 @@ export default function EventModal({ event, onClose, onEdit }) {
 
   return (
     <div
-      className="fixed inset-0 z-50 md:flex md:items-center md:justify-center md:p-6"
+      className="fixed inset-0 z-[70] md:flex md:items-center md:justify-center md:p-6"
       style={{ backgroundColor: 'rgba(50, 30, 10, 0.4)', backdropFilter: 'blur(2px)' }}
       onClick={handleBackdrop}
     >

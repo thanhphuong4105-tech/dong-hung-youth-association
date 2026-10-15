@@ -351,34 +351,7 @@ export default function Calendar() {
         <div className="px-3 space-y-2.5">
           {upcoming.length === 0
             ? <p className="text-sm text-center py-8" style={{ color: '#A08070' }}>No upcoming events.</p>
-            : upcoming.slice(0, 10).map((item, i) => {
-                const [y, m, d] = item.dateStr.split('-').map(Number)
-                const isBirthday = item.type === 'birthday'
-                const accentColors = ['#F1745E','#4CAF50','#FF9800','#9C6FE8','#5B8FE8','#E06464','#00BCD4']
-                const accent = isBirthday ? '#4F252A' : accentColors[i % accentColors.length]
-                const dow = new Date(y, m - 1, d).toLocaleDateString('en-US', { weekday: 'short' }).toUpperCase()
-                const label = isBirthday ? `${item.name}'s Birthday` : item.title
-                return (
-                  <div key={i} className="flex items-center rounded-2xl overflow-hidden"
-                    style={{ backgroundColor: '#ffffff', border: '1px solid #EDD0AC', boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
-                    {/* Colored accent bar */}
-                    <div className="w-1 self-stretch shrink-0" style={{ backgroundColor: accent }} />
-                    {/* Date badge */}
-                    <div className="flex flex-col items-center justify-center px-4 py-3 shrink-0" style={{ minWidth: '72px' }}>
-                      <span className="text-xs font-bold uppercase" style={{ color: accent }}>{dow}</span>
-                      <span className="text-xs font-semibold" style={{ color: '#7A5550' }}>{SHORT_MONTHS[m-1]} {d}</span>
-                    </div>
-                    {/* Divider */}
-                    <div className="w-px self-stretch" style={{ backgroundColor: '#F0E0D0' }} />
-                    {/* Title */}
-                    <div className="flex-1 px-4 py-3 min-w-0">
-                      <p className="text-sm font-semibold truncate" style={{ color: '#4F252A' }}>{label}</p>
-                    </div>
-                    {/* Chevron */}
-                    <ChevronRightIcon className="w-4 h-4 shrink-0 mr-3" style={{ color: '#C8B0A0' }} />
-                  </div>
-                )
-              })
+            : upcoming.slice(0, 10).map((item, i) => <UpcomingRow key={i} item={item} />)
           }
         </div>
       </div>

@@ -1,5 +1,5 @@
 ﻿import { useEffect, useState } from 'react'
-import { PlusIcon, BanknotesIcon, CreditCardIcon, ScaleIcon as ScaleHeroIcon } from '@heroicons/react/24/outline'
+import { PlusIcon, BanknotesIcon, CreditCardIcon, ScaleIcon as ScaleHeroIcon, TrashIcon } from '@heroicons/react/24/outline'
 import { supabase } from '../lib/supabase'
 import Modal, { Field, Input, Select, SubmitButton } from '../components/Modal'
 import { useProfile } from '../hooks/useProfile'
@@ -31,6 +31,7 @@ export default function Budget() {
   const [form, setForm] = useState(emptyForm)
   const [saving, setSaving] = useState(false)
   const [formError, setFormError] = useState('')
+  const [deletingItem, setDeletingItem] = useState(null)
 
   const fetchAll = async () => {
     setLoading(true)
@@ -64,6 +65,13 @@ export default function Budget() {
   function openModal() { setForm(emptyForm); setFormError(''); setShowModal(true) }
   function closeModal() { setShowModal(false) }
   function handleChange(e) { setForm(f => ({ ...f, [e.target.name]: e.target.value })) }
+
+  async function handleDelete() {
+    if (!deletingItem) return
+    await supabase.from('budget_items').delete().eq('id', deletingItem.id)
+    setDeletingItem(null)
+    fetchAll()
+  }
 
   async function handleSubmit(e) {
     e.preventDefault()
@@ -150,6 +158,13 @@ export default function Budget() {
                     <span className="shrink-0 text-sm font-bold" style={{ color: isIncome ? '#16A34A' : '#DC2626' }}>
                       {isIncome ? '+' : '-'}{fmt(Math.abs(item.amount))}
                     </span>
+                    {canManage && (
+                      <button onClick={() => setDeletingItem(item)}
+                        className="shrink-0 p-1.5 rounded-lg hover:bg-red-50 transition-colors ml-1"
+                        style={{ color: '#D4B0A0' }}>
+                        <TrashIcon className="w-4 h-4" />
+                      </button>
+                    )}
                   </div>
                 )
               })}
@@ -210,25 +225,33 @@ export default function Budget() {
         <EmptyState onAdd={openModal} />
       ) : (
         <div className="rounded-3xl overflow-hidden" style={{ border: '1.5px solid #EDD0AC', boxShadow: '0 4px 20px rgba(0,0,0,0.04)' }}>
-          <div className="px-5 py-3 text-xs font-semibold uppercase tracking-wide grid grid-cols-12 gap-2"
-            style={{ backgroundColor: '#FFF7F3', color: '#7A5550', borderBottom: '1px solid #EDD0AC' }}>
-            <span className="col-span-5">Label</span>
-            <span className="col-span-3">Category</span>
-            <span className="col-span-2">Event</span>
-            <span className="col-span-2 text-right">Amount</span>
+          <div className="px-5 py-3 text-xs font-semibold uppercase tracking-wide grid gap-2 items-center"
+            style={{ gridTemplateColumns: '1fr 1fr 1fr auto auto', backgroundColor: '#FFF7F3', color: '#7A5550', borderBottom: '1px solid #EDD0AC' }}>
+            <span>Label</span>
+            <span>Category</span>
+            <span>Event</span>
+            <span className="text-right">Amount</span>
+            <span />
           </div>
           {items.map((item, i) => {
             const isIncome = item.category === 'Income'
             return (
               <div key={item.id}
-                className="px-5 py-3.5 grid grid-cols-12 gap-2 items-center text-sm"
-                style={{ backgroundColor: i % 2 === 0 ? '#FFF7F3' : '#FFF7F3', borderBottom: i < items.length - 1 ? '1px solid #EDD0AC' : 'none' }}>
-                <span className="col-span-5 font-semibold truncate" style={{ color: '#4F252A' }}>{item.label}</span>
-                <span className="col-span-3 truncate" style={{ color: '#7A5550' }}>{item.category}</span>
-                <span className="col-span-2 truncate text-xs" style={{ color: '#A08070' }}>{item.events?.title || '—'}</span>
-                <span className="col-span-2 text-right font-bold" style={{ color: isIncome ? '#F1745E' : '#E06464' }}>
+                className="px-5 py-3.5 grid gap-2 items-center text-sm"
+                style={{ gridTemplateColumns: '1fr 1fr 1fr auto auto', borderBottom: i < items.length - 1 ? '1px solid #EDD0AC' : 'none' }}>
+                <span className="font-semibold truncate" style={{ color: '#4F252A' }}>{item.label}</span>
+                <span className="truncate" style={{ color: '#7A5550' }}>{item.category}</span>
+                <span className="truncate text-xs" style={{ color: '#A08070' }}>{item.events?.title || '—'}</span>
+                <span className="text-right font-bold" style={{ color: isIncome ? '#F1745E' : '#E06464' }}>
                   {isIncome ? '+' : '-'}{fmt(Math.abs(item.amount))}
                 </span>
+                {canManage ? (
+                  <button onClick={() => setDeletingItem(item)}
+                    className="p-1.5 rounded-lg hover:bg-red-50 transition-colors"
+                    style={{ color: '#D4B0A0' }}>
+                    <TrashIcon className="w-4 h-4" />
+                  </button>
+                ) : <span />}
               </div>
             )
           })}
@@ -236,6 +259,29 @@ export default function Budget() {
       )}
 
       </div>{/* end desktop block */}
+
+      {deletingItem && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ backgroundColor: 'rgba(50,20,10,0.45)' }}>
+          <div className="w-full max-w-sm rounded-3xl p-7" style={{ backgroundColor: '#fff', border: '1.5px solid #EDD0AC', boxShadow: '0 8px 40px rgba(0,0,0,0.18)' }}>
+            <div className="w-12 h-12 rounded-2xl flex items-center justify-center mb-4" style={{ backgroundColor: '#FFF0EC' }}>
+              <TrashIcon className="w-6 h-6" style={{ color: '#E06464' }} />
+            </div>
+            <h3 className="text-lg font-extrabold mb-1" style={{ color: '#4F252A' }}>Delete Entry?</h3>
+            <p className="text-sm mb-1" style={{ color: '#7A5550' }}>
+              <strong>{deletingItem.label}</strong>
+            </p>
+            <p className="text-sm mb-6" style={{ color: '#A08070' }}>This cannot be undone.</p>
+            <div className="flex gap-3">
+              <button onClick={() => setDeletingItem(null)}
+                className="flex-1 py-2.5 text-sm font-semibold rounded-2xl border"
+                style={{ borderColor: '#EDD0AC', color: '#7A5550' }}>Cancel</button>
+              <button onClick={handleDelete}
+                className="flex-1 py-2.5 text-sm font-semibold rounded-2xl text-white"
+                style={{ background: 'linear-gradient(135deg, #E06464, #C04040)' }}>Delete</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {showModal && (
         <Modal title="Add Budget Entry" onClose={closeModal}>

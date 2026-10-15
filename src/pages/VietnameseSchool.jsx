@@ -6,7 +6,7 @@ import {
   CalendarDaysIcon, CheckIcon, ArrowPathIcon, CheckCircleIcon, FunnelIcon, PhoneIcon,
 } from '@heroicons/react/24/outline'
 
-// â”€â”€â”€ Design tokens â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Design tokens ─────────────────────────────────────────────────────────
 const C = {
   burgundy: '#4F252A', coral: '#E06464', orange: '#F1745E',
   beige: '#EDD0AC', blush: '#FBC3B9', bg: '#FFF7F3',
@@ -19,7 +19,7 @@ const inputStyle = {
   color: C.burgundy, fontFamily: "'Nunito', sans-serif", fontSize: '0.875rem', outline: 'none',
 }
 
-// â”€â”€â”€ Mock Data â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Mock Data ──────────────────────────────────────────────────────────────
 const INIT_SEMESTERS = [
   { id: 's1', name: 'Fall 2026',   startDate: '2026-08-30', endDate: '2026-12-20', status: 'Upcoming' },
   { id: 's2', name: 'Spring 2026', startDate: '2026-01-11', endDate: '2026-05-24', status: 'Active'   },
@@ -42,16 +42,16 @@ const INIT_STUDENTS = []
 const INIT_LESSONS = [
   { id: 'l1', semesterId: 's1', classId: 'c1', title: 'Vietnamese Alphabet Review', date: '2026-09-06', topic: 'Alphabet and tones',         materials: 'Worksheet 1',      status: 'Planned'   },
   { id: 'l2', semesterId: 's1', classId: 'c1', title: 'Basic Greetings',            date: '2026-09-13', topic: 'Common phrases',              materials: 'Flashcards',       status: 'Planned'   },
-  { id: 'l3', semesterId: 's1', classId: 'c1', title: 'Numbers 1â€“20',               date: '2026-09-20', topic: 'Numbers and counting',        materials: 'Number chart',     status: 'Planned'   },
+  { id: 'l3', semesterId: 's1', classId: 'c1', title: 'Numbers 1–20',               date: '2026-09-20', topic: 'Numbers and counting',        materials: 'Number chart',     status: 'Planned'   },
   { id: 'l4', semesterId: 's1', classId: 'c3', title: 'Reading Comprehension',      date: '2026-09-06', topic: 'Short story analysis',        materials: 'Story booklet',    status: 'Planned'   },
   { id: 'l5', semesterId: 's1', classId: 'c4', title: 'Essay Writing',              date: '2026-09-06', topic: 'Paragraph structure',         materials: 'Writing guide',    status: 'Completed' },
 ]
 
 const INIT_ATTENDANCE = []
 
-// â”€â”€â”€ Helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Helpers ─────────────────────────────────────────────────────────────────
 function fmt(dateStr) {
-  if (!dateStr) return 'â€”'
+  if (!dateStr) return '—'
   try { return new Date(dateStr + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) }
   catch { return dateStr }
 }
@@ -82,7 +82,7 @@ const STATUS_COLORS = {
 
 const AVATAR_COLORS = ['#F1745E','#E06464','#5A6FB5','#2D7A4F','#8B5CF6','#D4A843','#B0305A']
 
-// â”€â”€â”€ Shared UI â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Shared UI ────────────────────────────────────────────────────────────────
 function Card({ children, className = '', style = {}, onClick }) {
   return (
     <div className={`rounded-3xl ${className}`} onClick={onClick}
@@ -135,7 +135,7 @@ function Field({ label, required, children }) {
   )
 }
 
-// â”€â”€â”€ Shared member fetcher â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Shared member fetcher ────────────────────────────────────────────────────
 function useMembersList() {
   const [members, setMembers] = useState([])
   useEffect(() => {
@@ -161,7 +161,7 @@ function memberSubtitle(m) {
   return m.email || 'App User'
 }
 
-// â”€â”€â”€ Single Teacher Select â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Single Teacher Select ────────────────────────────────────────────────────
 function TeacherSelect({ value, onChange }) {
   const members = useMembersList()
   const [search, setSearch] = useState('')
@@ -182,7 +182,7 @@ function TeacherSelect({ value, onChange }) {
           style={{ flex: 1, padding: '0.6rem 0.875rem', background: 'transparent', outline: 'none', border: 'none', color: '#4F252A', fontFamily: "'Nunito', sans-serif", fontSize: '0.875rem' }}
         />
         {value && !open && (
-          <button type="button" onClick={() => { onChange(''); setOpen(false) }} className="pr-3" style={{ color: '#A08070' }}>âœ•</button>
+          <button type="button" onClick={() => { onChange(''); setOpen(false) }} className="pr-3" style={{ color: '#A08070' }}>✕</button>
         )}
       </div>
       {open && (
@@ -213,7 +213,7 @@ function TeacherSelect({ value, onChange }) {
   )
 }
 
-// â”€â”€â”€ Multi-select TA Select â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Multi-select TA Select ───────────────────────────────────────────────────
 function TASelect({ value = [], onChange }) {
   const members = useMembersList()
   const [search, setSearch] = useState('')
@@ -241,7 +241,7 @@ function TASelect({ value = [], onChange }) {
             <span key={name} className="flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold"
               style={{ backgroundColor: '#FFF0EA', color: '#E06464', border: '1px solid #F4B8A8' }}>
               {name}
-              <button type="button" onClick={() => removeTA(name)} style={{ lineHeight: 1, color: '#E06464' }}>âœ•</button>
+              <button type="button" onClick={() => removeTA(name)} style={{ lineHeight: 1, color: '#E06464' }}>✕</button>
             </span>
           ))}
         </div>
@@ -283,7 +283,7 @@ function TASelect({ value = [], onChange }) {
   )
 }
 
-// â”€â”€â”€ Step 1: Semester List â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Step 1: Semester List ───────────────────────────────────────────────────
 function SemesterList({ semesters, classes, students, onOpen, onCreateSemester, onEditSemester, onDeleteSemester }) {
   function statsFor(sem) {
     const cls = classes.filter(c => c.semesterId === sem.id)
@@ -297,7 +297,7 @@ function SemesterList({ semesters, classes, students, onOpen, onCreateSemester, 
 
   return (
     <div>
-      {/* â”€â”€ Mobile layout â”€â”€ */}
+      {/* ── Mobile layout ── */}
       <div className="block md:hidden" style={{ backgroundColor: '#FFF7F3', minHeight: '100vh', paddingBottom: 'calc(80px + env(safe-area-inset-bottom))' }}>
         <div className="px-4 pt-5 pb-3 flex items-center justify-between gap-3">
           <div className="min-w-0">
@@ -318,7 +318,7 @@ function SemesterList({ semesters, classes, students, onOpen, onCreateSemester, 
             const stats = statsFor(sem)
             const sc = STATUS_COLORS[sem.status] || STATUS_COLORS.Upcoming
             const n = sem.name?.toLowerCase() || ''
-            const emoji = n.includes('spring') ? 'ðŸŒ¸' : n.includes('fall') || n.includes('autumn') ? 'ðŸ‚' : n.includes('summer') ? 'â˜€ï¸' : n.includes('winter') ? 'â„ï¸' : 'ðŸ“…'
+            const emoji = n.includes('spring') ? '🌸' : n.includes('fall') || n.includes('autumn') ? '🍂' : n.includes('summer') ? '☀ï¸' : n.includes('winter') ? '❄ï¸' : '📅'
             return (
               <button key={sem.id} onClick={() => onOpen(sem)}
                 className="w-full text-left rounded-2xl p-4"
@@ -328,7 +328,7 @@ function SemesterList({ semesters, classes, students, onOpen, onCreateSemester, 
                     <span className="text-2xl shrink-0">{emoji}</span>
                     <div className="flex-1 min-w-0">
                       <p className="text-base font-extrabold truncate" style={{ color: '#4F252A' }}>{sem.name}</p>
-                      <p className="text-xs" style={{ color: '#A08070' }}>{fmt(sem.startDate)} â€“ {fmt(sem.endDate)}</p>
+                      <p className="text-xs" style={{ color: '#A08070' }}>{fmt(sem.startDate)} – {fmt(sem.endDate)}</p>
                     </div>
                   </div>
                   <span className="shrink-0 text-[10px] font-extrabold uppercase tracking-wider px-2.5 py-1 rounded-full"
@@ -359,7 +359,7 @@ function SemesterList({ semesters, classes, students, onOpen, onCreateSemester, 
         </div>
       </div>
 
-      {/* â”€â”€ Desktop layout â”€â”€ */}
+      {/* ── Desktop layout ── */}
       <div className="hidden md:block">
       <div className="flex items-start justify-between mb-6">
         <div>
@@ -382,7 +382,7 @@ function SemesterList({ semesters, classes, students, onOpen, onCreateSemester, 
                   <div className="flex items-center gap-3">
                     {(() => {
                       const n = sem.name?.toLowerCase() || ''
-                      const emoji = n.includes('spring') ? 'ðŸŒ¸' : n.includes('fall') || n.includes('autumn') ? 'ðŸ‚' : n.includes('summer') ? 'â˜€ï¸' : n.includes('winter') ? 'â„ï¸' : 'ðŸ“…'
+                      const emoji = n.includes('spring') ? '🌸' : n.includes('fall') || n.includes('autumn') ? '🍂' : n.includes('summer') ? '☀ï¸' : n.includes('winter') ? '❄ï¸' : '📅'
                       const bg    = n.includes('spring') ? '#FFF4F0' : n.includes('fall') || n.includes('autumn') ? '#FFF8F0' : n.includes('summer') ? '#FFFBEC' : n.includes('winter') ? '#F0F4FF' : '#F5F5F5'
                       return (
                         <div className="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl" style={{ backgroundColor: bg }}>
@@ -396,10 +396,10 @@ function SemesterList({ semesters, classes, students, onOpen, onCreateSemester, 
                         {sem.status}
                       </span>
                       <h3 className="text-xl font-extrabold mt-1" style={{ color: C.burgundy, fontFamily: "'Nunito', sans-serif" }}>{sem.name}</h3>
-                      <p className="text-xs" style={{ color: C.faint }}>{fmt(sem.startDate)} â€“ {fmt(sem.endDate)}</p>
+                      <p className="text-xs" style={{ color: C.faint }}>{fmt(sem.startDate)} – {fmt(sem.endDate)}</p>
                     </div>
                   </div>
-                  {/* Action buttons â€” stop propagation so they don't open the semester */}
+                  {/* Action buttons — stop propagation so they don't open the semester */}
                   <div className="flex gap-1 shrink-0 ml-2" onClick={e => e.stopPropagation()}>
                     <button onClick={() => onEditSemester(sem)}
                       className="w-8 h-8 rounded-xl flex items-center justify-center hover:bg-orange-100 transition-colors"
@@ -442,7 +442,7 @@ function SemesterList({ semesters, classes, students, onOpen, onCreateSemester, 
   )
 }
 
-// â”€â”€â”€ Semester Form â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Semester Form ────────────────────────────────────────────────────────────
 function SemesterForm({ onSave, onClose }) {
   const [form, setForm] = useState({ name: '', startDate: '', endDate: '', status: 'Upcoming' })
   const [err, setErr] = useState('')
@@ -475,7 +475,7 @@ function SemesterForm({ onSave, onClose }) {
   )
 }
 
-// â”€â”€â”€ Edit Semester Form â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Edit Semester Form ───────────────────────────────────────────────────────
 function EditSemesterForm({ semester, onSave, onClose }) {
   const [form, setForm] = useState({ name: semester.name, startDate: semester.startDate, endDate: semester.endDate, status: semester.status })
   const [err, setErr] = useState('')
@@ -508,19 +508,19 @@ function EditSemesterForm({ semester, onSave, onClose }) {
   )
 }
 
-// â”€â”€â”€ Step 2: Class List â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Step 2: Class List ───────────────────────────────────────────────────────
 function printRegistrationForm() {
   const origin = window.location.origin
   const formContent = `
 <div class="header">
   <img src="${origin}/favicon.ico" alt="DHYA Logo" onerror="this.style.display='none'" />
   <h1>TrÆ°á»ng Viá»‡t Ngá»¯ DHYA</h1>
-  <h2>ÄÆ¡n Nháº­p Há»c â€“ School Application</h2>
+  <h2>ÄÆ¡n Nháº­p Há»c – School Application</h2>
 </div>
 <table>
   <tr>
-    <td style="width:50%"><div class="label">TÃªn Cha â€“ Father's name</div><div class="field-line">&nbsp;</div></td>
-    <td style="width:50%"><div class="label">TÃªn Máº¹ â€“ Mother's name</div><div class="field-line">&nbsp;</div></td>
+    <td style="width:50%"><div class="label">TÃªn Cha – Father's name</div><div class="field-line">&nbsp;</div></td>
+    <td style="width:50%"><div class="label">TÃªn Máº¹ – Mother's name</div><div class="field-line">&nbsp;</div></td>
   </tr>
   <tr><td colspan="2"><div class="label">Email</div><div class="field-line">&nbsp;</div></td></tr>
   <tr><td colspan="2"><div class="label">Äá»‹a chá»‰ / Address</div><div class="field-line">&nbsp;</div></td></tr>
@@ -530,7 +530,7 @@ function printRegistrationForm() {
   </tr>
   <tr>
     <td><div class="label">Student's English Name</div><div class="field-line">&nbsp;</div></td>
-    <td><div class="label">Sinh â€“ DOB</div><div style="display:flex;gap:10px;margin-top:3px;font-size:13px"><span>NgÃ y/Day ______</span><span>ThÃ¡ng/Month ______</span><span>NÄƒm/Year ______</span></div></td>
+    <td><div class="label">Sinh – DOB</div><div style="display:flex;gap:10px;margin-top:3px;font-size:13px"><span>NgÃ y/Day ______</span><span>ThÃ¡ng/Month ______</span><span>NÄƒm/Year ______</span></div></td>
   </tr>
   <tr><td colspan="2"><div class="label">Student's Vietnamese Name</div><div class="field-line">&nbsp;</div></td></tr>
   <tr><td colspan="2"><div class="label">Email</div><div class="field-line">&nbsp;</div></td></tr>
@@ -560,11 +560,11 @@ function printRegistrationForm() {
 <html lang="vi">
 <head>
 <meta charset="UTF-8"/>
-<title>ÄÆ¡n Nháº­p Há»c â€“ DHYA</title>
+<title>ÄÆ¡n Nháº­p Há»c – DHYA</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
 
-  /* â”€â”€ Preview UI â”€â”€ */
+  /* ── Preview UI ── */
   body { background: #2a2a2a; font-family: Arial, sans-serif; }
   #toolbar {
     position: fixed; top: 0; left: 0; right: 0; height: 52px; z-index: 100;
@@ -586,7 +586,7 @@ function printRegistrationForm() {
     box-shadow: 0 4px 32px rgba(0,0,0,0.5);
   }
 
-  /* â”€â”€ Form styles â”€â”€ */
+  /* ── Form styles ── */
   .header { text-align: center; margin-bottom: 8px; }
   .header img { width: 60px; height: 60px; object-fit: contain; margin-bottom: 3px; }
   .header h1 { font-family: 'Times New Roman', serif; font-size: 17px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 2px; }
@@ -602,7 +602,7 @@ function printRegistrationForm() {
   .release-box u { text-decoration: underline; }
   .footer { text-align: center; font-style: normal; margin-top: 10px; font-family: 'Times New Roman', serif; font-size: 13px; }
 
-  /* â”€â”€ Print: hide toolbar, reset paper â”€â”€ */
+  /* ── Print: hide toolbar, reset paper ── */
   @media print {
     #toolbar { display: none !important; }
     body { background: #fff; }
@@ -614,10 +614,10 @@ function printRegistrationForm() {
 </head>
 <body>
 <div id="toolbar">
-  <button id="btn-zoom-out">âˆ’</button>
+  <button id="btn-zoom-out">−</button>
   <span id="zoom-label">100%</span>
   <button id="btn-zoom-in">+</button>
-  <button id="btn-print">ðŸ–¨ Print</button>
+  <button id="btn-print">🖨 Print</button>
 </div>
 <div id="preview-area">
   <div id="paper">${formContent}</div>
@@ -655,7 +655,7 @@ function printStudentList(semester, semClasses, students) {
     const teachers = [cls.teacher, ...(cls.assistants || [])].filter(Boolean).join(', ')
 
     const studentRows = clsStudents.map((s, i) => {
-      const englishName = [s.firstName, s.lastName].filter(Boolean).join(' ') || s.name || 'â€”'
+      const englishName = [s.firstName, s.lastName].filter(Boolean).join(' ') || s.name || '—'
       const dob = fmtDate(s.birthday)
       const age = s.age ?? (s.birthday ? (() => { const today = new Date(); const dob2 = new Date(s.birthday + 'T00:00:00'); let a = today.getFullYear() - dob2.getFullYear(); const m = today.getMonth() - dob2.getMonth(); if (m < 0 || (m === 0 && today.getDate() < dob2.getDate())) a--; return a >= 0 ? a : '' })() : '')
       const parents = s.parents?.length ? s.parents : []
@@ -669,10 +669,10 @@ function printStudentList(semester, semClasses, students) {
         <td><div style="font-weight:600">${englishName}</div></td>
         <td style="text-align:center">${age}</td>
         <td>${dob}</td>
-        <td>${parentNames || 'â€”'}</td>
-        <td>${phones || 'â€”'}</td>
+        <td>${parentNames || '—'}</td>
+        <td>${phones || '—'}</td>
         <td>${allergyText}</td>
-        <td style="text-align:center;font-size:16px">${s.paid ? 'âœ“' : ''}</td>
+        <td style="text-align:center;font-size:16px">${s.paid ? '✓' : ''}</td>
       </tr>`
     }).join('')
 
@@ -683,7 +683,7 @@ function printStudentList(semester, semClasses, students) {
     return `<div class="page-sheet">
       ${titleHtml}
       <div class="class-block">
-        <div class="class-header">${cls.className} â€“ ${teachers}</div>
+        <div class="class-header">${cls.className} – ${teachers}</div>
         <table>
           <thead><tr><th>No.</th><th>Student Name</th><th>Age</th><th>Birthday</th><th>Parent / Guardian</th><th>Phone</th><th>Allergy</th><th>Paid</th></tr></thead>
           <tbody>${studentRows}</tbody>
@@ -696,7 +696,7 @@ function printStudentList(semester, semClasses, students) {
 <html lang="vi">
 <head>
 <meta charset="UTF-8"/>
-<title>Student List â€“ ${semester.name}</title>
+<title>Student List – ${semester.name}</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { background: #2a2a2a; font-family: Arial, sans-serif; }
@@ -744,10 +744,10 @@ function printStudentList(semester, semClasses, students) {
 </head>
 <body>
 <div id="toolbar">
-  <button id="btn-zoom-out">âˆ’</button>
+  <button id="btn-zoom-out">−</button>
   <span id="zoom-label">85%</span>
   <button id="btn-zoom-in">+</button>
-  <button id="btn-print">ðŸ–¨ Print</button>
+  <button id="btn-print">🖨 Print</button>
 </div>
 <div id="preview-area">
   ${classPages.length ? classPages.join('') : '<div class="page-sheet"><p style="text-align:center;color:#888;padding:20px">No students enrolled yet.</p></div>'}
@@ -814,7 +814,7 @@ function FormsMenu() {
                 <button onClick={() => { setOpen(false); printRegistrationForm() }}
                   className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-extrabold whitespace-nowrap hover:opacity-80 transition-opacity"
                   style={{ backgroundColor: '#FFF0EC', color: C.orange, border: `1px solid #F4B8A8` }}>
-                  ðŸ–¨ Print
+                  🖨 Print
                 </button>
               </div>
             </div>
@@ -834,7 +834,7 @@ function SemesterCalendarModal({ semester, dateForm, setDateForm, classDayOfWeek
   const [calEvents, setCalEvents] = useState(dateForm.calEvents || {}) // { 'YYYY-MM-DD': { label, noClass } }
   const [popover, setPopover] = useState(null) // { iso, label, noClass }
 
-  // Build a map of MM-DD â†’ [name, ...] from student birthdays
+  // Build a map of MM-DD → [name, ...] from student birthdays
   const birthdayMap = {}
   for (const s of students) {
     const bday = s.birthday
@@ -952,8 +952,8 @@ function SemesterCalendarModal({ semester, dateForm, setDateForm, classDayOfWeek
                 )}
                 {bdays.map((name, bi) => (
                   <div key={bi} className="text-[10px] leading-tight text-center mt-0.5 w-full px-0.5 truncate"
-                    style={{ color: '#B8860B', backgroundColor: '#FFF9C4', borderRadius: 4, maxWidth: 58 }} title={`ðŸŽ‚ ${name}`}>
-                    ðŸŽ‚ {name.split(' ')[0]}
+                    style={{ color: '#B8860B', backgroundColor: '#FFF9C4', borderRadius: 4, maxWidth: 58 }} title={`🎂 ${name}`}>
+                    🎂 {name.split(' ')[0]}
                   </div>
                 ))}
               </div>
@@ -989,7 +989,7 @@ function SemesterCalendarModal({ semester, dateForm, setDateForm, classDayOfWeek
               <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-full inline-block" style={{ border: '2px solid #C0392B' }} /> First/Last day</span>
               <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-full inline-block" style={{ backgroundColor: '#d0e8f8' }} /> Class day</span>
               <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-full inline-block" style={{ backgroundColor: '#e0e0e0' }} /> No class</span>
-              <span className="flex items-center gap-1"><span style={{ fontSize: 10 }}>ðŸŽ‚</span> Birthday</span>
+              <span className="flex items-center gap-1"><span style={{ fontSize: 10 }}>🎂</span> Birthday</span>
             </div>
           </div>
         </div>
@@ -1104,7 +1104,7 @@ function StudentListModal({ semester, semClasses, students, onUpdateStudent, onC
         {/* Header */}
         <div className="no-print flex items-center justify-between px-6 py-4 border-b shrink-0" style={{ borderColor: C.beige }}>
           <div>
-            <h2 className="text-lg font-extrabold" style={{ color: C.burgundy, fontFamily: "'Nunito', sans-serif" }}>{semester.name} â€” Student List</h2>
+            <h2 className="text-lg font-extrabold" style={{ color: C.burgundy, fontFamily: "'Nunito', sans-serif" }}>{semester.name} — Student List</h2>
             <p className="text-xs" style={{ color: C.muted }}>Click any field to edit Â· changes saved when you click Save</p>
           </div>
           <div className="flex items-center gap-2">
@@ -1112,7 +1112,7 @@ function StudentListModal({ semester, semClasses, students, onUpdateStudent, onC
               className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold border transition-colors disabled:opacity-40"
               style={{ borderColor: C.beige, color: saved ? '#2D7A4F' : C.burgundy, backgroundColor: saved ? '#F0FAF4' : C.card }}>
               <CheckIcon className="w-4 h-4" style={{ color: saved ? '#2D7A4F' : C.orange }} />
-              {saving ? 'Savingâ€¦' : saved ? 'Saved' : 'Save'}
+              {saving ? 'Saving…' : saved ? 'Saved' : 'Save'}
             </button>
             <button onClick={() => {
                 const merged = students.map(s => ({ ...s, ...(localEditsRef.current[s.id] || {}) }))
@@ -1138,7 +1138,7 @@ function StudentListModal({ semester, semClasses, students, onUpdateStudent, onC
               <div key={cls.id} className="mb-8">
                 <div className="flex items-center gap-2 mb-3">
                   <h3 className="text-base font-extrabold" style={{ color: C.burgundy, fontFamily: "'Nunito', sans-serif" }}>{cls.className}</h3>
-                  {teachers && <span className="text-xs" style={{ color: C.muted }}>â€” {teachers}</span>}
+                  {teachers && <span className="text-xs" style={{ color: C.muted }}>— {teachers}</span>}
                   <span className="text-xs ml-auto" style={{ color: C.muted }}>{clsStudents.length} students</span>
                 </div>
                 <div className="overflow-x-auto rounded-2xl border" style={{ borderColor: C.beige }}>
@@ -1153,7 +1153,7 @@ function StudentListModal({ semester, semClasses, students, onUpdateStudent, onC
                     <tbody>
                       {clsStudents.map((s, i) => {
                         const stu = getStudent(s)
-                        const name = [stu.firstName, stu.lastName].filter(Boolean).join(' ') || 'â€”'
+                        const name = [stu.firstName, stu.lastName].filter(Boolean).join(' ') || '—'
                         const parents = stu.parents || []
                         const hasAllergy = stu.allergy && stu.allergy.trim() && stu.allergy.toLowerCase() !== 'none' && stu.allergy.toLowerCase() !== 'n/a'
                         const isDirty = !!localEdits[s.id]
@@ -1192,33 +1192,33 @@ function StudentListModal({ semester, semClasses, students, onUpdateStudent, onC
                                   onBlur={e => storeEdit(s, 'birthday', e.target.value)}
                                   className="px-1 py-0.5 rounded border text-xs" style={{ borderColor: C.orange }} />
                               ) : (
-                                <span className="cursor-pointer hover:underline" onClick={() => startEdit(s, 'birthday')}>{fmtDate(stu.birthday) || 'â€”'}</span>
+                                <span className="cursor-pointer hover:underline" onClick={() => startEdit(s, 'birthday')}>{fmtDate(stu.birthday) || '—'}</span>
                               )}
                             </td>
-                            {/* Parent names â€” one per line, editable */}
+                            {/* Parent names — one per line, editable */}
                             <td className="px-3 py-2 text-xs align-top" style={{ color: C.muted }}>
-                              {parents.length === 0 ? <span className="text-xs" style={{ color: C.faint }}>â€”</span> : parents.map((p, pi) => (
+                              {parents.length === 0 ? <span className="text-xs" style={{ color: C.faint }}>—</span> : parents.map((p, pi) => (
                                 <div key={pi} className="leading-5">
                                   {isEditing(`parent-name-${pi}`) ? (
                                     <input autoFocus defaultValue={p.name}
                                       onBlur={e => storeParentEdit(pi, 'name', e.target.value)}
                                       className="w-32 px-1 py-0.5 rounded border text-xs" style={{ borderColor: C.orange, color: C.burgundy }} />
                                   ) : (
-                                    <span className="cursor-pointer hover:underline" onClick={() => startEdit(s, `parent-name-${pi}`)}>{p.name || 'â€”'}</span>
+                                    <span className="cursor-pointer hover:underline" onClick={() => startEdit(s, `parent-name-${pi}`)}>{p.name || '—'}</span>
                                   )}
                                 </div>
                               ))}
                             </td>
-                            {/* Phones â€” one per line, editable */}
+                            {/* Phones — one per line, editable */}
                             <td className="px-3 py-2 text-xs align-top" style={{ color: C.muted }}>
-                              {parents.length === 0 ? <span className="text-xs" style={{ color: C.faint }}>â€”</span> : parents.map((p, pi) => (
+                              {parents.length === 0 ? <span className="text-xs" style={{ color: C.faint }}>—</span> : parents.map((p, pi) => (
                                 <div key={pi} className="leading-5 whitespace-nowrap">
                                   {isEditing(`parent-phone-${pi}`) ? (
                                     <input autoFocus defaultValue={p.phone}
                                       onBlur={e => storeParentEdit(pi, 'phone', e.target.value)}
                                       className="w-32 px-1 py-0.5 rounded border text-xs" style={{ borderColor: C.orange }} />
                                   ) : (
-                                    <span className="cursor-pointer hover:underline" onClick={() => startEdit(s, `parent-phone-${pi}`)}>{p.phone || 'â€”'}</span>
+                                    <span className="cursor-pointer hover:underline" onClick={() => startEdit(s, `parent-phone-${pi}`)}>{p.phone || '—'}</span>
                                   )}
                                 </div>
                               ))}
@@ -1288,7 +1288,7 @@ function ClassList({ semester, classes, students, attendance, onBack, onOpenClas
     const end   = semester.endDate   ? new Date(semester.endDate   + 'T00:00:00') : null
     const calEvents = semester.calEvents || {}
     const targetDay = DAY_MAP_CAL[semClasses[0]?.dayOfWeek || 'Sunday'] ?? 0
-    if (!start || !end) return 'â€”'
+    if (!start || !end) return '—'
     let count = 0
     const cur = new Date(start)
     const diff = (targetDay - cur.getDay() + 7) % 7
@@ -1420,18 +1420,18 @@ function ClassList({ semester, classes, students, attendance, onBack, onOpenClas
                 <div className="space-y-2 text-xs mt-2">
                   <div className="flex gap-2">
                     <span className="shrink-0 font-semibold" style={{ color: C.faint, minWidth: '90px' }}>Main Teacher</span>
-                    <span style={{ color: C.burgundy }}>{cls.teacher || 'â€”'}</span>
+                    <span style={{ color: C.burgundy }}>{cls.teacher || '—'}</span>
                   </div>
                   <div className="flex gap-2">
                     <span className="shrink-0 font-semibold" style={{ color: C.faint, minWidth: '90px' }}>TA(s)</span>
                     <span style={{ color: C.burgundy }}>
-                      {cls.assistants?.length ? cls.assistants.join(', ') : 'â€”'}
+                      {cls.assistants?.length ? cls.assistants.join(', ') : '—'}
                     </span>
                   </div>
                   <div className="flex gap-2">
                     <span className="shrink-0 font-semibold" style={{ color: C.faint, minWidth: '90px' }}>Hours</span>
                     <span style={{ color: C.burgundy }}>
-                      {cls.dayOfWeek && cls.startTime ? `${cls.dayOfWeek} ${fmtTime(cls.startTime)} â€“ ${fmtTime(cls.endTime)}` : 'â€”'}
+                      {cls.dayOfWeek && cls.startTime ? `${cls.dayOfWeek} ${fmtTime(cls.startTime)} – ${fmtTime(cls.endTime)}` : '—'}
                     </span>
                   </div>
                   <div className="flex gap-2">
@@ -1475,13 +1475,13 @@ function ClassList({ semester, classes, students, attendance, onBack, onOpenClas
 const LEVEL_OPTIONS = ['Introductory', 'Beginner', 'Intermediate']
 const DAY_OPTIONS = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday']
 
-// â”€â”€â”€ Shared class form fields â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Shared class form fields ─────────────────────────────────────────────────
 function ClassFormFields({ form, setForm }) {
   function hc(e) { setForm(f => ({ ...f, [e.target.name]: e.target.value })) }
   return (
     <>
       <Field label="Class Name" required>
-        <input name="className" value={form.className} onChange={hc} placeholder="e.g. Introductory â€“ Group A" required style={inputStyle} />
+        <input name="className" value={form.className} onChange={hc} placeholder="e.g. Introductory – Group A" required style={inputStyle} />
       </Field>
       <Field label="Level">
         <select name="level" value={form.level} onChange={hc} style={inputStyle}>
@@ -1507,7 +1507,7 @@ function ClassFormFields({ form, setForm }) {
   )
 }
 
-// â”€â”€â”€ Class Form â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Class Form ───────────────────────────────────────────────────────────────
 function ClassForm({ semesterId, onSave, onClose }) {
   const [form, setForm] = useState({ className: '', level: 'Introductory', teacher: '', assistants: [], dayOfWeek: 'Sunday', startTime: '', endTime: '' })
   const [err, setErr] = useState('')
@@ -1529,7 +1529,7 @@ function ClassForm({ semesterId, onSave, onClose }) {
   )
 }
 
-// â”€â”€â”€ Edit Class Form â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Edit Class Form ──────────────────────────────────────────────────────────
 function EditClassForm({ cls, onSave, onClose }) {
   const [form, setForm] = useState({ className: cls.className, level: cls.level, teacher: cls.teacher || '', assistants: cls.assistants || [], dayOfWeek: cls.dayOfWeek || 'Sunday', startTime: cls.startTime || '', endTime: cls.endTime || '' })
   const [err, setErr] = useState('')
@@ -1551,7 +1551,7 @@ function EditClassForm({ cls, onSave, onClose }) {
   )
 }
 
-// â”€â”€â”€ Student Form â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Student Form ─────────────────────────────────────────────────────────────
 function ParentEntry({ parent, index, onChange, onRemove, showRemove }) {
   function hc(e) { onChange(index, { ...parent, [e.target.name]: e.target.value }) }
   return (
@@ -1682,7 +1682,7 @@ function StudentForm({ semesterId, classId, classes, registry = [], onSave, onCl
   )
 }
 
-// â”€â”€â”€ Students Tab â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Students Tab ─────────────────────────────────────────────────────────────
 function StudentsTab({ students, cls, onAddStudent, onUpdateStudent, onDeleteStudent }) {
   const [editingStudent, setEditingStudent] = useState(null)
   const [deletingStudent, setDeletingStudent] = useState(null)
@@ -1713,7 +1713,7 @@ function StudentsTab({ students, cls, onAddStudent, onUpdateStudent, onDeleteStu
 
   return (
     <div>
-      {/* â”€â”€ Mobile card list â”€â”€ */}
+      {/* ── Mobile card list ── */}
       <div className="md:hidden space-y-3">
         {sortedStudents.length === 0
           ? <p className="py-10 text-center text-sm" style={{ color: C.faint }}>No students yet. Tap "+ Add Student" to enroll one.</p>
@@ -1729,17 +1729,17 @@ function StudentsTab({ students, cls, onAddStudent, onUpdateStudent, onDeleteStu
                   <div className="flex-1 min-w-0">
                     <p className="text-base font-extrabold mb-1" style={{ color: C.burgundy, fontFamily: "'Nunito', sans-serif" }}>{s.firstName} {s.lastName}</p>
                     <div className="flex items-center gap-3 text-xs mb-3" style={{ color: C.muted }}>
-                      <span className="flex items-center gap-1"><UserIcon className="w-3.5 h-3.5" /> Age {age ?? 'â€”'}</span>
-                      <span className="flex items-center gap-1"><CalendarDaysIcon className="w-3.5 h-3.5" /> {s.birthday ? fmt(s.birthday) : 'â€”'}</span>
+                      <span className="flex items-center gap-1"><UserIcon className="w-3.5 h-3.5" /> Age {age ?? '—'}</span>
+                      <span className="flex items-center gap-1"><CalendarDaysIcon className="w-3.5 h-3.5" /> {s.birthday ? fmt(s.birthday) : '—'}</span>
                     </div>
                     <div className="grid grid-cols-3 gap-1 text-xs">
                       <div>
                         <p className="font-semibold mb-0.5" style={{ color: C.faint }}>Parent / Guardian</p>
-                        {pList.length ? pList.map((p, pi) => <p key={pi} style={{ color: C.burgundy }}>{p.name || 'â€”'}</p>) : <p style={{ color: C.faint }}>â€”</p>}
+                        {pList.length ? pList.map((p, pi) => <p key={pi} style={{ color: C.burgundy }}>{p.name || '—'}</p>) : <p style={{ color: C.faint }}>—</p>}
                       </div>
                       <div>
                         <p className="font-semibold mb-0.5 flex items-center gap-1" style={{ color: C.faint }}><PhoneIcon className="w-3 h-3" /> Phone</p>
-                        {pList.length ? pList.map((p, pi) => <p key={pi} style={{ color: C.muted }}>{p.phone || 'â€”'}</p>) : <p style={{ color: C.faint }}>â€”</p>}
+                        {pList.length ? pList.map((p, pi) => <p key={pi} style={{ color: C.muted }}>{p.phone || '—'}</p>) : <p style={{ color: C.faint }}>—</p>}
                       </div>
                       <div>
                         <p className="font-semibold mb-0.5" style={{ color: C.faint }}>Allergy</p>
@@ -1760,7 +1760,7 @@ function StudentsTab({ students, cls, onAddStudent, onUpdateStudent, onDeleteStu
           })}
       </div>
 
-      {/* â”€â”€ Desktop table â”€â”€ */}
+      {/* ── Desktop table ── */}
       <Card className="hidden md:block overflow-hidden">
         <table className="w-full text-sm" style={{ borderCollapse: 'collapse' }}>
           <thead>
@@ -1778,13 +1778,13 @@ function StudentsTab({ students, cls, onAddStudent, onUpdateStudent, onDeleteStu
               <tr key={s.id} style={{ borderBottom: i < sortedStudents.length - 1 ? `1px solid #F5EDE4` : 'none' }} className="hover:bg-orange-50">
                 <td className="px-4 py-3 text-xs font-semibold" style={{ color: C.faint }}>{i + 1}</td>
                 <td className="px-4 py-3"><span className="font-semibold" style={{ color: C.burgundy }}>{s.firstName} {s.lastName}</span></td>
-                <td className="px-4 py-3 text-xs" style={{ color: C.muted }}>{calcAge(s.birthday) ?? 'â€”'}</td>
-                <td className="px-4 py-3 text-xs whitespace-nowrap" style={{ color: C.muted }}>{s.birthday ? fmt(s.birthday) : 'â€”'}</td>
+                <td className="px-4 py-3 text-xs" style={{ color: C.muted }}>{calcAge(s.birthday) ?? '—'}</td>
+                <td className="px-4 py-3 text-xs whitespace-nowrap" style={{ color: C.muted }}>{s.birthday ? fmt(s.birthday) : '—'}</td>
                 <td className="px-4 py-3 text-xs" style={{ color: C.muted }}>
-                  {(() => { const pl = s.parents?.length ? s.parents : (s.parentName ? [{ name: s.parentName }] : []); return pl.length ? pl.map((p, i) => <div key={i}>{p.name || 'â€”'}</div>) : 'â€”' })()}
+                  {(() => { const pl = s.parents?.length ? s.parents : (s.parentName ? [{ name: s.parentName }] : []); return pl.length ? pl.map((p, i) => <div key={i}>{p.name || '—'}</div>) : '—' })()}
                 </td>
                 <td className="px-4 py-3 text-xs" style={{ color: C.muted }}>
-                  {(() => { const pl = s.parents?.length ? s.parents : (s.parentPhone ? [{ phone: s.parentPhone }] : []); return pl.length ? pl.map((p, i) => <div key={i}>{p.phone || 'â€”'}</div>) : 'â€”' })()}
+                  {(() => { const pl = s.parents?.length ? s.parents : (s.parentPhone ? [{ phone: s.parentPhone }] : []); return pl.length ? pl.map((p, i) => <div key={i}>{p.phone || '—'}</div>) : '—' })()}
                 </td>
                 <td className="px-4 py-3 text-xs" style={{ color: s.allergy ? '#B0305A' : C.faint }}>{s.allergy || <span style={{ color: C.faint }}>None</span>}</td>
                 <td className="px-4 py-3">
@@ -1859,7 +1859,7 @@ function StudentsTab({ students, cls, onAddStudent, onUpdateStudent, onDeleteStu
   )
 }
 
-// â”€â”€â”€ Step 3: Class Detail â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Step 3: Class Detail ─────────────────────────────────────────────────────
 function ClassDetail({ cls, semester, students, attendance, lessons, onBack, onUpdateAttendance, onAddLesson, onUpdateLesson, onDeleteLesson, onAddStudent, onUpdateStudent, onDeleteStudent }) {
   const [tab, setTab] = useState('attendance')
   const clsStudents = students.filter(s => s.classId === cls.id)
@@ -1929,7 +1929,7 @@ function ClassDetail({ cls, semester, students, attendance, lessons, onBack, onU
         else if (status === 'Late') bg = '#ffe08a'
         else if (status === 'Absent') bg = '#f4b8c8'
         else if (d < new Date().toISOString().slice(0,10)) bg = '#f5f5f5'
-        const mark = status === 'Present' ? '<span style="color:#2D7A4F;font-size:13px;font-weight:700">âœ“</span>'
+        const mark = status === 'Present' ? '<span style="color:#2D7A4F;font-size:13px;font-weight:700">✓</span>'
           : status === 'Late' ? '<span style="color:#8A6200;font-size:11px;font-weight:700">L</span>'
           : ''
         return `<td style="background:${bg}">${mark}</td>`
@@ -1944,7 +1944,7 @@ function ClassDetail({ cls, semester, students, attendance, lessons, onBack, onU
 
 
     const html = `<!DOCTYPE html><html><head><meta charset="utf-8"/>
-<title>Attendance â€“ ${cls.className}</title>
+<title>Attendance – ${cls.className}</title>
 <style>
   body { font-family: Arial, sans-serif; margin: 24px; color: #222; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   h2 { text-align:center; text-decoration:underline; text-transform:uppercase; margin-bottom:4px; font-size:16px; }
@@ -2092,7 +2092,7 @@ function ClassDetail({ cls, semester, students, attendance, lessons, onBack, onU
       {/* Left column */}
       <div className="flex-1 min-w-0 w-full">
 
-      {/* Class info card â€” mobile: 2Ã—2 grid, desktop: horizontal */}
+      {/* Class info card — mobile: 2Ã—2 grid, desktop: horizontal */}
       <Card className="px-4 py-3 md:px-6 md:py-4 mb-4">
         {/* Mobile layout */}
         <div className="grid grid-cols-2 gap-3 md:hidden">
@@ -2100,7 +2100,7 @@ function ClassDetail({ cls, semester, students, attendance, lessons, onBack, onU
             <UserIcon className="w-4 h-4 shrink-0 mt-0.5" style={{ color: C.faint }} />
             <div>
               <p className="text-[10px] font-semibold uppercase tracking-wide" style={{ color: C.faint }}>Teacher</p>
-              <p className="text-xs font-bold" style={{ color: C.burgundy }}>{cls.teacher || 'â€”'}</p>
+              <p className="text-xs font-bold" style={{ color: C.burgundy }}>{cls.teacher || '—'}</p>
             </div>
           </div>
           <div className="flex items-start gap-2">
@@ -2109,7 +2109,7 @@ function ClassDetail({ cls, semester, students, attendance, lessons, onBack, onU
               <p className="text-[10px] font-semibold uppercase tracking-wide" style={{ color: C.faint }}>TA(s)</p>
               {cls.assistants?.length
                 ? cls.assistants.map((a, i) => <p key={i} className="text-xs font-bold" style={{ color: C.burgundy }}>{a}</p>)
-                : <p className="text-xs font-bold" style={{ color: C.burgundy }}>â€”</p>}
+                : <p className="text-xs font-bold" style={{ color: C.burgundy }}>—</p>}
             </div>
           </div>
           <div className="flex items-start gap-2">
@@ -2117,8 +2117,8 @@ function ClassDetail({ cls, semester, students, attendance, lessons, onBack, onU
             <div>
               <p className="text-[10px] font-semibold uppercase tracking-wide" style={{ color: C.faint }}>Schedule</p>
               {cls.dayOfWeek
-                ? <p className="text-xs font-bold" style={{ color: C.burgundy }}>Every {cls.dayOfWeek}{cls.startTime ? `, ${fmtTime(cls.startTime)}â€“${fmtTime(cls.endTime)}` : ''}</p>
-                : <p className="text-xs font-bold" style={{ color: C.burgundy }}>â€”</p>}
+                ? <p className="text-xs font-bold" style={{ color: C.burgundy }}>Every {cls.dayOfWeek}{cls.startTime ? `, ${fmtTime(cls.startTime)}–${fmtTime(cls.endTime)}` : ''}</p>
+                : <p className="text-xs font-bold" style={{ color: C.burgundy }}>—</p>}
             </div>
           </div>
           <div className="flex items-start gap-2">
@@ -2129,7 +2129,7 @@ function ClassDetail({ cls, semester, students, attendance, lessons, onBack, onU
             </div>
           </div>
         </div>
-        {/* Desktop layout â€” 4-column grid */}
+        {/* Desktop layout — 4-column grid */}
         <div className="hidden md:grid grid-cols-4 gap-0 divide-x" style={{ borderColor: C.beige }}>
           {/* Main Teacher */}
           <div className="flex items-center gap-3 px-6 py-1">
@@ -2138,7 +2138,7 @@ function ClassDetail({ cls, semester, students, attendance, lessons, onBack, onU
             </div>
             <div>
               <p className="text-xs font-semibold mb-0.5" style={{ color: C.faint }}>Main Teacher</p>
-              <p className="text-sm font-bold" style={{ color: C.burgundy }}>{cls.teacher || 'â€”'}</p>
+              <p className="text-sm font-bold" style={{ color: C.burgundy }}>{cls.teacher || '—'}</p>
             </div>
           </div>
           {/* Assistant Teacher(s) */}
@@ -2150,7 +2150,7 @@ function ClassDetail({ cls, semester, students, attendance, lessons, onBack, onU
               <p className="text-xs font-semibold mb-0.5" style={{ color: C.faint }}>Assistant Teacher(s)</p>
               {cls.assistants?.length
                 ? <p className="text-sm font-bold" style={{ color: C.burgundy }}>{cls.assistants.join(', ')}</p>
-                : <p className="text-sm font-bold" style={{ color: C.burgundy }}>â€”</p>}
+                : <p className="text-sm font-bold" style={{ color: C.burgundy }}>—</p>}
             </div>
           </div>
           {/* Schedule */}
@@ -2162,8 +2162,8 @@ function ClassDetail({ cls, semester, students, attendance, lessons, onBack, onU
               <p className="text-xs font-semibold mb-0.5" style={{ color: C.faint }}>Schedule</p>
               {cls.dayOfWeek
                 ? <><p className="text-sm font-bold" style={{ color: C.burgundy }}>Every {cls.dayOfWeek}</p>
-                    {cls.startTime && <p className="text-xs" style={{ color: C.muted }}>{fmtTime(cls.startTime)} â€“ {fmtTime(cls.endTime)}</p>}</>
-                : <p className="text-sm font-bold" style={{ color: C.burgundy }}>â€”</p>}
+                    {cls.startTime && <p className="text-xs" style={{ color: C.muted }}>{fmtTime(cls.startTime)} – {fmtTime(cls.endTime)}</p>}</>
+                : <p className="text-sm font-bold" style={{ color: C.burgundy }}>—</p>}
             </div>
           </div>
           {/* Students + attendance badges */}
@@ -2177,12 +2177,12 @@ function ClassDetail({ cls, semester, students, attendance, lessons, onBack, onU
               <div className="flex flex-wrap gap-1">
                 {perfectStudents.length > 0 && (
                   <span className="text-xs font-bold px-2 py-0.5 rounded-full" style={{ backgroundColor: '#F0FAF4', color: '#2D7A4F' }}>
-                    â­ {perfectStudents.length} perfect
+                    ⭐ {perfectStudents.length} perfect
                   </span>
                 )}
                 {goodStudents.length > 0 && (
                   <span className="text-xs font-bold px-2 py-0.5 rounded-full" style={{ backgroundColor: '#FFF8EC', color: '#8A6200' }}>
-                    ðŸ‘ {goodStudents.length} good
+                    👍 {goodStudents.length} good
                   </span>
                 )}
               </div>
@@ -2193,7 +2193,7 @@ function ClassDetail({ cls, semester, students, attendance, lessons, onBack, onU
 
       {/* Tabs */}
       <div className="mb-4 border-b" style={{ borderColor: C.beige }}>
-        {/* Tab pills â€” scrollable on mobile, with icons */}
+        {/* Tab pills — scrollable on mobile, with icons */}
         <div className="flex gap-0 overflow-x-auto pb-px" style={{ scrollbarWidth: 'none' }}>
           {TABS.map(({ id, label, Icon }) => (
             <button key={id} onClick={() => setTab(id)}
@@ -2245,7 +2245,7 @@ function ClassDetail({ cls, semester, students, attendance, lessons, onBack, onU
         </div>
       </div>
 
-      {/* â”€â”€ Attendance Tab â”€â”€ */}
+      {/* ── Attendance Tab ── */}
       {tab === 'attendance' && (
         <div>
           <div>
@@ -2369,7 +2369,7 @@ function ClassDetail({ cls, semester, students, attendance, lessons, onBack, onU
         </div>
       )}
 
-      {/* â”€â”€ Students Tab â”€â”€ */}
+      {/* ── Students Tab ── */}
       {tab === 'students' && (
         <StudentsTab
           students={clsStudents}
@@ -2380,7 +2380,7 @@ function ClassDetail({ cls, semester, students, attendance, lessons, onBack, onU
         />
       )}
 
-      {/* â”€â”€ Lessons Tab â”€â”€ */}
+      {/* ── Lessons Tab ── */}
       {tab === 'lessons' && (
         <div>
           <p className="text-sm mb-4" style={{ color: C.muted }}>{clsLessons.length} lessons planned</p>
@@ -2467,7 +2467,7 @@ function ClassDetail({ cls, semester, students, attendance, lessons, onBack, onU
         </div>
       )}
 
-      {/* â”€â”€ Parents Tab â”€â”€ */}
+      {/* ── Parents Tab ── */}
       {tab === 'parents' && (() => {
         const rows = clsStudents.flatMap(s => {
           const pList = s.parents?.length ? s.parents : (s.parentName ? [{ name: s.parentName, phone: s.parentPhone || '', email: s.parentEmail || '' }] : [])
@@ -2488,10 +2488,10 @@ function ClassDetail({ cls, semester, students, attendance, lessons, onBack, onU
                   ? <tr><td colSpan={5} className="py-10 text-center text-sm" style={{ color: C.faint }}>No parents listed. Click "+ Add Parent(s)" to add one.</td></tr>
                   : rows.map((r, i) => (
                   <tr key={r.key} style={{ borderBottom: i < rows.length - 1 ? `1px solid #F5EDE4` : 'none' }} className="hover:bg-orange-50">
-                    <td className="px-4 py-3 font-semibold text-xs" style={{ color: C.burgundy }}>{r.name || 'â€”'}</td>
+                    <td className="px-4 py-3 font-semibold text-xs" style={{ color: C.burgundy }}>{r.name || '—'}</td>
                     <td className="px-4 py-3 text-xs" style={{ color: C.muted }}>{r.studentName}</td>
-                    <td className="px-4 py-3 text-xs" style={{ color: C.muted }}>{r.phone || 'â€”'}</td>
-                    <td className="px-4 py-3 text-xs" style={{ color: C.muted }}>{r.email || 'â€”'}</td>
+                    <td className="px-4 py-3 text-xs" style={{ color: C.muted }}>{r.phone || '—'}</td>
+                    <td className="px-4 py-3 text-xs" style={{ color: C.muted }}>{r.email || '—'}</td>
                     <td className="px-4 py-3">
                       <div className="flex gap-1">
                         <button onClick={() => openEditParent(r.student, r.parentIndex)}
@@ -2524,7 +2524,7 @@ function ClassDetail({ cls, semester, students, attendance, lessons, onBack, onU
               <div className="mb-3">
                 <Field label="Student">
                   <select value={parentForm.studentId} onChange={e => setParentForm(f => ({ ...f, studentId: e.target.value }))} style={inputStyle}>
-                    <option value="">â€” Select student â€”</option>
+                    <option value="">— Select student —</option>
                     {clsStudents.map(s => <option key={s.id} value={s.id}>{s.firstName} {s.lastName}</option>)}
                   </select>
                 </Field>
@@ -2546,7 +2546,7 @@ function ClassDetail({ cls, semester, students, attendance, lessons, onBack, onU
 
       </div>{/* end left column */}
 
-      {/* Right column â€” sticky Attendance Summary */}
+      {/* Right column — sticky Attendance Summary */}
       <div className="hidden md:block w-64 shrink-0 sticky top-4">
         <Card className="p-5">
           <h4 className="text-sm font-extrabold mb-4" style={{ color: C.burgundy }}>Attendance Summary</h4>
@@ -2586,7 +2586,7 @@ function ClassDetail({ cls, semester, students, attendance, lessons, onBack, onU
 
         <Card className="p-4 mt-4">
           <div className="flex gap-2">
-            <span className="text-base mt-0.5">ðŸ’¡</span>
+            <span className="text-base mt-0.5">💡</span>
             <p className="text-xs leading-relaxed" style={{ color: C.muted }}>
               <span className="font-bold" style={{ color: C.burgundy }}>Tip: </span>
               Click "Mark All Present" to quickly set all students as present, then update any changes as needed.
@@ -2601,7 +2601,7 @@ function ClassDetail({ cls, semester, students, attendance, lessons, onBack, onU
   )
 }
 
-// â”€â”€â”€ Lesson Form â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Lesson Form ──────────────────────────────────────────────────────────────
 function LessonForm({ classId, semesterId, onSave, onClose }) {
   const [form, setForm] = useState({ title: '', date: '', topic: '', materials: '', status: 'Planned' })
   function hc(e) { setForm(f => ({ ...f, [e.target.name]: e.target.value })) }
@@ -2630,7 +2630,7 @@ function LessonForm({ classId, semesterId, onSave, onClose }) {
   )
 }
 
-// â”€â”€â”€ DB mappers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── DB mappers ──────────────────────────────────────────────────────────────
 function semFromDB(r) { return { id: r.id, name: r.name, startDate: r.start_date || '', endDate: r.end_date || '', status: r.status || 'Upcoming', calEvents: r.cal_events || {} } }
 function semToDB(s)   { return { id: s.id, name: s.name, start_date: s.startDate || null, end_date: s.endDate || null, status: s.status || 'Upcoming', cal_events: s.calEvents || {} } }
 
@@ -2646,7 +2646,7 @@ function lesToDB(l)   { return { id: l.id, semester_id: l.semesterId, class_id: 
 function attFromDB(r) { return { id: r.id, classId: r.class_id, studentId: r.student_id, date: r.date, status: r.status || '', note: r.note || '' } }
 function attToDB(a)   { return { id: a.id, class_id: a.classId, student_id: a.studentId, date: a.date, status: a.status || null, note: a.note || null } }
 
-// â”€â”€â”€ Root Page â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Root Page ────────────────────────────────────────────────────────────────
 export default function VietnameseSchool() {
   const [semesters,  setSemesters]  = useState([])
   const [classes,    setClasses]    = useState([])
@@ -2657,7 +2657,7 @@ export default function VietnameseSchool() {
   const [migrating,  setMigrating]  = useState(false)
   const [registry,   setRegistry]   = useState(() => { try { return JSON.parse(localStorage.getItem('dhya_student_registry') || '[]') } catch { return [] } })
 
-  // â”€â”€ Fetch all data from Supabase â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Fetch all data from Supabase ──────────────────────────────────────────
   async function fetchAll() {
     const [semRes, clsRes, stuRes, lesRes, attRes] = await Promise.all([
       supabase.from('vs_semesters').select('*').order('created_at'),
@@ -2676,7 +2676,7 @@ export default function VietnameseSchool() {
 
   useEffect(() => { fetchAll() }, [])
 
-  // â”€â”€ Sync registry from students â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Sync registry from students ───────────────────────────────────────────
   useEffect(() => {
     if (!students.length) return
     setRegistry(prev => {
@@ -2694,7 +2694,7 @@ export default function VietnameseSchool() {
     })
   }, [students])
 
-  // â”€â”€ One-time migration from localStorage â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── One-time migration from localStorage ──────────────────────────────────
   async function migrateFromLocalStorage() {
     setMigrating(true)
     try {
@@ -2839,7 +2839,7 @@ export default function VietnameseSchool() {
 
   return (
     <div>
-      {/* Migrate banner â€” shown when this browser has unsaved localStorage data */}
+      {/* Migrate banner — shown when this browser has unsaved localStorage data */}
       {hasLocalData && semesters.length === 0 && (
         <div className="mb-4 px-4 py-3 rounded-2xl flex items-center justify-between gap-3"
           style={{ backgroundColor: '#FFF7F3', border: '1.5px solid #EDD0AC' }}>
@@ -2849,7 +2849,7 @@ export default function VietnameseSchool() {
           <button onClick={migrateFromLocalStorage} disabled={migrating}
             className="shrink-0 px-4 py-1.5 text-sm font-semibold rounded-xl text-white disabled:opacity-60"
             style={{ backgroundColor: '#F1745E' }}>
-            {migrating ? 'Importingâ€¦' : 'Import to Cloud'}
+            {migrating ? 'Importing…' : 'Import to Cloud'}
           </button>
         </div>
       )}

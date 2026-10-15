@@ -5,7 +5,7 @@ import Modal, { Field, Input, Select, SubmitButton } from '../components/Modal'
 import { useProfile } from '../hooks/useProfile'
 import { useAuth } from '../contexts/AuthContext'
 
-const CATEGORIES = ['Income', 'Venue', 'Food & Drinks', 'Supplies', 'Marketing', 'Transport', 'Other']
+const CATEGORIES = ['Revenue', 'Food & Drinks', 'Supplies', 'Decorations', 'Business Trip', 'Dance Team', 'Other']
 
 const emptyForm = { label: '', amount: '', category: 'Other', event_id: '' }
 

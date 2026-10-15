@@ -265,6 +265,125 @@ export default function Calendar() {
 
   return (
     <div>
+
+      {/* ── Mobile layout ── */}
+      <div className="block md:hidden" style={{ backgroundColor: '#FFF7F3', minHeight: '100vh', paddingBottom: 'calc(80px + env(safe-area-inset-bottom))' }}>
+        {/* Header */}
+        <div className="px-4 pt-5 pb-3 flex items-center justify-between">
+          <h1 className="text-2xl font-extrabold" style={{ color: '#4F252A', fontFamily: "'Nunito', sans-serif" }}>Calendar</h1>
+          <button onClick={() => navigate('/events')}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold text-white"
+            style={{ backgroundColor: '#F1745E' }}>
+            <PlusIcon className="w-3.5 h-3.5" /> New Event
+          </button>
+        </div>
+
+        {/* Calendar card */}
+        <div className="mx-4 rounded-2xl overflow-hidden mb-4"
+          style={{ backgroundColor: '#ffffff', border: '1.5px solid #EDD0AC', boxShadow: '0 2px 12px rgba(0,0,0,0.06)' }}>
+
+          {/* Toolbar */}
+          <div className="flex items-center justify-between px-3 py-2.5 border-b" style={{ borderColor: '#F0E0D0' }}>
+            <div className="flex items-center gap-1">
+              <button onClick={() => { setYear(today.getFullYear()); setMonth(today.getMonth()) }}
+                className="px-2.5 py-1 text-xs font-bold rounded-lg border"
+                style={{ borderColor: '#EDD0AC', color: '#4F252A' }}>Today</button>
+              <button onClick={prevMonth} className="w-7 h-7 flex items-center justify-center rounded-lg" style={{ color: '#7A5550' }}>
+                <ChevronLeftIcon className="w-4 h-4" />
+              </button>
+              <button onClick={nextMonth} className="w-7 h-7 flex items-center justify-center rounded-lg" style={{ color: '#7A5550' }}>
+                <ChevronRightIcon className="w-4 h-4" />
+              </button>
+              <span className="text-sm font-extrabold" style={{ color: '#4F252A' }}>{SHORT_MONTHS[month]} {year}</span>
+            </div>
+            {/* View toggle */}
+            <div className="flex items-center rounded-lg overflow-hidden border" style={{ borderColor: '#EDD0AC' }}>
+              {['Month','List'].map((v, i) => (
+                <button key={v} onClick={() => setView(v.toLowerCase())}
+                  className="px-3 py-1 text-xs font-bold"
+                  style={{
+                    backgroundColor: view === v.toLowerCase() ? '#F1745E' : '#ffffff',
+                    color: view === v.toLowerCase() ? '#ffffff' : '#7A5550',
+                    borderLeft: i > 0 ? '1px solid #EDD0AC' : 'none',
+                  }}>{v}</button>
+              ))}
+            </div>
+          </div>
+
+          {/* Month view */}
+          {view === 'month' && (
+            <div>
+              {/* Day headers */}
+              <div className="grid grid-cols-7 border-b" style={{ borderColor: '#F0E0D0' }}>
+                {['S','M','T','W','T','F','S'].map((d, i) => (
+                  <div key={i} className="py-1.5 text-center text-[10px] font-bold uppercase" style={{ color: '#A08070' }}>{d}</div>
+                ))}
+              </div>
+              {/* Grid */}
+              <div className="grid grid-cols-7">
+                {grid.map((cell, i) => {
+                  const items   = cell.date ? itemsForDate(cell.date) : []
+                  const isToday = cell.date === todayStr
+                  const isLast  = i >= grid.length - 7
+                  const isRight = (i + 1) % 7 === 0
+                  const hasItems = items.length > 0
+                  return (
+                    <div key={i} className="flex flex-col items-center py-1 gap-0.5"
+                      style={{
+                        minHeight: '40px',
+                        borderRight:  !isRight ? '1px solid #F5E8DC' : 'none',
+                        borderBottom: !isLast  ? '1px solid #F5E8DC' : 'none',
+                        backgroundColor: isToday ? '#FFF7F3' : '#ffffff',
+                      }}>
+                      <span className="w-6 h-6 flex items-center justify-center rounded-full text-xs font-bold"
+                        style={{
+                          backgroundColor: isToday ? '#F1745E' : 'transparent',
+                          color: isToday ? '#ffffff' : cell.current ? '#4F252A' : '#C8A898',
+                        }}>{cell.day}</span>
+                      {hasItems && (
+                        <div className="flex gap-0.5 flex-wrap justify-center px-0.5">
+                          {items.slice(0, 2).map((item, j) => (
+                            <span key={j} className="w-1.5 h-1.5 rounded-full shrink-0"
+                              style={{ backgroundColor: item.type === 'birthday' ? '#4F252A' : '#F1745E' }} />
+                          ))}
+                          {items.length > 2 && <span className="text-[8px] leading-none" style={{ color: '#A08070' }}>+{items.length - 2}</span>}
+                        </div>
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* List view */}
+          {view === 'list' && (
+            <div className="p-3 space-y-2">
+              {upcoming.length === 0
+                ? <p className="text-sm text-center py-8" style={{ color: '#A08070' }}>No upcoming events.</p>
+                : upcoming.map((item, i) => <ListRow key={i} item={item} />)
+              }
+            </div>
+          )}
+        </div>
+
+        {/* Upcoming events list (below calendar in month view) */}
+        {view === 'month' && (
+          <div className="px-4">
+            <p className="text-sm font-extrabold mb-2" style={{ color: '#4F252A' }}>Upcoming</p>
+            <div className="space-y-2">
+              {upcoming.length === 0
+                ? <p className="text-sm text-center py-6" style={{ color: '#A08070' }}>Nothing upcoming.</p>
+                : upcoming.slice(0, 8).map((item, i) => <ListRow key={i} item={item} />)
+              }
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* ── Desktop layout ── */}
+      <div className="hidden md:block">
+
       {/* ── Page header ── */}
       <div className="flex items-start justify-between mb-6 gap-4">
         <div>
@@ -438,6 +557,7 @@ export default function Calendar() {
           <UpcomingCard items={upcoming} />
         </div>
       </div>
+      </div>{/* end hidden md:block */}
     </div>
   )
 }

@@ -269,94 +269,117 @@ export default function Calendar() {
       {/* ── Mobile layout ── */}
       <div className="block md:hidden" style={{ backgroundColor: '#FFF7F3', minHeight: '100vh', paddingBottom: 'calc(80px + env(safe-area-inset-bottom))' }}>
 
-        {/* Header */}
-        <div className="px-3 pt-4 pb-2 flex items-center justify-between">
-          <h1 className="text-xl font-extrabold" style={{ color: '#4F252A', fontFamily: "'Nunito', sans-serif" }}>Calendar</h1>
-          <button onClick={() => navigate('/events')}
-            className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-bold text-white"
-            style={{ backgroundColor: '#F1745E' }}>
-            <PlusIcon className="w-3 h-3" /> New Event
+        {/* Calendar card */}
+        <div className="mx-3 mt-3 rounded-2xl overflow-hidden"
+          style={{ backgroundColor: '#ffffff', border: '1.5px solid #EDD0AC', boxShadow: '0 2px 12px rgba(0,0,0,0.06)' }}>
+
+          {/* Month nav */}
+          <div className="flex items-center gap-2 px-4 py-3">
+            <button onClick={prevMonth} className="w-8 h-8 flex items-center justify-center rounded-full"
+              style={{ color: '#7A5550' }}>
+              <ChevronLeftIcon className="w-5 h-5" />
+            </button>
+            <span className="flex-1 text-center text-base font-extrabold" style={{ color: '#4F252A' }}>
+              {MONTHS[month]} {year}
+            </span>
+            <button onClick={nextMonth} className="w-8 h-8 flex items-center justify-center rounded-full"
+              style={{ color: '#7A5550' }}>
+              <ChevronRightIcon className="w-5 h-5" />
+            </button>
+            <button onClick={() => { setYear(today.getFullYear()); setMonth(today.getMonth()) }}
+              className="px-3 py-1.5 text-xs font-bold rounded-xl border"
+              style={{ borderColor: '#EDD0AC', color: '#7A5550', backgroundColor: '#FFF7F3' }}>
+              Today
+            </button>
+            <button onClick={() => navigate('/events')}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-white"
+              style={{ backgroundColor: '#F1745E' }}>
+              <PlusIcon className="w-3.5 h-3.5" /> New Event
+            </button>
+          </div>
+
+          {/* Day headers */}
+          <div className="grid grid-cols-7 border-t" style={{ borderColor: '#F0E0D0' }}>
+            {DAYS.map((d, i) => (
+              <div key={i} className="py-2 text-center text-xs font-semibold" style={{ color: '#A08070' }}>{d}</div>
+            ))}
+          </div>
+
+          {/* Grid */}
+          <div className="grid grid-cols-7 border-t" style={{ borderColor: '#F0E0D0' }}>
+            {grid.map((cell, i) => {
+              const cellItems = cell.date ? itemsForDate(cell.date) : []
+              const isToday   = cell.date === todayStr
+              const isLast    = i >= grid.length - 7
+              const isRight   = (i + 1) % 7 === 0
+              const dotColors = ['#F1745E','#4CAF50','#5B8FE8','#FF9800','#9C6FE8','#E06464','#00BCD4']
+              return (
+                <div key={i} className="flex flex-col items-center py-1.5 gap-1"
+                  style={{
+                    minHeight: '52px',
+                    borderRight:  !isRight ? '1px solid #F5EBE0' : 'none',
+                    borderBottom: !isLast  ? '1px solid #F5EBE0' : 'none',
+                  }}>
+                  <span className="w-7 h-7 flex items-center justify-center rounded-full text-sm font-semibold"
+                    style={{
+                      backgroundColor: isToday ? '#F1745E' : 'transparent',
+                      color: isToday ? '#ffffff' : cell.current ? '#333333' : '#C8B8B0',
+                      fontWeight: isToday ? 700 : cell.current ? 500 : 400,
+                    }}>{cell.day}</span>
+                  {cellItems.length > 0 && (
+                    <div className="flex gap-0.5 justify-center flex-wrap px-1">
+                      {cellItems.slice(0, 3).map((item, j) => (
+                        <span key={j} className="w-1.5 h-1.5 rounded-full shrink-0"
+                          style={{ backgroundColor: item.type === 'birthday' ? '#4F252A' : dotColors[j % dotColors.length] }} />
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )
+            })}
+          </div>
+        </div>
+
+        {/* Upcoming Events */}
+        <div className="px-3 mt-5 mb-3 flex items-center justify-between">
+          <span className="text-lg font-extrabold" style={{ color: '#4F252A', fontFamily: "'Nunito', sans-serif" }}>Upcoming Events</span>
+          <button onClick={() => navigate('/events')} className="flex items-center gap-0.5 text-sm font-semibold" style={{ color: '#7A5550' }}>
+            See All <ChevronRightIcon className="w-4 h-4" />
           </button>
         </div>
 
-        {/* Side-by-side: calendar + upcoming */}
-        <div className="flex gap-2 px-3">
-
-          {/* Calendar card — main focus */}
-          <div className="flex-1 min-w-0 rounded-2xl overflow-hidden"
-            style={{ backgroundColor: '#ffffff', border: '1.5px solid #EDD0AC', boxShadow: '0 2px 8px rgba(0,0,0,0.05)' }}>
-
-            {/* Month nav */}
-            <div className="flex items-center justify-between px-2 py-2 border-b" style={{ borderColor: '#F0E0D0' }}>
-              <button onClick={prevMonth} className="w-6 h-6 flex items-center justify-center" style={{ color: '#7A5550' }}>
-                <ChevronLeftIcon className="w-3.5 h-3.5" />
-              </button>
-              <div className="flex items-center gap-1.5">
-                <span className="text-xs font-extrabold" style={{ color: '#4F252A' }}>{SHORT_MONTHS[month]} {year}</span>
-                <button onClick={() => { setYear(today.getFullYear()); setMonth(today.getMonth()) }}
-                  className="px-1.5 py-0.5 text-[10px] font-bold rounded border"
-                  style={{ borderColor: '#EDD0AC', color: '#7A5550' }}>Today</button>
-              </div>
-              <button onClick={nextMonth} className="w-6 h-6 flex items-center justify-center" style={{ color: '#7A5550' }}>
-                <ChevronRightIcon className="w-3.5 h-3.5" />
-              </button>
-            </div>
-
-            {/* Day headers */}
-            <div className="grid grid-cols-7">
-              {['S','M','T','W','T','F','S'].map((d, i) => (
-                <div key={i} className="py-1 text-center text-[9px] font-bold uppercase" style={{ color: '#A08070' }}>{d}</div>
-              ))}
-            </div>
-
-            {/* Grid */}
-            <div className="grid grid-cols-7">
-              {grid.map((cell, i) => {
-                const items   = cell.date ? itemsForDate(cell.date) : []
-                const isToday = cell.date === todayStr
-                const isLast  = i >= grid.length - 7
-                const isRight = (i + 1) % 7 === 0
+        <div className="px-3 space-y-2.5">
+          {upcoming.length === 0
+            ? <p className="text-sm text-center py-8" style={{ color: '#A08070' }}>No upcoming events.</p>
+            : upcoming.slice(0, 10).map((item, i) => {
+                const [y, m, d] = item.dateStr.split('-').map(Number)
+                const isBirthday = item.type === 'birthday'
+                const accentColors = ['#F1745E','#4CAF50','#FF9800','#9C6FE8','#5B8FE8','#E06464','#00BCD4']
+                const accent = isBirthday ? '#4F252A' : accentColors[i % accentColors.length]
+                const dow = new Date(y, m - 1, d).toLocaleDateString('en-US', { weekday: 'short' }).toUpperCase()
+                const label = isBirthday ? `${item.name}'s Birthday` : item.title
                 return (
-                  <div key={i} className="flex flex-col items-center pt-0.5 pb-1"
-                    style={{
-                      minHeight: '32px',
-                      borderRight:  !isRight ? '1px solid #F5E8DC' : 'none',
-                      borderBottom: !isLast  ? '1px solid #F5E8DC' : 'none',
-                    }}>
-                    <span className="w-5 h-5 flex items-center justify-center rounded-full text-[10px] font-bold"
-                      style={{
-                        backgroundColor: isToday ? '#F1745E' : 'transparent',
-                        color: isToday ? '#ffffff' : cell.current ? '#4F252A' : '#C8A898',
-                      }}>{cell.day}</span>
-                    {items.length > 0 && (
-                      <span className="w-1 h-1 rounded-full" style={{ backgroundColor: '#F1745E' }} />
-                    )}
+                  <div key={i} className="flex items-center rounded-2xl overflow-hidden"
+                    style={{ backgroundColor: '#ffffff', border: '1px solid #EDD0AC', boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
+                    {/* Colored accent bar */}
+                    <div className="w-1 self-stretch shrink-0" style={{ backgroundColor: accent }} />
+                    {/* Date badge */}
+                    <div className="flex flex-col items-center justify-center px-4 py-3 shrink-0" style={{ minWidth: '72px' }}>
+                      <span className="text-xs font-bold uppercase" style={{ color: accent }}>{dow}</span>
+                      <span className="text-xs font-semibold" style={{ color: '#7A5550' }}>{SHORT_MONTHS[m-1]} {d}</span>
+                    </div>
+                    {/* Divider */}
+                    <div className="w-px self-stretch" style={{ backgroundColor: '#F0E0D0' }} />
+                    {/* Title */}
+                    <div className="flex-1 px-4 py-3 min-w-0">
+                      <p className="text-sm font-semibold truncate" style={{ color: '#4F252A' }}>{label}</p>
+                    </div>
+                    {/* Chevron */}
+                    <ChevronRightIcon className="w-4 h-4 shrink-0 mr-3" style={{ color: '#C8B0A0' }} />
                   </div>
                 )
-              })}
-            </div>
-          </div>
-
-          {/* Upcoming sidebar — slim */}
-          <div className="w-28 shrink-0 flex flex-col gap-1.5" style={{ overflowY: 'auto', maxHeight: '320px' }}>
-            <p className="text-[10px] font-extrabold uppercase tracking-wide pt-1" style={{ color: '#A08070' }}>Upcoming</p>
-            {upcoming.length === 0
-              ? <p className="text-[10px]" style={{ color: '#C8A898' }}>Nothing upcoming</p>
-              : upcoming.slice(0, 10).map((item, i) => {
-                  const [, m, d] = (item.date || '').split('-')
-                  const label = item.title || item.name || ''
-                  return (
-                    <div key={i} className="rounded-xl px-2 py-1.5"
-                      style={{ backgroundColor: '#ffffff', border: '1px solid #EDD0AC' }}>
-                      <p className="text-[9px] font-bold uppercase" style={{ color: '#F1745E' }}>
-                        {m && d ? `${SHORT_MONTHS[parseInt(m,10)-1]} ${parseInt(d,10)}` : ''}
-                      </p>
-                      <p className="text-[10px] font-bold leading-tight line-clamp-2" style={{ color: '#4F252A' }}>{label}</p>
-                    </div>
-                  )
-                })
-            }
-          </div>
+              })
+          }
         </div>
       </div>
 

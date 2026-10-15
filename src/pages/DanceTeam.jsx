@@ -837,98 +837,278 @@ export default function DanceTeam() {
 
   return (
     <div>
-      {/* Header */}
-      <div className="mb-8">
-        <h2 className="text-4xl mb-1" style={{ color: C.sage }}>Dance Team</h2>
-        <p className="text-sm" style={{ color: C.muted }}>Manage dance team participants, parent information, and songs.</p>
-      </div>
 
-      {/* Summary cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
-        {summaryCards.map(card => (
-          <div key={card.label} className="rounded-3xl p-5 flex items-center gap-4"
-            style={{ backgroundColor: '#ffffff', border: '1.5px solid #EDD0AC', boxShadow: '0 4px 24px rgba(0,0,0,0.07)' }}>
-            <card.Icon className="w-7 h-7 shrink-0" style={{ color: '#A08070' }} />
-            <div>
-              <p className="text-xs font-semibold" style={{ color: '#A08070' }}>{card.label}</p>
-              <p className="text-2xl font-extrabold leading-tight" style={{ color: '#4F252A', fontFamily: "'Nunito', sans-serif" }}>{card.value}</p>
-            </div>
+      {/* ── Mobile layout ── */}
+      <div className="block md:hidden" style={{ backgroundColor: '#FFF7F3', minHeight: '100vh', paddingBottom: 'calc(80px + env(safe-area-inset-bottom))' }}>
+
+        {/* Header */}
+        <div className="px-4 pt-5 pb-3 flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-extrabold" style={{ color: '#4F252A', fontFamily: "'Nunito', sans-serif" }}>Dance Team</h1>
+            <p className="text-xs mt-0.5" style={{ color: '#7A5550' }}>Participants, parents & songs</p>
           </div>
-        ))}
+          {canManage && (
+            <button onClick={() => setModal({ type: activeTab === 'parents' ? 'parent' : activeTab === 'songs' ? 'song' : 'participant', data: null })}
+              className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold text-white"
+              style={{ backgroundColor: '#F1745E' }}>
+              <PlusIcon className="w-3.5 h-3.5" /> Add
+            </button>
+          )}
+        </div>
+
+        {/* Stat chips */}
+        <div className="px-4 flex gap-3 mb-4">
+          {summaryCards.map(card => (
+            <div key={card.label} className="flex-1 rounded-2xl p-3 flex items-center gap-2.5"
+              style={{ backgroundColor: '#ffffff', border: '1px solid #EDD0AC' }}>
+              <div className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0" style={{ backgroundColor: '#FEF0EE' }}>
+                <card.Icon className="w-4 h-4" style={{ color: '#F1745E' }} />
+              </div>
+              <div>
+                <p className="text-[10px] font-semibold" style={{ color: '#A08070' }}>{card.label.split(' ')[1] || card.label}</p>
+                <p className="text-xl font-extrabold leading-tight" style={{ color: '#4F252A' }}>{card.value}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Tab bar */}
+        <div className="px-4 mb-4">
+          <div className="flex rounded-2xl overflow-hidden" style={{ border: '1.5px solid #EDD0AC' }}>
+            {TABS.map((tab, i) => (
+              <button key={tab.id} onClick={() => setActiveTab(tab.id)}
+                className="flex-1 py-2.5 text-xs font-bold transition-colors"
+                style={{
+                  backgroundColor: activeTab === tab.id ? '#F1745E' : '#ffffff',
+                  color: activeTab === tab.id ? '#ffffff' : '#7A5550',
+                  borderLeft: i > 0 ? '1px solid #EDD0AC' : 'none',
+                }}>{tab.label}</button>
+            ))}
+          </div>
+        </div>
+
+        {/* Participants */}
+        {activeTab === 'participants' && (
+          <div className="px-4 space-y-3">
+            {loading.participants
+              ? <div className="flex justify-center py-10"><div className="w-8 h-8 rounded-full border-4 animate-spin" style={{ borderColor: '#EDD0AC', borderTopColor: '#F1745E' }} /></div>
+              : participants.length === 0
+                ? <p className="text-sm text-center py-8" style={{ color: '#A08070' }}>No participants yet.</p>
+                : [...participants].sort((a, b) => (calcAge(a.birthday) ?? 999) - (calcAge(b.birthday) ?? 999)).map((row, i) => {
+                    const rowParents = Array.isArray(row.parents) ? row.parents : []
+                    return (
+                      <div key={row.id} className="rounded-2xl p-4" style={{ backgroundColor: '#ffffff', border: '1.5px solid #EDD0AC' }}>
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="flex items-center gap-3 min-w-0">
+                            <span className="text-xs font-bold shrink-0" style={{ color: '#A08070' }}>{i + 1}</span>
+                            <Avatar name={row.name} />
+                            <div className="min-w-0">
+                              <p className="font-semibold truncate" style={{ color: '#4F252A' }}>{row.name}</p>
+                              {row.notes && <p className="text-xs truncate" style={{ color: '#A08070' }}>{row.notes}</p>}
+                            </div>
+                          </div>
+                          {canManage && <RowMenu onEdit={() => setModal({ type: 'participant', data: row })} onDelete={() => deleteParticipant(row.id)} />}
+                        </div>
+                        <div className="mt-3 grid grid-cols-4 gap-2 text-xs">
+                          {[['Age', calcAge(row.birthday) ?? row.age ?? '—'], ['Height', row.height || '—'], ['Weight', row.weight || '—'], ['Size', row.clothing_size || '—']].map(([label, val]) => (
+                            <div key={label}>
+                              <p className="font-bold uppercase tracking-wide" style={{ color: '#7A5550', fontSize: '10px' }}>{label}</p>
+                              <p style={{ color: '#4F252A' }}>{val}</p>
+                            </div>
+                          ))}
+                        </div>
+                        {rowParents.length > 0 && (
+                          <div className="mt-2 pt-2 border-t" style={{ borderColor: '#F5E8DC' }}>
+                            {rowParents.map((p, pi) => (
+                              <div key={pi} className="text-xs">
+                                <span className="font-medium" style={{ color: '#4F252A' }}>{p.name || '—'}</span>
+                                {p.phone && <span className="ml-1.5" style={{ color: '#A08070' }}>{p.phone}</span>}
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )
+                  })
+            }
+          </div>
+        )}
+
+        {/* Parents */}
+        {activeTab === 'parents' && (
+          <div className="px-4 space-y-3">
+            {loading.parents
+              ? <div className="flex justify-center py-10"><div className="w-8 h-8 rounded-full border-4 animate-spin" style={{ borderColor: '#EDD0AC', borderTopColor: '#F1745E' }} /></div>
+              : parents.length === 0
+                ? <p className="text-sm text-center py-8" style={{ color: '#A08070' }}>No parents yet.</p>
+                : parents.map(row => (
+                    <div key={row.id} className="rounded-2xl p-4" style={{ backgroundColor: '#ffffff', border: '1.5px solid #EDD0AC' }}>
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-3 min-w-0">
+                          <Avatar name={row.parent_name} />
+                          <p className="font-semibold truncate" style={{ color: '#4F252A' }}>{row.parent_name}</p>
+                        </div>
+                        {canManage && <RowMenu onEdit={() => setModal({ type: 'parent', data: row })} onDelete={() => deleteParent(row.id)} />}
+                      </div>
+                      <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
+                        <div>
+                          <p className="font-bold uppercase tracking-wide mb-0.5" style={{ color: '#7A5550', fontSize: '10px' }}>Phone</p>
+                          <p style={{ color: '#4F252A' }}>{row.phone || '—'}</p>
+                        </div>
+                        <div>
+                          <p className="font-bold uppercase tracking-wide mb-0.5" style={{ color: '#7A5550', fontSize: '10px' }}>Email</p>
+                          <p className="truncate" style={{ color: '#4F252A' }}>{row.email || '—'}</p>
+                        </div>
+                      </div>
+                      {row.children_names?.length > 0 && (
+                        <div className="mt-2 pt-2 border-t text-xs" style={{ borderColor: '#F5E8DC' }}>
+                          <span className="font-bold uppercase tracking-wide" style={{ color: '#7A5550', fontSize: '10px' }}>Children: </span>
+                          <span style={{ color: '#4F252A' }}>{row.children_names.join(', ')}</span>
+                        </div>
+                      )}
+                    </div>
+                  ))
+            }
+          </div>
+        )}
+
+        {/* Songs */}
+        {activeTab === 'songs' && (
+          <div className="px-4 space-y-3">
+            {loading.songs
+              ? <div className="flex justify-center py-10"><div className="w-8 h-8 rounded-full border-4 animate-spin" style={{ borderColor: '#EDD0AC', borderTopColor: '#F1745E' }} /></div>
+              : songs.length === 0
+                ? <p className="text-sm text-center py-8" style={{ color: '#A08070' }}>No songs yet.</p>
+                : songs.map(row => (
+                    <div key={row.id} className="rounded-2xl p-4" style={{ backgroundColor: '#ffffff', border: '1.5px solid #EDD0AC' }}>
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-3 min-w-0">
+                          <div className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0" style={{ backgroundColor: '#FEF0EE' }}>
+                            <MusicalNoteIcon className="w-4 h-4" style={{ color: '#F1745E' }} />
+                          </div>
+                          <div className="min-w-0">
+                            <p className="font-semibold truncate" style={{ color: '#4F252A' }}>{row.title}</p>
+                            {row.artist && <p className="text-xs truncate" style={{ color: '#7A5550' }}>{row.artist}</p>}
+                          </div>
+                        </div>
+                        {canManage && <RowMenu onEdit={() => setModal({ type: 'song', data: row })} onDelete={() => deleteSong(row.id)} />}
+                      </div>
+                      <div className="mt-3 flex gap-4 text-xs">
+                        {row.event_name && (
+                          <div>
+                            <p className="font-bold uppercase tracking-wide" style={{ color: '#7A5550', fontSize: '10px' }}>Event</p>
+                            <p style={{ color: '#4F252A' }}>{row.event_name}</p>
+                          </div>
+                        )}
+                        {row.year && (
+                          <div>
+                            <p className="font-bold uppercase tracking-wide" style={{ color: '#7A5550', fontSize: '10px' }}>Year</p>
+                            <p style={{ color: '#4F252A' }}>{row.year}</p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))
+            }
+          </div>
+        )}
       </div>
 
-      {/* Two-column layout */}
-      <div className="flex flex-col xl:flex-row gap-6 items-start">
+      {/* ── Desktop layout ── */}
+      <div className="hidden md:block">
+        {/* Header */}
+        <div className="mb-8">
+          <h2 className="text-4xl mb-1" style={{ color: C.sage }}>Dance Team</h2>
+          <p className="text-sm" style={{ color: C.muted }}>Manage dance team participants, parent information, and songs.</p>
+        </div>
 
-        {/* Left: tabs + table */}
-        <div className="flex-1 min-w-0">
-          {/* Tabs */}
-          <div className="flex items-center justify-between mb-5 border-b" style={{ borderColor: C.peach }}>
-            <div className="flex gap-1">
-              {TABS.map(tab => (
-                <button key={tab.id} onClick={() => setActiveTab(tab.id)}
-                  className="px-5 py-2.5 text-sm font-semibold transition-all relative"
-                  style={{ color: activeTab === tab.id ? C.orange : C.muted }}>
-                  {tab.label}
-                  {activeTab === tab.id && (
-                    <div className="absolute bottom-0 left-0 right-0 h-0.5 rounded-full" style={{ backgroundColor: C.orange }} />
-                  )}
-                </button>
-              ))}
+        {/* Summary cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+          {summaryCards.map(card => (
+            <div key={card.label} className="rounded-3xl p-5 flex items-center gap-4"
+              style={{ backgroundColor: '#ffffff', border: '1.5px solid #EDD0AC', boxShadow: '0 4px 24px rgba(0,0,0,0.07)' }}>
+              <card.Icon className="w-7 h-7 shrink-0" style={{ color: '#A08070' }} />
+              <div>
+                <p className="text-xs font-semibold" style={{ color: '#A08070' }}>{card.label}</p>
+                <p className="text-2xl font-extrabold leading-tight" style={{ color: '#4F252A', fontFamily: "'Nunito', sans-serif" }}>{card.value}</p>
+              </div>
             </div>
-            {canManage && (
-              <button onClick={() => setModal({ type: 'participant', data: null })}
-                className="flex items-center gap-2 px-4 py-2 text-white text-sm font-semibold rounded-2xl shadow-md hover:opacity-90 transition-opacity shrink-0 mb-1"
-                style={{ background: 'linear-gradient(135deg, #F1745E, #E06464)' }}>
-                <PlusIcon className="w-4 h-4" /> Add Participant
-              </button>
+          ))}
+        </div>
+
+        {/* Two-column layout */}
+        <div className="flex flex-col xl:flex-row gap-6 items-start">
+
+          {/* Left: tabs + table */}
+          <div className="flex-1 min-w-0">
+            {/* Tabs */}
+            <div className="flex items-center justify-between mb-5 border-b" style={{ borderColor: C.peach }}>
+              <div className="flex gap-1">
+                {TABS.map(tab => (
+                  <button key={tab.id} onClick={() => setActiveTab(tab.id)}
+                    className="px-5 py-2.5 text-sm font-semibold transition-all relative"
+                    style={{ color: activeTab === tab.id ? C.orange : C.muted }}>
+                    {tab.label}
+                    {activeTab === tab.id && (
+                      <div className="absolute bottom-0 left-0 right-0 h-0.5 rounded-full" style={{ backgroundColor: C.orange }} />
+                    )}
+                  </button>
+                ))}
+              </div>
+              {canManage && (
+                <button onClick={() => setModal({ type: 'participant', data: null })}
+                  className="flex items-center gap-2 px-4 py-2 text-white text-sm font-semibold rounded-2xl shadow-md hover:opacity-90 transition-opacity shrink-0 mb-1"
+                  style={{ background: 'linear-gradient(135deg, #F1745E, #E06464)' }}>
+                  <PlusIcon className="w-4 h-4" /> Add Participant
+                </button>
+              )}
+            </div>
+
+            {activeTab === 'participants' && (
+              <ParticipantsTab
+                participants={participants}
+                loading={loading.participants}
+                canManage={canManage}
+                onEdit={row => setModal({ type: 'participant', data: row })}
+                onDelete={deleteParticipant}
+                onAdd={() => setModal({ type: 'participant', data: null })}
+                onReorder={reorderParticipants}
+              />
+            )}
+            {activeTab === 'parents' && (
+              <ParentsTab
+                parents={parents}
+                loading={loading.parents}
+                canManage={canManage}
+                onEdit={row => setModal({ type: 'parent', data: row })}
+                onDelete={deleteParent}
+                onAdd={() => setModal({ type: 'parent', data: null })}
+              />
+            )}
+            {activeTab === 'songs' && (
+              <SongsTab
+                songs={songs}
+                loading={loading.songs}
+                canManage={canManage}
+                onEdit={row => setModal({ type: 'song', data: row })}
+                onDelete={deleteSong}
+                onAdd={() => setModal({ type: 'song', data: null })}
+              />
             )}
           </div>
 
-          {activeTab === 'participants' && (
-            <ParticipantsTab
-              participants={participants}
-              loading={loading.participants}
-              canManage={canManage}
-              onEdit={row => setModal({ type: 'participant', data: row })}
-              onDelete={deleteParticipant}
-              onAdd={() => setModal({ type: 'participant', data: null })}
-              onReorder={reorderParticipants}
-            />
-          )}
-          {activeTab === 'parents' && (
-            <ParentsTab
-              parents={parents}
-              loading={loading.parents}
-              canManage={canManage}
-              onEdit={row => setModal({ type: 'parent', data: row })}
-              onDelete={deleteParent}
-              onAdd={() => setModal({ type: 'parent', data: null })}
-            />
-          )}
-          {activeTab === 'songs' && (
-            <SongsTab
+          {/* Right: Songs sidebar */}
+          <div className="xl:w-72 w-full shrink-0">
+            <SongsSidebar
               songs={songs}
-              loading={loading.songs}
-              canManage={canManage}
-              onEdit={row => setModal({ type: 'song', data: row })}
-              onDelete={deleteSong}
               onAdd={() => setModal({ type: 'song', data: null })}
+              canManage={canManage}
             />
-          )}
+          </div>
         </div>
+      </div>{/* end desktop */}
 
-        {/* Right: Songs sidebar */}
-        <div className="xl:w-72 w-full shrink-0">
-          <SongsSidebar
-            songs={songs}
-            onAdd={() => setModal({ type: 'song', data: null })}
-            canManage={canManage}
-          />
-        </div>
-      </div>
-
-      {/* Modals */}
+      {/* Shared Modals */}
       {modal?.type === 'participant' && (
         <ParticipantModal editing={modal.data} onClose={() => setModal(null)} onSaved={() => { fetchParticipants(); fetchParents() }} />
       )}

@@ -687,6 +687,8 @@ export default function Inventory() {
     setDeleteSale(null); fetchAll()
   }
 
+  const [mobileTab, setMobileTab] = useState('items')
+
   const displayedBorrows = showAllBorrows ? borrows : borrows.slice(0, 4)
   const displayedSales   = showAllSales   ? sales   : sales.slice(0, 4)
 
@@ -700,6 +702,182 @@ export default function Inventory() {
 
   return (
     <div>
+
+      {/* ── Mobile layout ── */}
+      <div className="block md:hidden" style={{ backgroundColor: '#FFF7F3', minHeight: '100vh', paddingBottom: 'calc(80px + env(safe-area-inset-bottom))' }}>
+
+        {/* Header */}
+        <div className="px-4 pt-5 pb-3 flex items-center justify-between gap-3">
+          <div>
+            <h1 className="text-2xl font-extrabold" style={{ color: C.burgundy, fontFamily: "'Nunito', sans-serif" }}>Inventory</h1>
+            <p className="text-xs mt-0.5" style={{ color: C.muted }}>Áo dài, borrows & sales</p>
+          </div>
+          <button onClick={() => mobileTab === 'borrows' ? setAddBorrowOpen(true) : mobileTab === 'sold' ? setAddSaleOpen(true) : setAddOpen(true)}
+            className="shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold text-white"
+            style={{ backgroundColor: '#F1745E' }}>
+            <PlusIcon className="w-3.5 h-3.5" /> Add
+          </button>
+        </div>
+
+        {/* Stats */}
+        <div className="px-4 flex gap-3 mb-4">
+          {[
+            { label: 'Items', value: inventory.length, Icon: ArchiveBoxIcon },
+            { label: 'Active Borrows', value: borrows.filter(b => !b.returnedDate).length, Icon: ArrowPathIcon },
+          ].map(({ label, value, Icon }) => (
+            <div key={label} className="flex-1 rounded-2xl p-3 flex items-center gap-2.5"
+              style={{ backgroundColor: '#ffffff', border: '1px solid #EDD0AC' }}>
+              <div className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0" style={{ backgroundColor: '#FEF0EE' }}>
+                <Icon className="w-4 h-4" style={{ color: '#F1745E' }} />
+              </div>
+              <div>
+                <p className="text-[10px] font-semibold" style={{ color: C.faint }}>{label}</p>
+                <p className="text-xl font-extrabold leading-tight" style={{ color: C.burgundy }}>{value}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Tab bar */}
+        <div className="px-4 mb-4">
+          <div className="flex rounded-2xl overflow-hidden" style={{ border: '1.5px solid #EDD0AC' }}>
+            {[['items','Items'],['borrows','Borrows'],['sold','Sold']].map(([id, label], i) => (
+              <button key={id} onClick={() => setMobileTab(id)}
+                className="flex-1 py-2.5 text-xs font-bold transition-colors"
+                style={{
+                  backgroundColor: mobileTab === id ? '#F1745E' : '#ffffff',
+                  color: mobileTab === id ? '#ffffff' : '#7A5550',
+                  borderLeft: i > 0 ? '1px solid #EDD0AC' : 'none',
+                }}>{label}</button>
+            ))}
+          </div>
+        </div>
+
+        {/* Search (Items tab) */}
+        {mobileTab === 'items' && (
+          <div className="px-4 mb-3">
+            <div className="relative">
+              <MagnifyingGlassIcon className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: C.faint }} />
+              <input value={search} onChange={e => { setSearch(e.target.value); setPage(1) }}
+                placeholder="Search items..."
+                className="w-full" style={{ ...inputStyle, paddingLeft: '2.25rem' }} />
+            </div>
+          </div>
+        )}
+
+        {/* Items tab */}
+        {mobileTab === 'items' && (
+          <div className="px-4 space-y-3">
+            {filtered.length === 0
+              ? <p className="text-sm text-center py-8" style={{ color: C.faint }}>No items found.</p>
+              : filtered.map(item => {
+                  const avail = calcAvailable(item, borrows, participantMap)
+                  const borrowed = borrows.filter(b => b.itemName === item.itemName && b.size === item.size && b.status !== 'Returned').reduce((s, b) => s + b.quantity, 0)
+                  return (
+                    <div key={item.id} className="rounded-2xl p-4" style={{ backgroundColor: '#ffffff', border: '1.5px solid #EDD0AC' }}>
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-3 min-w-0">
+                          <div className="shrink-0">
+                            <ClothingIcon itemName={item.itemName} color={iconColorFromName(item.itemName)} size={32} />
+                          </div>
+                          <div className="min-w-0">
+                            <p className="font-semibold text-sm truncate" style={{ color: C.burgundy }}>{item.itemName}</p>
+                            <p className="text-xs" style={{ color: C.muted }}>Size {item.size}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-1 shrink-0">
+                          <button onClick={() => setEditItem(item)} className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-orange-100" style={{ color: C.muted }}>
+                            <PencilIcon className="w-3.5 h-3.5" />
+                          </button>
+                          <button onClick={() => setDeleteItem(item)} className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-red-50" style={{ color: C.coral }}>
+                            <TrashIcon className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </div>
+                      <div className="mt-3 grid grid-cols-3 gap-2 text-xs">
+                        {[['Total', item.totalQuantity], ['Available', avail], ['Borrowed', borrowed]].map(([lbl, val]) => (
+                          <div key={lbl} className="rounded-xl px-2 py-1.5 text-center" style={{ backgroundColor: '#FFF7F3', border: '1px solid #F0E0D0' }}>
+                            <p className="font-bold uppercase tracking-wide" style={{ color: C.faint, fontSize: '9px' }}>{lbl}</p>
+                            <p className="font-extrabold text-base leading-tight" style={{ color: lbl === 'Available' ? (avail > 0 ? '#2D7A4F' : C.coral) : C.burgundy }}>{val}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )
+                })
+            }
+          </div>
+        )}
+
+        {/* Borrows tab */}
+        {mobileTab === 'borrows' && (
+          <div className="px-4 space-y-3">
+            {borrows.length === 0
+              ? <p className="text-sm text-center py-8" style={{ color: C.faint }}>No borrow records yet.</p>
+              : borrows.map(b => {
+                  const status = b.returnedDate ? 'Returned' : (b.expectedReturnDate && new Date(b.expectedReturnDate) < new Date() ? 'Overdue' : 'Borrowed')
+                  return (
+                    <div key={b.id} className="rounded-2xl p-4" style={{ backgroundColor: '#ffffff', border: '1.5px solid #EDD0AC' }}>
+                      <div className="flex items-center justify-between gap-2 mb-2">
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <ClothingIcon itemName={b.itemName} color={iconColorFromName(b.itemName)} size={28} />
+                          <div className="min-w-0">
+                            <p className="font-semibold text-sm truncate" style={{ color: C.burgundy }}>{b.itemName} {b.size ? `(${b.size})` : ''}</p>
+                            <p className="text-xs font-medium" style={{ color: C.muted }}>{b.borrowerName}</p>
+                          </div>
+                        </div>
+                        <StatusBadge status={status} />
+                      </div>
+                      <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs mb-2" style={{ color: C.muted }}>
+                        {b.eventName && <span>Event: {b.eventName}</span>}
+                        <span>Qty: {b.quantity}</span>
+                        <span>Return by: {fmt(b.expectedReturnDate)}</span>
+                      </div>
+                      <div className="flex gap-2">
+                        {!b.returnedDate && (
+                          <button onClick={() => handleReturn(b.id)}
+                            className="flex items-center gap-1 text-xs font-semibold px-3 py-1.5 rounded-xl"
+                            style={{ backgroundColor: '#F0FAF4', color: '#2D7A4F', border: '1px solid #A8DFC0' }}>
+                            <ArrowPathIcon className="w-3 h-3" /> Mark Returned
+                          </button>
+                        )}
+                        <button onClick={() => setEditingBorrow(b)} className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-orange-100" style={{ color: C.muted }}>
+                          <PencilIcon className="w-3.5 h-3.5" />
+                        </button>
+                        <button onClick={() => setDeleteBorrow(b)} className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-red-50" style={{ color: C.coral }}>
+                          <TrashIcon className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                  )
+                })
+            }
+          </div>
+        )}
+
+        {/* Sold tab */}
+        {mobileTab === 'sold' && (
+          <div className="px-4 space-y-3">
+            {participantSales.length === 0
+              ? <p className="text-sm text-center py-8" style={{ color: C.faint }}>No sold records yet.</p>
+              : participantSales.map(p => (
+                  <div key={p.id} className="rounded-2xl p-4" style={{ backgroundColor: '#ffffff', border: '1.5px solid #EDD0AC' }}>
+                    <div className="flex items-center gap-3">
+                      <ClothingIcon itemName={p.uniform} color={iconColorFromName(p.uniform)} size={28} />
+                      <div className="min-w-0 flex-1">
+                        <p className="font-semibold text-sm truncate" style={{ color: C.burgundy }}>{p.uniform}</p>
+                        <p className="text-xs" style={{ color: C.muted }}>{p.name}{p.clothesSize ? ` · ${p.clothesSize}` : ''}{p.eventTitle ? ` · ${p.eventTitle}` : ''}</p>
+                      </div>
+                    </div>
+                  </div>
+                ))
+            }
+          </div>
+        )}
+      </div>
+
+      {/* ── Desktop layout ── */}
+      <div className="hidden md:block">
       {/* Page header */}
       <div className="flex items-start justify-between mb-6 gap-4">
         <div>
@@ -962,6 +1140,7 @@ export default function Inventory() {
           <LowStockCard inventory={inventory} borrows={borrows} participantMap={participantMap} onViewAll={() => setStatusF('low')} />
         </div>
       </div>
+      </div>{/* end desktop */}
 
       {/* ── Drawers / Modals ── */}
       <Drawer open={addOpen} onClose={() => setAddOpen(false)} title="Add Item">

@@ -506,7 +506,7 @@ function DancePairModal({ eventId, members, buildOpts, editing, nextOrder, usedK
     <div className="fixed inset-0 z-[75] flex items-end sm:items-center justify-center">
       <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" onClick={onClose} />
       <div className="relative w-full sm:max-w-md rounded-t-3xl sm:rounded-3xl p-6 z-10"
-        style={{ backgroundColor: '#FFFCF8', border: '1.5px solid #EDD0AC', boxShadow: '0 8px 40px rgba(0,0,0,0.12)' }}>
+        style={{ backgroundColor: '#FFFCF8', border: '1.5px solid #EDD0AC', boxShadow: '0 8px 40px rgba(0,0,0,0.12)', paddingBottom: 'calc(1.5rem + 80px + env(safe-area-inset-bottom))' }}>
         <h3 className="text-lg font-bold mb-4" style={{ color: C.text, fontFamily: "'Nunito', sans-serif" }}>
           {editing ? 'Edit Pair' : 'Add Pair'}
         </h3>
@@ -3121,12 +3121,17 @@ function VolunteerSection({ eventId, onCountChange, onAssignedCountChange }) {
     // Count unique volunteers across all roles (no double-counting)
     const uniqueVolunteers = new Set()
     rows.forEach(role => {
-      const vols = role.assigned_volunteers || []
-      if (vols.length > 0) {
-        vols.forEach(v => uniqueVolunteers.add(v))
+      const pairs = role.dang_hoa_pairs || []
+      if (pairs.length > 0) {
+        pairs.forEach(p => { if (p[0]) uniqueVolunteers.add(p[0]); if (p[1]) uniqueVolunteers.add(p[1]) })
       } else {
-        if (role.assigned_to) uniqueVolunteers.add(`profile:${role.assigned_to}`)
-        if (role.assigned_general_member_id) uniqueVolunteers.add(`general:${role.assigned_general_member_id}`)
+        const vols = role.assigned_volunteers || []
+        if (vols.length > 0) {
+          vols.forEach(v => uniqueVolunteers.add(v))
+        } else {
+          if (role.assigned_to) uniqueVolunteers.add(`profile:${role.assigned_to}`)
+          if (role.assigned_general_member_id) uniqueVolunteers.add(`general:${role.assigned_general_member_id}`)
+        }
       }
     })
     onAssignedCountChange(uniqueVolunteers.size)
@@ -4771,8 +4776,8 @@ export default function EventModal({ event, onClose, onEdit }) {
     async function fetchCounts() {
       const [todoRes, rolesRes, danceRes, agendaRes, participantsRes, docsRes, thinhSuRes] = await Promise.all([
         supabase.from('event_tasks').select('id', { count: 'exact', head: true }).eq('event_id', event.id),
-        supabase.from('volunteer_roles').select('id, assigned_to, assigned_general_member_id, assigned_volunteers').eq('event_id', event.id),
-        supabase.from('dance_participants').select('id', { count: 'exact', head: true }).eq('event_id', event.id),
+        supabase.from('volunteer_roles').select('id, assigned_to, assigned_general_member_id, assigned_volunteers, dang_hoa_pairs').eq('event_id', event.id),
+        supabase.from('dance_event_pairs').select('member1, member2').eq('event_id', event.id),
         supabase.from('event_agenda').select('id', { count: 'exact', head: true }).eq('event_id', event.id),
         supabase.from('retreat_participants').select('id', { count: 'exact', head: true }).eq('event_id', event.id),
         supabase.from('event_documents').select('id', { count: 'exact', head: true }).eq('event_id', event.id),
@@ -4787,16 +4792,21 @@ export default function EventModal({ event, onClose, onEdit }) {
         setVolunteerCount(rows.length)
         const unique = new Set()
         rows.forEach(role => {
-          const vols = role.assigned_volunteers || []
-          if (vols.length > 0) vols.forEach(v => unique.add(v))
-          else {
-            if (role.assigned_to) unique.add(`profile:${role.assigned_to}`)
-            if (role.assigned_general_member_id) unique.add(`general:${role.assigned_general_member_id}`)
+          const pairs = role.dang_hoa_pairs || []
+          if (pairs.length > 0) {
+            pairs.forEach(p => { if (p[0]) unique.add(p[0]); if (p[1]) unique.add(p[1]) })
+          } else {
+            const vols = role.assigned_volunteers || []
+            if (vols.length > 0) vols.forEach(v => unique.add(v))
+            else {
+              if (role.assigned_to) unique.add(`profile:${role.assigned_to}`)
+              if (role.assigned_general_member_id) unique.add(`general:${role.assigned_general_member_id}`)
+            }
           }
         })
         setAssignedVolunteerCount(unique.size)
       }
-      if (!danceRes.error) setDanceCount(danceRes.count ?? 0)
+      if (!danceRes.error) setDanceCount((danceRes.data || []).reduce((sum, p) => sum + (p.member1 ? 1 : 0) + (p.member2 ? 1 : 0), 0))
       if (!thinhSuRes.error) {
         const total = (thinhSuRes.data || []).reduce((sum, row) =>
           sum + (row.assigned_pairs || []).reduce((s, p) => s + (p[0] ? 1 : 0) + (p[1] ? 1 : 0), 0), 0)

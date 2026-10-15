@@ -1,5 +1,5 @@
 ﻿import { useEffect, useState } from 'react'
-import { PlusIcon, BanknotesIcon, CreditCardIcon, ScaleIcon as ScaleHeroIcon, TrashIcon } from '@heroicons/react/24/outline'
+import { PlusIcon, BanknotesIcon, CreditCardIcon, ScaleIcon as ScaleHeroIcon, TrashIcon, PencilIcon } from '@heroicons/react/24/outline'
 import { supabase } from '../lib/supabase'
 import Modal, { Field, Input, Select, SubmitButton } from '../components/Modal'
 import { useProfile } from '../hooks/useProfile'
@@ -32,6 +32,7 @@ export default function Budget() {
   const [saving, setSaving] = useState(false)
   const [formError, setFormError] = useState('')
   const [deletingItem, setDeletingItem] = useState(null)
+  const [editingItem, setEditingItem] = useState(null)
 
   const fetchAll = async () => {
     setLoading(true)
@@ -62,8 +63,14 @@ export default function Budget() {
   totals.balance = totals.income - totals.expenses
   const summaryValues = { income: totals.income, expenses: totals.expenses, balance: totals.balance }
 
-  function openModal() { setForm(emptyForm); setFormError(''); setShowModal(true) }
-  function closeModal() { setShowModal(false) }
+  function openModal() { setForm(emptyForm); setEditingItem(null); setFormError(''); setShowModal(true) }
+  function openEdit(item) {
+    setForm({ label: item.label, amount: String(item.amount), category: item.category, event_id: item.event_id || '' })
+    setEditingItem(item)
+    setFormError('')
+    setShowModal(true)
+  }
+  function closeModal() { setShowModal(false); setEditingItem(null) }
   function handleChange(e) { setForm(f => ({ ...f, [e.target.name]: e.target.value })) }
 
   async function handleDelete() {
@@ -79,12 +86,15 @@ export default function Budget() {
     if (!form.label.trim()) return setFormError('Label is required.')
     if (!form.amount || isNaN(parseFloat(form.amount))) return setFormError('Enter a valid amount.')
     setSaving(true)
-    const { error } = await supabase.from('budget_items').insert([{
+    const payload = {
       label: form.label.trim(),
       amount: parseFloat(form.amount),
       category: form.category,
       event_id: form.event_id || null,
-    }])
+    }
+    const { error } = editingItem
+      ? await supabase.from('budget_items').update(payload).eq('id', editingItem.id)
+      : await supabase.from('budget_items').insert([payload])
     setSaving(false)
     if (error) { setFormError(error.message); return }
     closeModal()
@@ -159,11 +169,18 @@ export default function Budget() {
                       {isIncome ? '+' : '-'}{fmt(Math.abs(item.amount))}
                     </span>
                     {canManage && (
-                      <button onClick={() => setDeletingItem(item)}
-                        className="shrink-0 p-1.5 rounded-lg hover:bg-red-50 transition-colors ml-1"
-                        style={{ color: '#D4B0A0' }}>
-                        <TrashIcon className="w-4 h-4" />
-                      </button>
+                      <div className="flex items-center gap-0.5 ml-1">
+                        <button onClick={() => openEdit(item)}
+                          className="shrink-0 p-1.5 rounded-lg hover:bg-orange-50 transition-colors"
+                          style={{ color: '#D4B0A0' }}>
+                          <PencilIcon className="w-4 h-4" />
+                        </button>
+                        <button onClick={() => setDeletingItem(item)}
+                          className="shrink-0 p-1.5 rounded-lg hover:bg-red-50 transition-colors"
+                          style={{ color: '#D4B0A0' }}>
+                          <TrashIcon className="w-4 h-4" />
+                        </button>
+                      </div>
                     )}
                   </div>
                 )
@@ -226,25 +243,32 @@ export default function Budget() {
       ) : (
         <div className="rounded-3xl overflow-hidden" style={{ border: '1.5px solid #EDD0AC', boxShadow: '0 4px 20px rgba(0,0,0,0.04)' }}>
           <div className="px-5 py-3 text-xs font-semibold uppercase tracking-wide grid gap-2 items-center"
-            style={{ gridTemplateColumns: '1fr 1fr 1fr auto auto', backgroundColor: '#FFF7F3', color: '#7A5550', borderBottom: '1px solid #EDD0AC' }}>
+            style={{ gridTemplateColumns: '1fr 1fr 1fr auto auto auto', backgroundColor: '#FFF7F3', color: '#7A5550', borderBottom: '1px solid #EDD0AC' }}>
             <span>Label</span>
             <span>Category</span>
             <span>Event</span>
             <span className="text-right">Amount</span>
-            <span />
+            <span /><span />
           </div>
           {items.map((item, i) => {
             const isIncome = item.category === 'Income'
             return (
               <div key={item.id}
                 className="px-5 py-3.5 grid gap-2 items-center text-sm"
-                style={{ gridTemplateColumns: '1fr 1fr 1fr auto auto', borderBottom: i < items.length - 1 ? '1px solid #EDD0AC' : 'none' }}>
+                style={{ gridTemplateColumns: '1fr 1fr 1fr auto auto auto', borderBottom: i < items.length - 1 ? '1px solid #EDD0AC' : 'none' }}>
                 <span className="font-semibold truncate" style={{ color: '#4F252A' }}>{item.label}</span>
                 <span className="truncate" style={{ color: '#7A5550' }}>{item.category}</span>
                 <span className="truncate text-xs" style={{ color: '#A08070' }}>{item.events?.title || '—'}</span>
                 <span className="text-right font-bold" style={{ color: isIncome ? '#F1745E' : '#E06464' }}>
                   {isIncome ? '+' : '-'}{fmt(Math.abs(item.amount))}
                 </span>
+                {canManage ? (
+                  <button onClick={() => openEdit(item)}
+                    className="p-1.5 rounded-lg hover:bg-orange-50 transition-colors"
+                    style={{ color: '#D4B0A0' }}>
+                    <PencilIcon className="w-4 h-4" />
+                  </button>
+                ) : <span />}
                 {canManage ? (
                   <button onClick={() => setDeletingItem(item)}
                     className="p-1.5 rounded-lg hover:bg-red-50 transition-colors"
@@ -284,7 +308,7 @@ export default function Budget() {
       )}
 
       {showModal && (
-        <Modal title="Add Budget Entry" onClose={closeModal}>
+        <Modal title={editingItem ? 'Edit Budget Entry' : 'Add Budget Entry'} onClose={closeModal}>
           <form onSubmit={handleSubmit} className="space-y-4">
             {formError && (
               <div className="px-4 py-2.5 rounded-2xl text-sm" style={{ backgroundColor: '#FFF7F3', border: '1px solid #EFCAC8', color: '#E06464' }}>
@@ -310,7 +334,7 @@ export default function Budget() {
                 {events.map(e => <option key={e.id} value={e.id}>{e.title}</option>)}
               </Select>
             </Field>
-            <SubmitButton loading={saving}>Save Entry</SubmitButton>
+            <SubmitButton loading={saving}>{editingItem ? 'Update Entry' : 'Save Entry'}</SubmitButton>
           </form>
         </Modal>
       )}

@@ -248,6 +248,32 @@ export default function Dashboard() {
             ))}
           </div>
 
+          {/* Quick Navigation */}
+          <div>
+            <p className="text-sm font-extrabold mb-2" style={{ color: '#4F252A', fontFamily: "'Nunito', sans-serif" }}>Quick Navigation</p>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+              {[
+                { label: 'Calendar',          path: '/calendar',          Icon: CalendarIcon,              emoji: '📅' },
+                { label: 'Events',            path: '/events',            Icon: CalendarDaysIcon,          emoji: '🏮' },
+                { label: 'Viet School',       path: '/vietnamese-school', Icon: AcademicCapIcon,           emoji: '🏫' },
+                { label: 'Members',           path: '/members',           Icon: UserGroupIcon,             emoji: '👥' },
+                { label: 'Tasks',             path: '/tasks',             Icon: ClipboardDocumentListIcon, emoji: '✅' },
+                { label: 'Dance Team',        path: '/dance-team',        Icon: MusicalNoteIcon,           emoji: '💃' },
+                { label: 'Inventory',         path: '/inventory',         Icon: ArchiveBoxIcon,            emoji: '📦' },
+                { label: 'Budget',            path: '/budget',            Icon: BanknotesIcon,             emoji: '💰' },
+              ].map(({ label, path, Icon }) => (
+                <button key={path} onClick={() => navigate(path)}
+                  className="flex items-center gap-2.5 px-3 py-3 rounded-2xl text-left active:scale-95 transition-transform"
+                  style={{ backgroundColor: '#ffffff', border: '1.5px solid #EDD0AC', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
+                  <div className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0" style={{ backgroundColor: '#FEF0EE' }}>
+                    <Icon className="w-4 h-4" style={{ color: '#F1745E' }} />
+                  </div>
+                  <span className="text-sm font-bold leading-tight" style={{ color: '#4F252A' }}>{label}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
           {/* Today's Reminders */}
           <div className="rounded-2xl overflow-hidden" style={{ backgroundColor: '#ffffff', border: '1.5px solid #EDD0AC' }}>
             <div className="flex items-center justify-between px-4 py-3" style={{ borderBottom: '1px solid #F5EDE4' }}>

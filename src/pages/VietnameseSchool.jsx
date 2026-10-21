@@ -287,7 +287,8 @@ function TASelect({ value = [], onChange }) {
 function SemesterList({ semesters, classes, students, onOpen, onCreateSemester, onEditSemester, onDeleteSemester }) {
   function statsFor(sem) {
     const cls = classes.filter(c => c.semesterId === sem.id)
-    const stu = students.filter(s => s.semesterId === sem.id)
+    const clsIds = new Set(cls.map(c => c.id))
+    const stu = students.filter(s => clsIds.has(s.classId))
     const teachers = [...new Set(cls.flatMap(c => [c.teacher, ...(c.assistants || [])]).filter(Boolean))]
     return { classes: cls.length, students: stu.length, teachers: teachers.length }
   }

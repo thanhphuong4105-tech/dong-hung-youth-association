@@ -1254,7 +1254,8 @@ function StudentListModal({ semester, semClasses, students, onUpdateStudent, onC
 
 function ClassList({ semester, classes, students, attendance, onBack, onOpenClass, onAddClass, onAddStudent, onEditClass, onDeleteClass, onUpdateSemesterDates, onUpdateStudent }) {
   const semClasses = classes.filter(c => c.semesterId === semester.id)
-  const semStudents = students.filter(s => s.semesterId === semester.id)
+  const semClassIds = new Set(semClasses.map(c => c.id))
+  const semStudents = students.filter(s => semClassIds.has(s.classId))
   const [showStudentListModal, setShowStudentListModal] = useState(false)
   const [showDateModal, setShowDateModal] = useState(false)
   const [dateForm, setDateForm] = useState({ startDate: semester.startDate || '', endDate: semester.endDate || '', calEvents: semester.calEvents || {} })

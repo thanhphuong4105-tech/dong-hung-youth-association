@@ -1167,10 +1167,10 @@ function DanceTeamSection({ eventId, onCountChange }) {
 
   // Fetch confirmed count separately for the stat card
   useEffect(() => {
-    supabase.from('dance_participants').select('id, status').eq('event_id', eventId)
+    supabase.from('dance_event_pairs').select('member1, member2').eq('event_id', eventId)
       .then(({ data }) => {
         const rows = data || []
-        setConfirmedCount(rows.filter(r => r.status === 'confirmed').length)
+        setConfirmedCount(rows.reduce((sum, p) => sum + (p.member1 ? 1 : 0) + (p.member2 ? 1 : 0), 0))
       })
     const parentRows = getDanceParentsStore()[eventId] || []
     setPendingParents(parentRows.filter(r => r.status === 'invited').length)

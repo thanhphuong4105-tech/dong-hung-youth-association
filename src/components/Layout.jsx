@@ -404,7 +404,7 @@ function AvatarDropdown({ profileInitials, profileAvatar, profileName, profileEm
 }
 
 /* ── Mobile Bottom Navigation ── */
-function MobileBottomNav() {
+function MobileBottomNav({ hideBudget }) {
   const location = useLocation()
   const navigate = useNavigate()
 
@@ -440,7 +440,7 @@ function MobileBottomNav() {
 }
 
 /* ── Sidebar ── */
-function Sidebar({ onClose, orgLogo, onOrgLogoChange, canManage }) {
+function Sidebar({ onClose, orgLogo, onOrgLogoChange, canManage, hideBudget }) {
   return (
     <aside className="w-64 flex flex-col relative overflow-hidden" style={{ backgroundColor: '#FFF7F3', borderRight: '1.5px solid #F2DDD0' }}>
       {/* Logo */}
@@ -578,7 +578,7 @@ export default function Layout() {
     <div className="flex min-h-screen" style={{ backgroundColor: '#FFF7F3' }}>
       {/* Desktop sidebar */}
       <div className="hidden md:flex flex-col w-64 shrink-0 sticky top-0 h-screen">
-        <Sidebar orgLogo={orgLogo} onOrgLogoChange={handleOrgLogoChange} canManage={canManage} />
+        <Sidebar orgLogo={orgLogo} onOrgLogoChange={handleOrgLogoChange} canManage={canManage} hideBudget={hideBudget} />
       </div>
 
       {/* Main content */}
@@ -615,7 +615,7 @@ export default function Layout() {
       </div>
 
       {/* Mobile bottom navigation */}
-      <MobileBottomNav />
+      <MobileBottomNav hideBudget={hideBudget} />
     </div>
   )
 }

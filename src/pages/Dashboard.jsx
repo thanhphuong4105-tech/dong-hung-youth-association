@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
+import { useProfile } from '../hooks/useProfile'
 import {
   CalendarDaysIcon, UserGroupIcon, CurrencyDollarIcon,
   CalendarIcon, BellAlertIcon, ChartBarIcon,
@@ -100,6 +101,8 @@ function SectionHeader({ Icon, title, linkLabel, onLink }) {
 // ─── Main Dashboard ───────────────────────────────────────────────────────────
 export default function Dashboard() {
   const { session } = useAuth()
+  const { profile } = useProfile()
+  const hideBudget  = profile?.role === 'president'
   const navigate    = useNavigate()
   const [stats, setStats] = useState({ events: null, tasks: null, members: null, balance: null })
   const [upcomingEvents, setUpcomingEvents] = useState([])
@@ -193,7 +196,7 @@ export default function Dashboard() {
   const cards = [
     { label: 'Upcoming Events', value: stats.events  !== null ? String(stats.events)  : '—', sub: 'Events scheduled ahead',    Icon: CalendarDaysIcon },
     { label: 'Total Members',   value: stats.members !== null ? String(stats.members) : '—', sub: 'Active members',             Icon: UserGroupIcon },
-    { label: 'Budget Balance',  value: stats.balance !== null ? fmt(stats.balance)    : '—', sub: 'Current available balance',  Icon: CurrencyDollarIcon },
+    ...(!hideBudget ? [{ label: 'Budget Balance', value: stats.balance !== null ? fmt(stats.balance) : '—', sub: 'Current available balance', Icon: CurrencyDollarIcon }] : []),
   ]
 
   async function markDone(id) {
@@ -230,7 +233,7 @@ export default function Dashboard() {
             {[
               { label: 'Upcoming Events', value: stats.events  !== null ? String(stats.events)  : '—', sub: 'Events scheduled ahead',   Icon: CalendarDaysIcon },
               { label: 'Total Members',   value: stats.members !== null ? String(stats.members) : '—', sub: 'Active members',            Icon: UserGroupIcon },
-              { label: 'Budget Balance',  value: stats.balance !== null ? fmt(stats.balance)    : '—', sub: 'Current available balance', Icon: CurrencyDollarIcon },
+              ...(!hideBudget ? [{ label: 'Budget Balance', value: stats.balance !== null ? fmt(stats.balance) : '—', sub: 'Current available balance', Icon: CurrencyDollarIcon }] : []),
               { label: 'To-do List',      value: stats.tasks   !== null ? String(stats.tasks)   : '—', sub: 'Tasks to complete',         Icon: ClipboardDocumentListIcon },
             ].map(c => (
               <div key={c.label} className="rounded-2xl p-4 flex items-center gap-3"
@@ -260,7 +263,7 @@ export default function Dashboard() {
                 { label: 'Tasks',             path: '/tasks',             Icon: ClipboardDocumentListIcon, emoji: '✅' },
                 { label: 'Dance Team',        path: '/dance-team',        Icon: MusicalNoteIcon,           emoji: '💃' },
                 { label: 'Inventory',         path: '/inventory',         Icon: ArchiveBoxIcon,            emoji: '📦' },
-                { label: 'Budget',            path: '/budget',            Icon: BanknotesIcon,             emoji: '💰' },
+                ...(!hideBudget ? [{ label: 'Budget', path: '/budget', Icon: BanknotesIcon, emoji: '💰' }] : []),
               ].map(({ label, path, Icon }) => (
                 <button key={path} onClick={() => navigate(path)}
                   className="flex items-center gap-2.5 px-3 py-3 rounded-2xl text-left active:scale-95 transition-transform"
@@ -558,7 +561,7 @@ export default function Dashboard() {
             { label: 'Tasks / Roles',     path: '/tasks',             Icon: ClipboardDocumentListIcon,   desc: 'Assign & track tasks' },
             { label: 'Dance Team',        path: '/dance-team',        Icon: MusicalNoteIcon,             desc: 'Team roster & schedule' },
             { label: 'Inventory',         path: '/inventory',         Icon: ArchiveBoxIcon,              desc: 'Track áo dài & items' },
-            { label: 'Budget',            path: '/budget',            Icon: BanknotesIcon,               desc: 'Income & expenses' },
+            ...(!hideBudget ? [{ label: 'Budget', path: '/budget', Icon: BanknotesIcon, desc: 'Income & expenses' }] : []),
           ].map(({ label, path, Icon, desc }) => (
             <button key={path} onClick={() => navigate(path)}
               className="flex items-center gap-3 p-4 rounded-2xl text-left hover:shadow-md transition-all hover:-translate-y-0.5"

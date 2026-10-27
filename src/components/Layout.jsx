@@ -418,7 +418,7 @@ function MobileBottomNav() {
         padding: '8px 4px calc(8px + env(safe-area-inset-bottom))',
       }}
     >
-      {BOTTOM_NAV.map(({ to, label, icon: Icon }) => {
+      {BOTTOM_NAV.filter(item => !(hideBudget && item.to === '/budget')).map(({ to, label, icon: Icon }) => {
         const active = location.pathname === to
         return (
           <button
@@ -476,7 +476,7 @@ function Sidebar({ onClose, orgLogo, onOrgLogoChange, canManage }) {
 
       {/* Nav */}
       <nav className="flex-1 px-3 py-1 space-y-0.5">
-        {navItems.map(({ to, label, icon: Icon }) => (
+        {navItems.filter(item => !(hideBudget && item.to === '/budget')).map(({ to, label, icon: Icon }) => (
           <NavLink
             key={to}
             to={to}
@@ -512,7 +512,8 @@ function Sidebar({ onClose, orgLogo, onOrgLogoChange, canManage }) {
 export default function Layout() {
   const navigate = useNavigate()
   const { session } = useAuth()
-  const { canManage } = useProfile()
+  const { canManage, profile } = useProfile()
+  const hideBudget = profile?.role === 'president'
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [profileName,   setProfileName]   = useState('')
   const [profileAvatar, setProfileAvatar] = useState(null)
